@@ -914,16 +914,16 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
 
 
 	double ** a_vec_matrix_lower_triangular;
-	a_vec_matrix_lower_triangular = (double**)malloc(num_bins_total_compressed);
+	a_vec_matrix_lower_triangular = (double**)malloc(sizeof(double*)*num_bins_total_compressed);
 	for(int i=0; i< num_bins_total_compressed; i++){
-		a_vec_matrix_lower_triangular[i] = (double*)malloc(num_bins_total_compressed);
+		a_vec_matrix_lower_triangular[i] = (double*)malloc(sizeof(double)*num_bins_total_compressed);
 	}
 
 	double ** a_vec_matrix_inverted;
-	a_vec_matrix_inverted = (double**)malloc(num_bins_total_compressed);
+	a_vec_matrix_inverted = (double**)malloc(sizeof(double*)*num_bins_total_compressed);
 	for(int i=0; i< num_bins_total_compressed; i++){
 	for(int j=0; j< num_bins_total_compressed; j++){
-		a_vec_matrix_inverted[i] = (double*)malloc(num_bins_total_compressed);
+		a_vec_matrix_inverted[i] = (double*)malloc(sizeof(double)*num_bins_total_compressed);
 	}}
 
 	for(int i=0; i< num_bins_total_compressed; i++){
@@ -934,14 +934,14 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
 
 
 	double *a_specin;
-	a_specin = (double*)malloc(n_t);
+	a_specin = (double*)malloc(sizeof(double)*n_t);
 	for(int i=0; i< n_t; i++){
 		a_specin[i] = specin->full_vector[i]  ;
 	}
 
 
 	double *a_corein;
-	a_corein = (double*)malloc(num_bins_total_compressed);
+	a_corein = (double*)malloc(sizeof(double)*num_bins_total_compressed);
 	for(int i=0; i< num_bins_total_compressed; i++){
 		a_corein[i] = core_spectrum.collapsed_vector[i];
 	}
