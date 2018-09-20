@@ -108,6 +108,7 @@ class SBNchi : public SBNconfig{
 	double CalcChi(double* sigVec);
 
 	double CalcChi(double ** inv, double *, double *);
+	float CalcChi(float ** inv, float *, float *);
 
 	std::vector<std::vector<double >> TMatrixDToVector(TMatrixT <double> McI);
 	
@@ -123,8 +124,9 @@ class SBNchi : public SBNconfig{
 	TH1D SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<double>*);
 
 	int CollapseVectorStandAlone(std::vector<double> * full_vector, std::vector<double> *collapsed_vector);
-	int CollapseVectorStandAlone(double* full_vector, double* collapsed_vector);
 
+	int CollapseVectorStandAlone(double* full_vector, double* collapsed_vector);
+	int CollapseVectorStandAlone(float* full_vector, float* collapsed_vector);
 
 
 
