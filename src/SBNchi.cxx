@@ -993,9 +993,9 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
     std::vector < float > gaus_sample_v(num_bins_total), sampled_fullvector_v(num_bins_total);
     std::vector<float> collapsed_v(num_bins_total_compressed, 0.0);
 
-//    float* gaus_sample = new float[num_bins_total];
-  //  float* sampled_fullvector = new float[num_bins_total] ;
-    //float* collapsed = new float[num_bins_total_compressed];
+  //  float* gaus_sample = new float[num_bins_total];
+    //float* sampled_fullvector = new float[num_bins_total] ;
+  //  float* collapsed = new float[num_bins_total_compressed];
 
     float gaus_sample[54];
     float sampled_fullvector[54];
@@ -1015,7 +1015,7 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
 #endif
 
 #ifdef USE_GPU
-#pragma acc parallel loop private(gaus_sample[:54],sampled_fullvector[:54],collapsed[:38],state) \
+#pragma acc parallel loop  private(gaus_sample[:54],sampled_fullvector[:54],collapsed[:38],state) \
     copyin(this[0:1],							\
             a_specin[:num_bins_total],					\
             a_vec_matrix_lower_triangular[:num_bins_total][:num_bins_total],\ 
@@ -1095,9 +1095,9 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
     delete[] a_vec_matrix_lower_triangular;
     delete[] a_vec_matrix_inverted;
 
-  //  delete[] gaus_sample;
-  //  delete[] sampled_fullvector;
-  //  delete[] collapsed;
+    delete[] gaus_sample;
+    delete[] sampled_fullvector;
+    delete[] collapsed;
 
     return ans;
 }

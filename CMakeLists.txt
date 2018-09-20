@@ -64,6 +64,7 @@ message("@main CMAKE_MAGMA_CXX_FLAGS: ${CMAKE_MAGMA_CXX_FLAGS}")
 #gopt is forcing LLVM compilation
 set (CMAKE_SO_CXX_FLAGS "-noswitcherror ${ROOT_CXX_FLAGS} ${GSL_LIBS} ${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
 set (CMAKE_ACC_CXX_FLAGS "-ta=tesla:nollvm -Mcudalib=curand -Minfo=accel -acc -w ${CMAKE_MAGMA_CXX_FLAGS} ${CMAKE_SO_CXX_FLAGS}")
+#set (CMAKE_ACC_CXX_FLAGS "-ta=multicore -Minfo=accel -acc -w ${CMAKE_MAGMA_CXX_FLAGS} ${CMAKE_SO_CXX_FLAGS}")
 set (CMAKE_CXX_FLAGS "${CMAKE_ACC_CXX_FLAGS}")
 
 message("@main CMAKE_SO_CXX_FLAGS: ${CMAKE_SO_CXX_FLAGS}")
