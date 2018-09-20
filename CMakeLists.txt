@@ -58,8 +58,11 @@ message("GSL_LIBS: ${GSL_LIBS}")
 message("GSL_CXX_FLAGS: ${GSL_CXX_FLAGS}")
 
 #gopt is forcing LLVM compilation
-set (CMAKE_SO_CXX_FLAGS "-noswitcherror ${ROOT_CXX_FLAGS} ${GSL_LIBS} ${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
-set (CMAKE_ACC_CXX_FLAGS "-ta=tesla:nollvm,keep -Mcudalib=curand -Minfo=accel -acc -w ${CMAKE_SO_CXX_FLAGS}")
+#set (CMAKE_SO_CXX_FLAGS "-noswitcherror ${ROOT_CXX_FLAGS} ${GSL_LIBS} ${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
+#set (CMAKE_ACC_CXX_FLAGS "-ta=tesla:nollvm,keep -Mcudalib=curand -Minfo=accel -acc -w -mp ${CMAKE_SO_CXX_FLAGS}")
+
+set (CMAKE_SO_CXX_FLAGS "-ta=tesla:managed,nollvm,keep -Mcudalib=curand -Minfo=accel -acc -w -mp -noswitcherror ${ROOT_CXX_FLAGS} ${GSL_LIBS} ${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
+set (CMAKE_ACC_CXX_FLAGS "${CMAKE_SO_CXX_FLAGS}")
 set (CMAKE_CXX_FLAGS "${CMAKE_ACC_CXX_FLAGS}")
 
 message("@main CMAKE_SO_CXX_FLAGS: ${CMAKE_SO_CXX_FLAGS}")
