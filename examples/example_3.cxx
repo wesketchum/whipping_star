@@ -84,14 +84,14 @@ int main(int argc, char* argv[])
 
   std::string tag = "EXAMPLE3";
 
-  SBNspec sig("EXAMPLE1.SBNspec.root",xml);
+  SBNspec sig("/gpfshome01/u/markross/whipping_star/build/examples/EXAMPLE1.SBNspec.root",xml);
   sig.Scale("leesignal",1.5);
 	
-  SBNspec bkg("EXAMPLE1.SBNspec.root",xml);
+  SBNspec bkg("/gpfshome01/u/markross/whipping_star/build/examples/EXAMPLE1.SBNspec.root",xml);
   bkg.Scale("leesignal",0.0);
 
   // Stats + sys
-  TFile * fsys = new TFile("EXAMPLE1.SBNcovar.root","read");
+  TFile * fsys = new TFile("/gpfshome01/u/markross/whipping_star/build/examples/EXAMPLE1.SBNcovar.root","read");
   TMatrixD * cov = (TMatrixD*)fsys->Get("frac_covariance_EXAMPLE1");
 
   SBNchi *chi = new SBNchi(bkg,*cov);
@@ -101,6 +101,7 @@ int main(int argc, char* argv[])
   if(sample_from_covariance) cls_factory.SetSampleCovariance();
 
   cls_factory.CalcCLS(num_MC_events, tag);
+  
 
   return 0;
 }

@@ -125,6 +125,16 @@ class SBNchi : public SBNconfig{
 	int CollapseVectorStandAlone(std::vector<double> * full_vector, std::vector<double> *collapsed_vector);
 	int CollapseVectorStandAlone(double* full_vector, double* collapsed_vector);
 
+
+
+
+    int SingleValueDecomposition(double ** matrix, double ** U, double**V, double *single_values );
+
+
+
+
+
+
 		//some plotting things
 	TH2D* GetChiogram();
 	int PrintMatricies(std::string);

@@ -30,11 +30,9 @@ double SBNfit3pN::MinimizerCalcChi(const double * X){
 
 }
 
-
 /****************************************************************
  *			3+1	Only 
  * *************************************************************/
-
 
 SBNfit3p1::SBNfit3p1(SBNosc inBk, SBNosc inSg, int npa) : SBNfit(inBk,inSg,npa), signal_osc_spectrum(inSg) {
 

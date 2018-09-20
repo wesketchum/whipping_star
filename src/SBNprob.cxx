@@ -148,11 +148,11 @@ double SBNprob::ProbabilityMatterExact(int a, int b, int nuornubar, double Energ
 
 
 	
-	for(int i=0;i<4; i++){
+	/*for(int i=0;i<4; i++){
 	for(int j=0;j<4; j++){
-	//	std::cout<<"Hamil "<<i<<" "<<j<<" real "<<hamiltonian.real(i,j)<<" imag "<<hamiltonian.imag(i,j)<<std::endl;
+		std::cout<<"Hamil "<<i<<" "<<j<<" real "<<hamiltonian.real(i,j)<<" imag "<<hamiltonian.imag(i,j)<<std::endl;
 	}
-	}
+	}*/
 
 	if(use_matter_effect){
 		hamiltonian.add(&potential);

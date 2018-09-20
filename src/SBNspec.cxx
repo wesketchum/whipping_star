@@ -24,12 +24,10 @@ SBNspec::SBNspec(std::string whichxml, int which_universe, bool isverbose) : SBN
 
 				ctr++;
 			}
-
 		}
 	}
 
 	has_been_scaled = false;
-
 	this->CollapseVector();
 
 }

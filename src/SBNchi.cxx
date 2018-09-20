@@ -396,7 +396,6 @@ double SBNchi::CalcChi(SBNspec *sigSpec, SBNspec *obsSpec){
         obsSpec->CollapseVector();
     }
 
-
     for(int i =0; i<num_bins_total_compressed; i++){
         for(int j =0; j<num_bins_total_compressed; j++){
             tchi += (obsSpec->collapsed_vector[i]-sigSpec->collapsed_vector[i])*vec_matrix_inverted[i][j]*(obsSpec->collapsed_vector[j]-sigSpec->collapsed_vector[j] );
@@ -405,7 +404,6 @@ double SBNchi::CalcChi(SBNspec *sigSpec, SBNspec *obsSpec){
 
     last_calculated_chi = tchi;
     return tchi;
-
 }
 
 
@@ -450,8 +448,6 @@ void SBNchi::CollapseSubchannels(TMatrixT <double> & M, TMatrixT <double> & Mc){
         mrow = 0; // as we end this row, reSet row count, but jump down 1 column
         mcol += num_subchannels[ic]*num_bins[ic];
     }//end of row loop
-
-
 
     ///********************************* And put them back toGether! ************************//
     Mc.Zero();
@@ -983,9 +979,9 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
     std::vector < double > gaus_sample_v(num_bins_total), sampled_fullvector_v(num_bins_total);
     std::vector<double> collapsed_v(num_bins_total_compressed, 0.0);
 
-    double gaus_sample[54];
-    double sampled_fullvector[54];
-    double collapsed[38];
+    double* gaus_sample = new double[num_bins_total];
+    double* sampled_fullvector = new double[num_bins_total] ;
+    double* collapsed = new double[num_bins_total_compressed];
 
 
 #ifdef USE_GPU
@@ -999,7 +995,6 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
     }
 #endif
 
-    //   #pragma acc parallel loop num_gangs(20000) private(gaus_sample[:54],sampled_fullvector[:54],collapsed[:38],state) 
 #ifdef USE_GPU
 #pragma acc parallel loop private(gaus_sample[:54],sampled_fullvector[:54],collapsed[:38],state) \
     copyin(this[0:1],							\
@@ -1038,20 +1033,18 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
                 if(sampled_fullvector[j]<0) sampled_fullvector[j]=0.0;
             }
 
-
             this->CollapseVectorStandAlone(sampled_fullvector, collapsed);
 
             a_vec_chis[i] = this->CalcChi(a_vec_matrix_inverted, a_corein, collapsed);
 
             //Just to get some pvalues that were asked for.
+
             for(int j=0; j< num_chival; j++){
 #pragma acc atomic update
                 if(a_vec_chis[i]>=a_chival[j]) nlower[j]++;
             }
 
-
         }
-
 
     is_verbose = true;
 
@@ -1082,6 +1075,10 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
 
     delete[] a_vec_matrix_lower_triangular;
     delete[] a_vec_matrix_inverted;
+
+    delete[] gaus_sample;
+    delete[] sampled_fullvector;
+    delete[] collapsed;
 
     return ans;
 }
@@ -1362,6 +1359,5 @@ TH1D SBNchi::SamplePoissonVaryCore(SBNspec *specin, int num_MC){
 
     is_verbose = true;
     return ans;
-
-
 }
+
