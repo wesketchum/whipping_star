@@ -1095,9 +1095,9 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
     delete[] a_vec_matrix_lower_triangular;
     delete[] a_vec_matrix_inverted;
 
-    delete[] gaus_sample;
-    delete[] sampled_fullvector;
-    delete[] collapsed;
+   // delete[] gaus_sample;
+   // delete[] sampled_fullvector;
+   // delete[] collapsed;
 
     return ans;
 }
