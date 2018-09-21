@@ -1,4 +1,5 @@
 #include "SBNspec.h"
+#include <cassert>
 using namespace sbn;
 
 SBNspec::SBNspec(std::string whichxml, int which_universe, bool isverbose) : SBNconfig(whichxml,isverbose){
@@ -258,19 +259,20 @@ int SBNspec::Norm(std::string name, double val){
 
 int SBNspec::CalcFullVector(){
   full_vector.clear();
-  size_t sz=0;
 
-  for(const auto& h: hist) 
-    sz += (h.GetSize()-2);
+  full_vector.resize(num_bins_total);
 
-  full_vector.resize(sz);
-
-  for(const auto& h: hist){
+  int hoffset = 0;
+  for(size_t hid=0; hid<hist.size(); ++hid) {
+    const auto& h =  hist[hid];
     for(int i = 1; i < (h.GetSize()-1); ++i){
-      full_vector[i-1] = h.GetBinContent(i);
+      full_vector[hoffset + i - 1] = h.GetBinContent(i);
     }
+    hoffset += (h.GetSize()-2);
   }
-	
+    
+  assert (hoffset == num_bins_total);
+
   return 0;
 }
 

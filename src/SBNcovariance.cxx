@@ -1,10 +1,12 @@
 #include "SBNcovariance.h"
 #include <stdexcept>
 #include <sstream>
+#include <cassert>
 
 using namespace sbn;
 
 SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
+    std::cout << "SBNcovariance::SBNcovariance\t|| Start" << std::endl;
 
     universes_used = 0;
     tolerence_positivesemi = 1e-5;
@@ -40,6 +42,9 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         trees[fid] = (TTree*)(files[fid]->Get(multisim_name.at(fid).c_str()));
         nentries[fid]= (int)trees.at(fid)->GetEntries();
 
+        std::cout << "SBNcovariance::SBNcovariance\t||" << std::endl;
+        std::cout << "SBNcovariance::SBNcovariance\t|| TFile::Open() file=" << files[fid]->GetName() << " @" << files[fid] << std::endl;
+
         auto multisim_file_friend_treename_iter = multisim_file_friend_treename_map.find(fn);
         if (multisim_file_friend_treename_iter != multisim_file_friend_treename_map.end()) {
             std::cout<<"SBNcovariance::SBNcovariance\t|| Detected friend trees" << std::endl;
@@ -61,6 +66,8 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 trees[fid]->AddFriend(treefriendname.c_str(),treefriendfile.c_str());
             }
         }
+
+        std::cout<<"SBNcovariance::SBNcovariance\t|| Read variations & universe size" << std::endl;
 
         trees.at(fid)->SetBranchAddress("weights", &(f_weights[fid]) );
 
@@ -98,7 +105,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     variations.insert(variations.begin(),variations_tmp.begin(),unique_iter);
 
     // make a map and start filling, before filling find if already in map, if it is check size.
-    std::cout << "SBNcovariance::SBNcovariance\t|| We have " << variations.size() << " unique variations: " << std::endl;
+    std::cout << "SBNcovariance::SBNcovariance\t|| Found " << variations.size() << " unique variations: " << std::endl;
 
     map_universe_to_var.clear();
     num_universes_per_variation.clear();
@@ -120,7 +127,6 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     }
 
     for(int i=1; i<num_files; i++){
-        //std::cout<<"File: "<<i-1<<" has "<<used_multisims.at(i-1)<<" multisims"<<std::endl;
         std::cout << "SBNcovariance::SBNcovariance\t|| File: " << i << " has " << used_multisims.at(i) << " multisims" << std::endl;
         if(used_multisims.at(i)!= used_multisims.at(i-1)){
             std::cerr << "SBNcovariance::SBNcovariance\t|| Warning, number of universes for are different between files" << std::endl;
@@ -138,9 +144,9 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     if(num_files == 1) 
         universes_used = used_multisims.front();
 
-    std::cout << "SBNcovariance::SBNcovariance\t|| -------------------------------------------------------------\n";
+    std::cout << "SBNcovariance::SBNcovariance\t|| -------------------------------------------------------------" << std::endl;
     std::cout << "SBNcovariance::SBNcovariance\t|| Initilizing " << universes_used << " universes." << std::endl;
-    std::cout << "SBNcovariance::SBNcovariance\t|| -------------------------------------------------------------\n";
+    std::cout << "SBNcovariance::SBNcovariance\t|| -------------------------------------------------------------" << std::endl;
 
     std::vector<double> base_vec (spec_central_value.num_bins_total,0.0);
 
@@ -150,36 +156,35 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     multi_vecspec.resize(universes_used,base_vec);
 
     std::cout << "SBNcovariance::SBNcovariance\t|| multi_vecspec now initilized of size :" << multi_vecspec.size() << std::endl;
-
     std::cout << "SBNcovariance::SBNcovariance\t|| Reading the data files" << std::endl;
     watch.Reset();
     watch.Start();
 
     for(int j=0; j < num_files; j++){
-
+        std::cout << "SBNcovariance::SBNcovariance\t|| @ data file=" << files[j]->GetName() << std::endl;
         int nevents = std::min(multisim_maxevents[j], nentries[j]);
-
+        size_t nbytes = 0;
         for(int i=0; i < nevents; i++) {
-
-            trees[j]->GetEntry(i);
-
+            nbytes+= trees[j]->GetEntry(i);
             ProcessEvent(*(f_weights[j]),j,i);
-
         } //end of entry loop
+        std::cout << "SBNcovariance::SBNcovariance\t|| nbytes read=" << nbytes << std::endl;
 
     } //end of file loop
+
     watch.Stop();
-    std::cout << "SBNcovariance::SBNcovariance\t|| done! CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
+    std::cout << "SBNcovariance::SBNcovariance\t|| done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
 
     /***************************************************************
      *		Now some clean-up and Writing
      * ************************************************************/
 
     for(auto f: files){
-        std::cout << "SBNcovariance::SBNcovariance\t|| TFile::Close() @file=" << f << std::endl;
+        std::cout << "SBNcovariance::SBNcovariance\t|| TFile::Close() file=" << f->GetName() << " @" << f << std::endl;
         f->Close();
     }
 
+    std::cout << "SBNcovariance::SBNcovariance\t|| End" << std::endl;
 }
 
 
@@ -196,21 +201,18 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
 
     if(std::isinf(global_weight) or (global_weight != global_weight)){
         std::stringstream ss;
-        ss << "SBNcovariance::SBNcovariance\t|| ERROR  error @ " << entryid
+        ss << "SBNcovariance::ProcessEvent\t|| ERROR  error @ " << entryid
             << " in File " << multisim_file.at(fileid) 
             << " as its either inf/nan: " << global_weight << std::endl;
         throw std::runtime_error(ss.str());
     }
 
-    std::vector<double> weights;
-    std::vector<int> vec_universes;
-
     if(!EventSelection(fileid)) return;
 
     // precompute the weight size
-    weights.resize(universes_used,global_weight);
+    std::vector<double> weights(universes_used,global_weight);
 
-    //Loop over all variations!
+    //Loop over all variations
     std::map<std::string, std::vector<double> >::const_iterator var_iter;
     int woffset = 0;
 
@@ -221,8 +223,10 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
 
         var_iter = thisfWeight.find(var);
 
-        if (var_iter == thisfWeight.end())
+        if (var_iter == thisfWeight.end()) {
+            woffset += expected_num_universe_sz;
             continue;
+        }
 
         if (expected_num_universe_sz != (*var_iter).second.size()) {
             std::stringstream ss;
@@ -236,7 +240,7 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
             throw std::runtime_error(ss.str());
         }
 
-        for(size_t wid0 = 0, wid1 = woffset; wid1 < woffset + expected_num_universe_sz; ++wid0, ++wid1) {
+        for(size_t wid0 = 0, wid1 = woffset; wid1 < (woffset + expected_num_universe_sz); ++wid0, ++wid1) {
             double wei = (*var_iter).second[wid0];
 
             bool is_inf = std::isinf(wei);
@@ -244,13 +248,13 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
 
             if(is_inf or is_nan){
                 std::stringstream ss;
-                ss << "SBNcovariance::SBNcovariance\t|| ERROR! Killing :: event # " << entryid
+                ss << "SBNcovariance::ProcessEvent\t|| ERROR! Killing :: event # " << entryid
                     << " in File " << multisim_file.at(fileid) << " weight: " << wei << " global bnb: " << global_weight << " in " << var << std::endl;
                 throw std::runtime_error(ss.str());
             }
 
             if(wei > abnormally_large_weight){
-                std::cout<<"ATTENTION! SBNcovariance::SBNcovariance\t|| HUGE weight: "<<wei<<" at "<<var<<" event "<<entryid<<" file "<<fileid<<std::endl;
+                std::cout<<"ATTENTION! SBNcovariance::ProcessEvent\t|| HUGE weight: "<<wei<<" at "<<var<<" event "<<entryid<<" file "<<fileid<<std::endl;
             }
 
             weights[wid1] *= wei;
@@ -259,6 +263,12 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
         woffset += expected_num_universe_sz;
 
     }//end of all variations
+
+    if (woffset != weights.size()) {
+        std::stringstream ss;
+        ss << "woffset=" << woffset << " weights sz=" << weights.size() << " !" << std::endl;
+        throw std::runtime_error(ss.str());
+    }
 
     //So the size of weights must equal global universes ya?
     if(universes_used != num_universes_per_variation.size()){
@@ -271,19 +281,18 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
         throw std::runtime_error(ss.str());
     }
 
-    for(int t=0; t<branch_variables[fileid].size(); t++) {
+    for(int t=0; t < branch_variables[fileid].size(); t++) {
         const auto branch_var_jt = branch_variables[fileid][t];
         int ih = spec_central_value.map_hist.at(branch_var_jt->associated_hist);
         double reco_var = *(static_cast<double*>(branch_var_jt->GetValue()));
         int reco_bin = spec_central_value.GetGlobalBinNumber(reco_var,ih);
         spec_central_value.hist[ih].Fill(reco_var,global_weight);
 
-        for(int m=0; m < weights.size(); m++){
+        for(int m=0; m<weights.size(); m++){
             if(reco_bin<0) continue;
-            multi_vecspec[m][reco_bin] += weights[m]; // this is not a race, each file independent reco bin
+            multi_vecspec[m][reco_bin] += weights[m];
         }
     }
-
 
     return;
 }
@@ -311,7 +320,7 @@ int SBNcovariance::FillHistograms(int file, int uni, double wei){
 
 int SBNcovariance::FormCovarianceMatrix(std::string tag){
 
-    std::cout<<"SBNcovariance::FormCovariancematrix\t|| Starting.\n";
+    std::cout<<"SBNcovariance::FormCovariancematrix\t|| Start" << std::endl;
     full_covariance.ResizeTo(num_bins_total, num_bins_total);
     frac_covariance.ResizeTo(num_bins_total, num_bins_total);
     full_correlation.ResizeTo(num_bins_total, num_bins_total);
@@ -325,69 +334,133 @@ int SBNcovariance::FormCovarianceMatrix(std::string tag){
     vec_full_correlation.clear();
 
     vec_full_covariance.resize(variations.size(),full_covariance);
+    //auto vec_full_covariance2 = vec_full_covariance;
     vec_frac_covariance.resize(variations.size(),frac_covariance);
     vec_full_correlation.resize(variations.size(),full_correlation);
 
+    int num_variations = variations.size();
+    int num_bins_total2 = num_bins_total*num_bins_total;
     for(size_t vid=0; vid < variations.size(); ++vid) {
         const auto& v = variations[vid];
-        map_var_to_matrix[v] = i;
-        vec_var_to_matrix[vid] = i;
+        map_var_to_matrix[v] = vid;
     }
 
     spec_central_value.CalcFullVector();
 
     std::vector<double> CV = spec_central_value.full_vector;
 
-    // prepare pointer memory
+    // prepare pointer memory, incase we go to GPU
     double* a_CV = CV.data();
     int* a_num_universes_per_variation = num_universes_per_variation.data();
+    int* a_vec_universe_to_var = vec_universe_to_var.data();
 
-    double** a_multi_vecspec = new double*(multi_vecspec.size());
+    double** a_multi_vecspec = new double*[multi_vecspec.size()];
     for(size_t m=0; m<multi_vecspec.size(); ++m)
         a_multi_vecspec[m] = multi_vecspec[m].data();
 
-    double** a_vec_full_covariance = new double*(vec_full_covariance.size());
-    for(size_t k=0; k<vec_full_covariance.size(); ++k)
-        a_vec_full_covariance[k] = (double*) vec_full_covariance.GetMatrixData();
+    double** a_vec_full_covariance  = new double*[vec_full_covariance.size()];
+    //double** a_vec_full_covariance2 = new double*[vec_full_covariance.size()];
+    double** a_vec_frac_covariance  = new double*[vec_frac_covariance.size()];
+    double** a_vec_full_correlation = new double*[vec_full_correlation.size()];
+    for(size_t k=0; k<vec_full_covariance.size(); ++k) {
+        a_vec_full_covariance[k]  = (double*) vec_full_covariance[k].GetMatrixArray();
+        // a_vec_full_covariance2[k] = (double*) vec_full_covariance2[k].GetMatrixArray();
+        a_vec_frac_covariance[k]  = (double*) vec_frac_covariance[k].GetMatrixArray();
+        a_vec_full_correlation[k] = (double*) vec_full_correlation[k].GetMatrixArray();
+    }
 
-    std::cout << "SBNcovariance::FormCovariancematrix\t|| Begining to form the " << num_bins_total << "X" << num_bins_total << " covariance matrix" << std::endl;
-    std::cout << "SBNcovariance::SBNcovariance\t|| Start build covariance" << std::endl;
+    double* a_full_covariance  = full_covariance.GetMatrixArray();
+    double* a_frac_covariance  = frac_covariance.GetMatrixArray();
+    double* a_full_correlation = full_correlation.GetMatrixArray();
+
+    std::cout << "SBNcovariance::FormCovariancematrix\t|| Form variation sz= (" << num_bins_total << "X" << num_bins_total << ") covariance matrix(s)" << std::endl;
     watch.Reset();
     watch.Start();
-    for(int i=0; i<num_bins_total; i++) {
-        for(int j=0; j<num_bins_total; j++) {
-            for(int k=0; k<universes_used; k++) {
-
-                // std::string var = map_universe_to_var.at(k);
-                // int which_matrix = map_var_to_matrix.at(var);
-
-                double vec_value = (aC_V[i]-a_multi_vecspec[k][i])*(a_CV[j]-a_multi_vecspec[k][j]) / ((double)a_num_universes_per_variation[k]);
-                a_vec_full_covariance[k][i*num_bins_total+j] += vec_value;
-
-                // need isnan check for vec_value
+#pragma acc parallel loop						\
+    copy(a_vec_full_covariance[:num_variations][:num_bins_total2])	\
+    copyin(a_vec_universe_to_var[:universes_used],			\
+            a_CV[:num_bins_total],						\
+            a_multi_vecspec[:universes_used][:num_bins_total],		\
+            a_num_universes_per_variation[:universes_used])
+    for(int k=0; k<universes_used; k++) {
+        int varid = a_vec_universe_to_var[k];
+        double vec_bot = ((double)a_num_universes_per_variation[k]);
+#pragma acc loop seq
+        for(int i=0; i<num_bins_total; i++) {
+#pragma acc loop vector
+            for(int j=0; j<num_bins_total; j++) {
+                double vec_value = (a_CV[i]-a_multi_vecspec[k][i])*(a_CV[j]-a_multi_vecspec[k][j]) / vec_bot;
+#pragma acc atomic update
+                a_vec_full_covariance[varid][i*num_bins_total+j] += vec_value;
             }
         }
     }
     watch.Stop();
-    std::cout << "SBNcovariance::SBNcovariance\t|| done! CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
+    std::cout << "SBNcovariance::FormCovariancematrix\t|| done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
+
+
+    // std::cout << "SBNcovariance::FormCovariancematrix\t|| Calculating on the CPU" << std::endl;
+    // watch.Reset();
+    // watch.Start();
+    // for(int i=0; i<num_bins_total; i++) {
+    //   for(int j=0; j<num_bins_total; j++) {
+    //     for(int k=0; k<universes_used; k++) {
+    // 	int varid = a_vec_universe_to_var[k];
+    // 	double vec_value = (a_CV[i]-a_multi_vecspec[k][i])*(a_CV[j]-a_multi_vecspec[k][j]);
+    // 	vec_value /= ((double)a_num_universes_per_variation[k]);
+    // 	a_vec_full_covariance2[varid][i*num_bins_total+j] += vec_value;
+    //     }
+    //   }
+    // }
+    // watch.Stop();
+    // std::cout << "SBNcovariance::FormCovariancematrix\t|| done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
+
+    // std::cout << "SBNcovariance::FormCovariancematrix\t|| Comparing CPU & GPU" << std::endl;
+    // double EPS = 1e-9;
+    // for(int i=0; i<num_bins_total; i++) {
+    //   for(int j=0; j<num_bins_total; j++) {
+    //     for(int k=0; k<variations.size(); k++) {
+    // 	if (std::abs(vec_full_covariance[k](i,j) - vec_full_covariance2[k](i,j)) > EPS)
+    // 	  std::cout << "@(" << i << "," << j << "," << k << ") gpu=" << vec_full_covariance[k](i,j) << " cpu=" << vec_full_covariance2[k](i,j) << std::endl;
+    //     }
+    //   }
+    // }
+    // std::cout << "SBNcovariance::FormCovariancematrix\t|| done" << std::endl;
+
+    watch.Reset();
+    watch.Start();
+    std::cout << "SBNcovariance::FormCovariancematrix\t|| Summing over variations for covariance matrix" << std::endl;
+    for(int vid=0; vid<variations.size(); ++vid) {
+        full_covariance += vec_full_covariance[vid];
+    }
+    watch.Stop();
+    std::cout << "SBNcovariance::FormCovariancematrix\t|| done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
 
     std::cout<<"SBNcovariance::FormCovariancematrix\t|| Now calculating fractional covariance and correlation matrix from full covariance."<<std::endl;
     watch.Reset();
     watch.Start();
-    for(int i=0; i < num_bins_total; i++){
-        for(int j=0; j < num_bins_total; j++){
-            frac_covariance(i,j) = full_covariance(i,j)/(spec_central_value.full_vector[i]*spec_central_value.full_vector[j]) ;
-            full_correlation(i,j)= full_covariance(i,j)/(sqrt(full_covariance(i,i))*sqrt(full_covariance(j,j)));
 
-            for(int m=0; m< vec_full_covariance.size(); m++){
-                vec_frac_covariance.at(m)(i,j) = vec_full_covariance.at(m)(i,j)/(spec_central_value.full_vector[i]*spec_central_value.full_vector[j]) ;
-                vec_full_correlation.at(m)(i,j)= vec_full_covariance.at(m)(i,j)/(sqrt(vec_full_covariance.at(m)(i,i))*sqrt(vec_full_covariance.at(m)(j,j)));
+#pragma acc parallel loop gang collapse(2)				\
+    copyin(a_CV[:num_bins_total])						\
+    copy(a_full_covariance[:num_bins_total2],				\
+            a_frac_covariance[:num_bins_total2],				\
+            a_full_correlation[:num_bins_total2],				\
+            a_vec_full_covariance[:num_variations][:num_bins_total2],	\
+            a_vec_frac_covariance[:num_variations][:num_bins_total2],	\
+            a_vec_full_correlation[:num_variations][:num_bins_total2])
+    for(int i=0; i < num_bins_total; i++) {
+        for(int j=0; j < num_bins_total; j++) {
+            a_frac_covariance[i*num_bins_total+j]  = a_full_covariance[i*num_bins_total+j]/(a_CV[i]*a_CV[j]);
+            a_full_correlation[i*num_bins_total+j] = a_full_covariance[i*num_bins_total+j]/(sqrt(a_full_covariance[i*num_bins_total+i])*sqrt(a_full_covariance[j*num_bins_total+j]));
+#pragma acc loop
+            for(int m=0; m<num_variations; m++){
+                a_vec_frac_covariance[m][i*num_bins_total+j]  = a_vec_full_covariance[m][i*num_bins_total+j]/(a_CV[i]*a_CV[j]) ;
+                a_vec_full_correlation[m][i*num_bins_total+j] = a_vec_full_covariance[m][i*num_bins_total+j]/(sqrt(a_vec_full_covariance[m][i*num_bins_total+i])*sqrt(a_vec_full_covariance[m][j*num_bins_total+j]));
             }
         }
     }
     watch.Stop();
-    std::cout << "SBNcovariance::SBNcovariance\t|| done! CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
-
+    std::cout << "SBNcovariance::FormCovariancematrix\t|| done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
 
     /************************************************************
      *			Saving to file				    *
@@ -410,8 +483,6 @@ int SBNcovariance::FormCovarianceMatrix(std::string tag){
         vec_frac_covariance.at(m).Write( (variations.at(m)+"_frac_covariance_"+tag).c_str(), TObject::kWriteDelete);
         vec_full_covariance.at(m).Write( (variations.at(m)+"_full_covariance_"+tag).c_str(), TObject::kWriteDelete);
     }
-
-
 
     std::vector<TH2D> h2_corr;
     std::vector<TH2D> h2_cov;
@@ -443,22 +514,24 @@ int SBNcovariance::FormCovarianceMatrix(std::string tag){
     spec_central_value.WriteOut(tag);
 
     qualityTesting();
+
+    std::cout<<"SBNcovariance::FormCovariancematrix\t|| End" << std::endl;
     return 0;
 }
 
 
-int SBNcovariance::qualityTesting(){
+int SBNcovariance::qualityTesting() {
 
     /************************************************************
      *		Quality Testing Suite			    *
      * *********************************************************/
-    std::cout<<"SBNcovariance::qualityTesting\t||-----------------------------------------------------\n";
+    std::cout<<"SBNcovariance::qualityTesting\t||-----------------------------------------------------" << std::endl;
     std::cout<<"SBNcovariance::qualityTesting\t||----------------Quality Testing Suite"<<std::endl;
-    std::cout<<"SBNcovariance::qualityTesting\t||-----------------------------------------------------\n";
+    std::cout<<"SBNcovariance::qualityTesting\t||-----------------------------------------------------" << std::endl;
 
 
-    std::cout<<"SBNcovariance::qualityTesting\t|| Checking if generated matrix is indeed a valid covariance matrix.\n";
-    std::cout<<"SBNcovariance::qualityTesting\t|| First checking if matrix is symmetric.\n";
+    std::cout<<"SBNcovariance::qualityTesting\t|| Checking if generated matrix is indeed a valid covariance matrix." << std::endl;
+    std::cout<<"SBNcovariance::qualityTesting\t|| First checking if matrix is symmetric." << std::endl;
 
     double max_sym_violation = 0;
     for(int i=0; i<num_bins_total; i++){
@@ -467,7 +540,6 @@ int SBNcovariance::qualityTesting(){
             if(tnp > max_sym_violation) max_sym_violation = tnp;
         }
     }
-
 
 
     if(max_sym_violation < 1e-13){
@@ -484,7 +556,7 @@ int SBNcovariance::qualityTesting(){
         exit(EXIT_FAILURE);
     }
 
-    std::cout<<"SBNcovariance::qualityTesting\t|| Checking if generated matrix is positive semi-definite by looking at eigenvalues.\n";
+    std::cout<<"SBNcovariance::qualityTesting\t|| Checking if generated matrix is positive semi-definite by looking at eigenvalues." << std::endl;
     //if a matrix is (a) real and (b) symmetric (checked above) then to prove positive semi-definite, we just need to check eigenvalues and >=0;
     TMatrixDEigen eigen (full_covariance);
     TVectorD eigen_values = eigen.GetEigenValuesRe();
@@ -494,7 +566,7 @@ int SBNcovariance::qualityTesting(){
         if(eigen_values(i)<0){
             is_small_negative_eigenvalue = true;
             if(fabs(eigen_values(i))> tolerence_positivesemi ){
-                std::cout<<"SBNcovariance::qualityTesting\t|| ERROR contains (at least one)  negative eigenvalue: "<<eigen_values(i)<<std::endl;
+                std::cout << "SBNcovariance::qualityTesting\t|| ERROR contains (at least one)  negative eigenvalue: " << eigen_values(i) << std::endl;
                 exit(EXIT_FAILURE);
             }
         }
@@ -506,7 +578,7 @@ int SBNcovariance::qualityTesting(){
     }else{
         std::cout<<"SBNcovariance::qualityTesting\t|| PASS: Generated covariance matrix is positive semi-definite."<<std::endl;
     }
-    std::cout<<"SBNcovariance::qualityTesting\t|| Congratulations, matrix is indeed a valid covariance matrix.\n";
+    std::cout<<"SBNcovariance::qualityTesting\t|| Congratulations, matrix is indeed a valid covariance matrix." << std::endl;
 
     return 0;
 }
@@ -515,13 +587,13 @@ int SBNcovariance::PrintVariations(std::string tag){
     TFile *fout = new TFile(("SBNfit_variation_plots_"+tag+".root").c_str(),"recreate");
     fout->cd();
 
-    std::cout<<"SBNcovariance::PrintVariations\t|| Starting to Print all variations, this can take a little. "<<std::endl;
+    std::cout << "SBNcovariance::PrintVariations\t|| Starting to Print all variations, this can take a little. " << std::endl;
 
     std::vector<TDirectory*> vec_dir;
 
     std::vector<std::vector<TCanvas*>> vec_canvas;
 
-    for(auto &v: variations){
+    for(const auto &v: variations){
 
         //std::cout<<"SBNcovariance::PrintVariations\t|| Preparing directory and canvases for variation: "<<v<<std::endl;
         fout->cd();
@@ -565,7 +637,6 @@ int SBNcovariance::PrintVariations(std::string tag){
 
         SBNspec temp_spec(multi_vecspec.at(m), xmlname,false);
 
-
         for(int i=0; i< temp_spec.hist.size(); i++){
             vec_canvas.at(which_matrix).at(i)->cd();
             temp_spec.hist.at(i).Scale(1,"width");
@@ -577,7 +648,7 @@ int SBNcovariance::PrintVariations(std::string tag){
 
     }//end universe loop
 
-    std::cout<<"SBNcovariance::PrintVariations\t|| Finished. Just tidying up and writing TCanvas. "<<std::endl;
+    std::cout << "SBNcovariance::PrintVariations\t|| Finished. Just tidying up and writing TCanvas. " << std::endl;
 
 
     for(int v =0; v< variations.size(); v++){
@@ -604,10 +675,11 @@ int SBNcovariance::PrintVariations(std::string tag){
 }
 
 
-int SBNcovariance::PrintMatricies(std::string tag){
+int SBNcovariance::PrintMatricies(std::string tag) {
+    std::cout << "SBNcovariance::PrintMatricies\t|| Start" << std::endl;
+
     TFile* fout = new TFile(("SBNfit_covariance_plots_"+tag+".root").c_str(),"recreate");
     fout->cd();
-
 
     gStyle->SetOptStat(0);
 
@@ -741,8 +813,6 @@ int SBNcovariance::PrintMatricies(std::string tag){
     }
     c_frac->Write();
 
-
-
     //Print the collapsed matricies too: Need to fudge this a bit
     SBNchi collapse_chi(xmlname);
 
@@ -849,15 +919,12 @@ int SBNcovariance::PrintMatricies(std::string tag){
         this->plot_one(vec_full_correlation.at(m), variations.at(m)+" Correlation", fout);
         this->plot_one(vec_frac_covariance.at(m), variations.at(m)+" Fractional Covariance", fout);
         this->plot_one(vec_full_covariance.at(m), variations.at(m)+" Full Covariance", fout);
-
     }
 
-
-
     fout->cd();
-
-
     fout->Close();
+
+    std::cout << "SBNcovariance::PrintMatricies\t|| End" << std::endl;
     return 0;
 }
 
@@ -870,8 +937,6 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin){
     }
     fin->cd(); 
     individualDir->cd();
-
-
 
     TH2D h2_full(matrix);
     h2_full.SetName((tag+"_th2d").c_str());

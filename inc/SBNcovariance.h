@@ -87,7 +87,7 @@ namespace sbn{
 
     std::vector<int> num_universes_per_variation;
     std::map<int, std::string> map_universe_to_var;
-    std::vector<int> map_universe_to_var;
+    std::vector<int> vec_universe_to_var;
     std::map<std::string, int> map_var_to_num_universe;
 
     std::map<std::string, int> map_var_to_matrix;
@@ -117,7 +117,7 @@ namespace sbn{
     TMatrixD full_correlation2D;
     std::vector<std::vector<double> > multi_vecspec2D;
     std::vector<double> vecspec2DCV;
-    TStopWatch watch;
+    TStopwatch watch;
     void ProcessEvent(const std::map<std::string, std::vector<double> >& thisfWeight,
 		      size_t fileid,
 		      int entryid);
