@@ -1015,7 +1015,7 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
 #endif
 
 #ifdef USE_GPU
-#pragma acc parallel loop  private(gaus_sample[:54],sampled_fullvector[:54],collapsed[:38],state) \
+#pragma acc parallel loop  private(gaus_sample[:54],sampled_fullvector[:54],collapsed[:36],state) \
     copyin(this[0:1],							\
             a_specin[:num_bins_total],					\
             a_vec_matrix_lower_triangular[:num_bins_total][:num_bins_total],\ 
@@ -1139,11 +1139,12 @@ int SBNchi::CollapseVectorStandAlone(float* full_vector, float *collapsed_vector
     //int tmp_num_bins[3] = {25,25,6};
     //int tmp_num_subchannels[3] = {2,1,1};
 
+   int collapsed_index = 0;
     for(int im = 0; im < num_modes; im++){
         for(int id =0; id < num_detectors; id++){
             int edge = id*num_bins_detector_block + num_bins_mode_block*im; // This is the starting index for this detector
             int out_edge = edge;
-            int chan = 0;
+//            int chan = 0;
             for(int ic = 0; ic < num_channels; ic++){
                 int corner=edge;
 
@@ -1160,9 +1161,9 @@ int SBNchi::CollapseVectorStandAlone(float* full_vector, float *collapsed_vector
                     }
                     //we can size this vector beforehand and get rid of all push_back()
 
-                    int collapsed_index = chan+out_edge;
+                   // int collapsed_index = chan+out_edge;
                     collapsed_vector[collapsed_index] = tempval;
-                    chan++;
+                    collapsed_index++;
                     }
                 }
                 }
