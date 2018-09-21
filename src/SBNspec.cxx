@@ -257,17 +257,21 @@ int SBNspec::Norm(std::string name, double val){
 
 
 int SBNspec::CalcFullVector(){
-	full_vector.clear();
+  full_vector.clear();
+  size_t sz=0;
 
-	for(auto& h: hist){
-		//std::cout<<"Hist size: "<<h.GetSize()-2<<std::endl;
-		for(int i = 1; i <= h.GetSize()-2; i++){
-			//std::cout<<h.GetBinContent(i)<<" ";
-			full_vector.push_back(h.GetBinContent(i));
-		}
-	}
+  for(const auto& h: hist) 
+    sz += (h.GetSize()-2);
 
-	return 0;
+  full_vector.resize(sz);
+
+  for(const auto& h: hist){
+    for(int i = 1; i < (h.GetSize()-1); ++i){
+      full_vector[i-1] = h.GetBinContent(i);
+    }
+  }
+	
+  return 0;
 }
 
 int SBNspec::CollapseVector(){
