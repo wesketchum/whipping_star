@@ -53,15 +53,14 @@ unset (CMAKE_CXX_FLAGS)
 message("GSL_LIBS: ${GSL_LIBS}")
 message("GSL_CXX_FLAGS: ${GSL_CXX_FLAGS}")
 
-<<<<<<< HEAD
 if(USE_GPU)
     set(CMAKE_MAGMA_CXX_FLAGS "-$ENV{MAGMA_CFLAGS} $ENV{MAGMA_LIB}")
     message("@main CMAKE_MAGMA_CXX_FLAGS: ${CMAKE_MAGMA_CXX_FLAGS}")
-    set(CMAKE_GPU_CXX_FLAGS "-ta=tesla:nollvm -Mcudalib=curand -Minfo=accel -acc -w")
+    set(CMAKE_GPU_CXX_FLAGS "-ta=tesla:nollvm -Mcudalib=curand -Minfo=accel -acc -w ${CMAKE_MAGMA_CXX_FLAGS}" )
 ENDIF()
 
 #gopt is forcing LLVM compilation
-set (CMAKE_SO_CXX_FLAGS "-noswitcherror ${ROOT_CXX_FLAGS} ${GSL_LIBS} ${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
+set (CMAKE_SO_CXX_FLAGS "-noswitcherror ${ROOT_CXX_FLAGS} ${GSL_LIBS} ${CMAKE_CXX_FLAGS} -w -Wno-deprecated-declarations")
 set (CMAKE_ACC_CXX_FLAGS "${CMAKE_GPU_CXX_FLAGS} ${CMAKE_SO_CXX_FLAGS}")
 set (CMAKE_PCC_CXX_FLAGS "-ta=multicore -Minfo=accel -acc -w ${CMAKE_SO_CXX_FLAGS}")
 
