@@ -282,8 +282,8 @@ double SBNchi::CalcChi(SBNspec *sigSpec){
         for(int j =0; j<num_bins_total_compressed; j++){
             k++;
 
-            if(i==j && vec_matrix_inverted.at(i).at(j)<0){
-                std::cout<<"ERROR: SBNchi::CalcChi || diagonal of inverse covariance is negative!"<<std::endl;
+            if(i==j && vec_matrix_inverted.at(i).at(j) > -1e16 && vec_matrix_inverted[i][j] < 0){
+                std::cout<<"ERROR: SBNchi::CalcChi || diagonal of inverse covariance is negative! : "<<vec_matrix_inverted[i][j]<<" @ ("<<i<<","<<j<<")"<<std::endl;
             }
             vec_last_calculated_chi.at(i).at(j) =(core_spectrum.collapsed_vector.at(i)-sigSpec->collapsed_vector.at(i))*vec_matrix_inverted.at(i).at(j)*(core_spectrum.collapsed_vector.at(j)-sigSpec->collapsed_vector.at(j) );
             tchi += vec_last_calculated_chi.at(i).at(j);
@@ -984,12 +984,13 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
     std::vector<float> vec_chis (num_MC, 0.0);
 
     float* a_vec_chis  = (float*)vec_chis.data();
-    float* a_chival = (float*)chival->data();
     int num_chival = chival->size();
+    float* a_chival = new float[num_chival];
 
     int *nlower = new int[num_chival];
     for(int i=0; i< num_chival; i++){
         nlower[i]=0; 
+        a_chival[i] = chival->at(i);
     }
 
     std::vector < float > gaus_sample_v(num_bins_total), sampled_fullvector_v(num_bins_total);
@@ -1077,7 +1078,7 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
     }
 
     for(int n =0; n< num_chival; n++){
-        chival->at(n) = nlower[n]/(double)num_MC;
+        chival->at(n) = ((double)nlower[n])*1.0/(double)num_MC;
     }
 
 
@@ -1284,12 +1285,13 @@ TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<dou
     std::vector<float> vec_chis (num_MC, 0.0);
 
     float* a_vec_chis  = (float*)vec_chis.data();
-    float* a_chival = (float*)chival->data();
     int num_chival = chival->size();
+    float* a_chival = new float[num_chival];
 
     int *nlower = new int[num_chival];
     for(int i=0; i< num_chival; i++){
         nlower[i]=0; 
+        a_chival[i]=chival->at(i); 
     }
     float* sampled_fullvector = new float[num_bins_total] ;
     float* collapsed = new float[num_bins_total_compressed];
