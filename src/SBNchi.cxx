@@ -1259,23 +1259,11 @@ TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC){
 //This one varies the input comparative spectrum, and as sucn has  only to calculate the matrix_systematics once
 TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<double> *chival){
 
-    float** a_vec_matrix_lower_triangular = new float*[num_bins_total];
     float** a_vec_matrix_inverted = new float*[num_bins_total_compressed];
-
-    for(int i=0; i < num_bins_total; i++){
-        a_vec_matrix_lower_triangular[i] = new float[num_bins_total];
-    }
 
     for(int i=0; i < num_bins_total_compressed; i++){
         a_vec_matrix_inverted[i] = new float[num_bins_total_compressed];
     }
-
-    for(int i=0; i < num_bins_total; i++){
-        for(int j=0; j < num_bins_total; j++){
-            a_vec_matrix_lower_triangular[i][j] = vec_matrix_lower_triangular[i][j]; 
-        }
-    }
-
     for(int i=0; i< num_bins_total_compressed; i++){
         for(int j=0; j< num_bins_total_compressed; j++){
             a_vec_matrix_inverted[i][j] = vec_matrix_inverted[i][j]; 
@@ -1294,6 +1282,7 @@ TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<dou
     }
 
     std::vector<float> vec_chis (num_MC, 0.0);
+
     float* a_vec_chis  = (float*)vec_chis.data();
     float* a_chival = (float*)chival->data();
     int num_chival = chival->size();
@@ -1302,7 +1291,6 @@ TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<dou
     for(int i=0; i< num_chival; i++){
         nlower[i]=0; 
     }
-
     float* sampled_fullvector = new float[num_bins_total] ;
     float* collapsed = new float[num_bins_total_compressed];
 
@@ -1315,11 +1303,10 @@ TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<dou
 
     for(int i=0; i < num_MC;i++){
 
-
-
         for(int j = 0; j < num_bins_total; j++){
             sampled_fullvector[j] = rangen->Poisson( a_specin[j]); 
         }
+
         this->CollapseVectorStandAlone(sampled_fullvector, collapsed);
         a_vec_chis[i] = this->CalcChi(a_vec_matrix_inverted, a_corein, collapsed);
 
@@ -1342,15 +1329,10 @@ TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<dou
     delete[] a_specin;
     delete[] nlower;
 
-    for(int i=0; i < num_bins_total; i++){
-        delete[] a_vec_matrix_lower_triangular[i];
-    }
-
     for(int i=0; i < num_bins_total_compressed; i++){
         delete[] a_vec_matrix_inverted[i];  
     }
 
-    delete[] a_vec_matrix_lower_triangular;
     delete[] a_vec_matrix_inverted;
 
     delete[] sampled_fullvector;
