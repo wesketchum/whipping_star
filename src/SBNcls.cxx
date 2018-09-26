@@ -63,7 +63,7 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 	std::cout<<"NUMBER @ scale : "<<"\t"<< pval.at(0)/(1-prob_values.at(0))<<"\tsig: "<<N_h0<<"\tbkg: "<<N_h1<<"\tsig_only "<<N_h0-N_h1<<"\t\ts/sqrt(s+b): "<<(N_h0-N_h1)/sqrt(N_h0)<<std::endl;
 
 
-   std::cout << "Total wall time: " << difftime(time(0), start_time)/.0 << " Secs.\n";
+   std::cout << "Total wall time: " << difftime(time(0), start_time)/1.0 << " Secs.\n";
 
 
 	TFile * fp = new TFile(("SBNfit_CLs_"+tag+".root").c_str(),"recreate");

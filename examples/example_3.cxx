@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
   opterr=1;
   int index;
   bool sample_from_covariance = false;
-  int num_MC_events = 40000;
+  int num_MC_events = 100000;
 
   const struct option longopts[] =
     {
@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
 	  std::cout<<"Allowed arguments:"<<std::endl;
 	  std::cout<<"\t-x\t--xml\t\tInput .xml file for SBNconfig"<<std::endl;
 	  std::cout<<"\t-c\t--covariance\t\tSample from covariance matrix instead of Poisson"<<std::endl;
-	  std::cout<<"\t-n\t--number\t\tNumber of MC events for frequentist studies (default 40k)"<<std::endl;
+	  std::cout<<"\t-n\t--number\t\tNumber of MC events for frequentist studies (default 100k)"<<std::endl;
 	  return 0;
 	}
     }
@@ -85,14 +85,14 @@ int main(int argc, char* argv[])
 
   std::string tag = "EXAMPLE3";
 
-  SBNspec sig("/gpfshome01/u/markross/whipping_star/build/examples/EXAMPLE1.SBNspec.root",xml);
+  SBNspec sig("EXAMPLE1.SBNspec.root",xml);
   sig.Scale("leesignal",1.5);
 	
-  SBNspec bkg("/gpfshome01/u/markross/whipping_star/build/examples/EXAMPLE1.SBNspec.root",xml);
+  SBNspec bkg("EXAMPLE1.SBNspec.root",xml);
   bkg.Scale("leesignal",0.0);
 
   // Stats + sys
-  TFile * fsys = new TFile("/gpfshome01/u/markross/whipping_star/build/examples/EXAMPLE1.SBNcovar.root","read");
+  TFile * fsys = new TFile("EXAMPLE1.SBNcovar.root","read");
   TMatrixD * cov = (TMatrixD*)fsys->Get("frac_covariance_EXAMPLE1");
 
   SBNchi *chi = new SBNchi(bkg,*cov);

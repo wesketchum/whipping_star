@@ -1,7 +1,9 @@
 #include "SBNchi.h"
+
+#ifdef USE_GPU
 #include "openacc.h"
 #include "openacc_curand.h"
-
+#endif
 using namespace sbn;
 
 
@@ -993,13 +995,13 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
     std::vector < float > gaus_sample_v(num_bins_total), sampled_fullvector_v(num_bins_total);
     std::vector<float> collapsed_v(num_bins_total_compressed, 0.0);
 
-  //  float* gaus_sample = new float[num_bins_total];
-    //float* sampled_fullvector = new float[num_bins_total] ;
-  //  float* collapsed = new float[num_bins_total_compressed];
+    float* gaus_sample = new float[num_bins_total];
+    float* sampled_fullvector = new float[num_bins_total] ;
+    float* collapsed = new float[num_bins_total_compressed];
 
-    float gaus_sample[54];
-    float sampled_fullvector[54];
-    float collapsed[38];
+    //  float gaus_sample[54];
+    // float sampled_fullvector[54];
+    //  float collapsed[38];
 
 
 
@@ -1069,8 +1071,8 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
 
 
     for(int i=0; i<num_MC; i++){
-        if (i<(int)1e3) 
-            std::cout << "@i=" << a_vec_chis[i] << std::endl;
+        //       if (i<(int)1e3) 
+        //         std::cout << "@i=" << a_vec_chis[i] << std::endl;
         ans.Fill(a_vec_chis[i]);
     }
 
@@ -1095,15 +1097,14 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
     delete[] a_vec_matrix_lower_triangular;
     delete[] a_vec_matrix_inverted;
 
-   // delete[] gaus_sample;
-   // delete[] sampled_fullvector;
-   // delete[] collapsed;
+    delete[] gaus_sample;
+    delete[] sampled_fullvector;
+    delete[] collapsed;
 
     return ans;
 }
 
 int SBNchi::CollapseVectorStandAlone(std::vector<double> * full_vector, std::vector<double> *collapsed_vector){
-
     for(int im = 0; im < num_modes; im++){
         for(int id =0; id < num_detectors; id++){
             int edge = id*num_bins_detector_block + num_bins_mode_block*im; // This is the starting index for this detector
@@ -1139,39 +1140,37 @@ int SBNchi::CollapseVectorStandAlone(float* full_vector, float *collapsed_vector
     //int tmp_num_bins[3] = {25,25,6};
     //int tmp_num_subchannels[3] = {2,1,1};
 
-   int collapsed_index = 0;
+    int collapsed_index = 0;
     for(int im = 0; im < num_modes; im++){
         for(int id =0; id < num_detectors; id++){
             int edge = id*num_bins_detector_block + num_bins_mode_block*im; // This is the starting index for this detector
             int out_edge = edge;
-//            int chan = 0;
+            //            int chan = 0;
             for(int ic = 0; ic < num_channels; ic++){
                 int corner=edge;
 
                 for(int j=0; j< this->a_num_bins[ic]; j++){
-                    //for(int j=0; j< tmp_num_bins[ic]; j++){
 
                     float tempval=0;
 
                     for(int sc = 0; sc < this->a_num_subchannels[ic]; sc++){
-                        //for(int sc = 0; sc < tmp_num_subchannels[ic]; sc++){
                         tempval += full_vector[j+sc*this->a_num_bins[ic]+corner];
                         //tempval += full_vector[j+sc*tmp_num_bins[ic]+corner];
                         edge +=1;	//when your done with a channel, add on every bin you just summed
                     }
                     //we can size this vector beforehand and get rid of all push_back()
 
-                   // int collapsed_index = chan+out_edge;
+                    // int collapsed_index = chan+out_edge;
                     collapsed_vector[collapsed_index] = tempval;
                     collapsed_index++;
-                    }
-                }
                 }
             }
-
-
-            return 0;
         }
+    }
+
+
+    return 0;
+}
 
 
 int SBNchi::CollapseVectorStandAlone(double* full_vector, double *collapsed_vector){
@@ -1188,12 +1187,10 @@ int SBNchi::CollapseVectorStandAlone(double* full_vector, double *collapsed_vect
                 int corner=edge;
 
                 for(int j=0; j< this->a_num_bins[ic]; j++){
-                    //for(int j=0; j< tmp_num_bins[ic]; j++){
 
                     double tempval=0;
 
                     for(int sc = 0; sc < this->a_num_subchannels[ic]; sc++){
-                        //for(int sc = 0; sc < tmp_num_subchannels[ic]; sc++){
                         tempval += full_vector[j+sc*this->a_num_bins[ic]+corner];
                         //tempval += full_vector[j+sc*tmp_num_bins[ic]+corner];
                         edge +=1;	//when your done with a channel, add on every bin you just summed
@@ -1203,180 +1200,250 @@ int SBNchi::CollapseVectorStandAlone(double* full_vector, double *collapsed_vect
                     int collapsed_index = chan+out_edge;
                     collapsed_vector[collapsed_index] = tempval;
                     chan++;
-                    }
-                }
                 }
             }
+        }
+    }
 
 
-            return 0;
+    return 0;
+}
+
+
+SBNspec SBNchi::SampleCovariance(SBNspec *specin){
+    if(!cholosky_performed) this->PerformCholoskyDecomposition(specin); 
+
+    int n_t = specin->full_vector.size();
+
+
+    TVectorT<double> u(n_t);
+    for(int i=0; i<n_t; i++){
+        u(i) = specin->full_vector.at(i);
+    }
+
+    TRandom3 * rangen = new TRandom3(0);
+
+    is_verbose = false;
+
+    TVectorT<double> gaus_sample(n_t);
+    TVectorT<double> multi_sample(n_t);
+    for(int a=0; a<n_t; a++){
+        gaus_sample(a) = rangen->Gaus(0,1);	
+    }
+
+    multi_sample = u + matrix_lower_triangular*gaus_sample;
+
+    std::vector<double> sampled_fullvector(n_t,0.0);
+    for(int j=0; j<n_t; j++){
+        sampled_fullvector.at(j) = multi_sample(j);
+    }
+    SBNspec sampled_spectra(sampled_fullvector, specin->xmlname ,false);
+
+    sampled_spectra.CollapseVector(); //this line important isnt it!
+
+
+    is_verbose = true;
+
+
+
+    return sampled_spectra;
+}
+
+
+
+
+TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC){ 
+    std::vector<double>  tmp = {};
+    return SamplePoissonVaryInput(specin,num_MC,&tmp);
+}
+//This one varies the input comparative spectrum, and as sucn has  only to calculate the matrix_systematics once
+TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<double> *chival){
+
+    float** a_vec_matrix_lower_triangular = new float*[num_bins_total];
+    float** a_vec_matrix_inverted = new float*[num_bins_total_compressed];
+
+    for(int i=0; i < num_bins_total; i++){
+        a_vec_matrix_lower_triangular[i] = new float[num_bins_total];
+    }
+
+    for(int i=0; i < num_bins_total_compressed; i++){
+        a_vec_matrix_inverted[i] = new float[num_bins_total_compressed];
+    }
+
+    for(int i=0; i < num_bins_total; i++){
+        for(int j=0; j < num_bins_total; j++){
+            a_vec_matrix_lower_triangular[i][j] = vec_matrix_lower_triangular[i][j]; 
+        }
+    }
+
+    for(int i=0; i< num_bins_total_compressed; i++){
+        for(int j=0; j< num_bins_total_compressed; j++){
+            a_vec_matrix_inverted[i][j] = vec_matrix_inverted[i][j]; 
+        }
+    }
+
+    float *a_specin = new float[num_bins_total];
+    float *a_corein = new float[num_bins_total_compressed];
+
+    for(int i=0; i< num_bins_total; i++){
+        a_specin[i] = specin->full_vector[i];
+    }
+
+    for(int i=0; i< num_bins_total_compressed; i++) {
+        a_corein[i] = core_spectrum.collapsed_vector[i];
+    }
+
+    std::vector<float> vec_chis (num_MC, 0.0);
+    float* a_vec_chis  = (float*)vec_chis.data();
+    float* a_chival = (float*)chival->data();
+    int num_chival = chival->size();
+
+    int *nlower = new int[num_chival];
+    for(int i=0; i< num_chival; i++){
+        nlower[i]=0; 
+    }
+
+    float* sampled_fullvector = new float[num_bins_total] ;
+    float* collapsed = new float[num_bins_total_compressed];
+
+    TRandom3 *rangen = new TRandom3(0);
+
+    TH1D ans("","",150,0,150);
+    //So save the core one that we will sample for
+    ans.GetXaxis()->SetCanExtend(kTRUE);
+    is_verbose = false;
+
+    for(int i=0; i < num_MC;i++){
+
+
+
+        for(int j = 0; j < num_bins_total; j++){
+            sampled_fullvector[j] = rangen->Poisson( a_specin[j]); 
+        }
+        this->CollapseVectorStandAlone(sampled_fullvector, collapsed);
+        a_vec_chis[i] = this->CalcChi(a_vec_matrix_inverted, a_corein, collapsed);
+
+        for(int j=0; j< num_chival; j++){
+            if(a_vec_chis[i]>=a_chival[j]) nlower[j]++;
         }
 
+    }
+    for(int i=0; i<num_MC; i++){
+        ans.Fill(a_vec_chis[i]);
+    }
 
-        SBNspec SBNchi::SampleCovariance(SBNspec *specin){
-            if(!cholosky_performed) this->PerformCholoskyDecomposition(specin); 
+    for(int n =0; n< num_chival; n++){
+        chival->at(n) = nlower[n]/(double)num_MC;
+    }
 
-            int n_t = specin->full_vector.size();
+    is_verbose = true;
 
+    delete[] a_corein;
+    delete[] a_specin;
+    delete[] nlower;
 
-            TVectorT<double> u(n_t);
-            for(int i=0; i<n_t; i++){
-                u(i) = specin->full_vector.at(i);
-            }
+    for(int i=0; i < num_bins_total; i++){
+        delete[] a_vec_matrix_lower_triangular[i];
+    }
 
-            TRandom3 * rangen = new TRandom3(0);
+    for(int i=0; i < num_bins_total_compressed; i++){
+        delete[] a_vec_matrix_inverted[i];  
+    }
 
-            is_verbose = false;
+    delete[] a_vec_matrix_lower_triangular;
+    delete[] a_vec_matrix_inverted;
 
-            TVectorT<double> gaus_sample(n_t);
-            TVectorT<double> multi_sample(n_t);
-            for(int a=0; a<n_t; a++){
-                gaus_sample(a) = rangen->Gaus(0,1);	
-            }
+    delete[] sampled_fullvector;
+    delete[] collapsed;
 
-            multi_sample = u + matrix_lower_triangular*gaus_sample;
-
-            std::vector<double> sampled_fullvector(n_t,0.0);
-            for(int j=0; j<n_t; j++){
-                sampled_fullvector.at(j) = multi_sample(j);
-            }
-            SBNspec sampled_spectra(sampled_fullvector, specin->xmlname ,false);
-
-            sampled_spectra.CollapseVector(); //this line important isnt it!
-
-
-            is_verbose = true;
+    return ans;
 
 
+}
+/*
+   std::vector<double> SBNchi::SampleCovarianceVaryInput_getpval(SBNspec *specin, int num_MC, std::vector<double> chival){
+   if(!cholosky_performed) this->PerformCholoskyDecomposition(specin); 
 
-            return sampled_spectra;
-        }
+   int n_t = specin->full_vector.size();
+   std::vector<int> nlower(chival.size(),0);
 
+   TVectorT<double> u(n_t);
+   for(int i=0; i<n_t; i++){
+   u(i) = specin->full_vector.at(i);
+   }
 
-
-
-        TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC){ 
-            std::vector<double>  tmp = {10};
-            return SamplePoissonVaryInput(specin,num_MC,&tmp);
-        }
-        //This one varies the input comparative spectrum, and as sucn has  only to calculate the matrix_systematics once
-        TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<double> *chival){
-            std::vector<int> nlower(chival->size(),0);
-
-            TRandom3 *rangen = new TRandom3(0);
-
-            TH1D ans("","",150,0,150);
-            //So save the core one that we will sample for
-            ans.GetXaxis()->SetCanExtend(kTRUE);
-            is_verbose = false;
-            for(int i=0; i < num_MC;i++){
-                SBNspec tmp = *specin;
-                tmp.ScalePoisson(rangen);
-                tmp.CollapseVector(); //this line important isnt it!
-                //tmp.PrintFullVector();
-
-                double thischi = this->CalcChi(&tmp);
-                ans.Fill(thischi);
-
-                for(int j=0; j< chival->size(); j++){
-                    if(thischi>=chival->at(j)) nlower.at(j)++;
-                }
-
-                if(i%1000==0) std::cout<<"SBNchi::SamplePoissonVaryInput(SBNspec*, int) on MC :"<<i<<"/"<<num_MC<<". Ans: "<<thischi<<std::endl;
-            }
-            for(int n =0; n< nlower.size(); n++){
-                chival->at(n) = nlower.at(n)/(double)num_MC;
-            }
-
-            is_verbose = true;
-            return ans;
+   TRandom3 * rangen = new TRandom3(0);
 
 
-        }
-        /*
-           std::vector<double> SBNchi::SampleCovarianceVaryInput_getpval(SBNspec *specin, int num_MC, std::vector<double> chival){
-           if(!cholosky_performed) this->PerformCholoskyDecomposition(specin); 
+   TH1D ans("","",100,0,100);
+   ans.GetXaxis()->SetCanExtend(kTRUE);
+   is_verbose = false;
+   for(int i=0; i < num_MC;i++){
 
-           int n_t = specin->full_vector.size();
-           std::vector<int> nlower(chival.size(),0);
+   TVectorT<double> gaus_sample(n_t);
+   TVectorT<double> multi_sample(n_t);
+   for(int a=0; a<n_t; a++){
+   gaus_sample(a) = rangen->Gaus(0,1);	
+   }
 
-           TVectorT<double> u(n_t);
-           for(int i=0; i<n_t; i++){
-           u(i) = specin->full_vector.at(i);
-           }
+   multi_sample = u + matrix_lower_triangular*gaus_sample;
 
-           TRandom3 * rangen = new TRandom3(0);
+   std::vector<double> sampled_fullvector(n_t,0.0);
+   for(int i=0; i<n_t; i++){
+   sampled_fullvector.at(i) = multi_sample(i);
+   }
+   SBNspec sampled_spectra(sampled_fullvector, specin->xmlname ,false);
 
+   sampled_spectra.CollapseVector(); //this line important isnt it!
 
-           TH1D ans("","",100,0,100);
-           ans.GetXaxis()->SetCanExtend(kTRUE);
-           is_verbose = false;
-           for(int i=0; i < num_MC;i++){
+   double thischi = this->CalcChi(&sampled_spectra);
+   ans.Fill(thischi);
 
-           TVectorT<double> gaus_sample(n_t);
-           TVectorT<double> multi_sample(n_t);
-           for(int a=0; a<n_t; a++){
-           gaus_sample(a) = rangen->Gaus(0,1);	
-           }
-
-           multi_sample = u + matrix_lower_triangular*gaus_sample;
-
-           std::vector<double> sampled_fullvector(n_t,0.0);
-           for(int i=0; i<n_t; i++){
-           sampled_fullvector.at(i) = multi_sample(i);
-           }
-           SBNspec sampled_spectra(sampled_fullvector, specin->xmlname ,false);
-
-           sampled_spectra.CollapseVector(); //this line important isnt it!
-
-           double thischi = this->CalcChi(&sampled_spectra);
-           ans.Fill(thischi);
-
-           for(int j=0; j< chival.size(); j++){
-           if(thischi>=chival.at(j)) nlower.at(j)++;
-           }
+   for(int j=0; j< chival.size(); j++){
+   if(thischi>=chival.at(j)) nlower.at(j)++;
+   }
 
 
-           if(i%1000==0) std::cout<<"SBNchi::SampleCovarianceVaryInput(SBNspec*, int) on MC :"<<i<<"/"<<num_MC<<". Ans: "<<thischi<<std::endl;
-           }
-           is_verbose = true;
+   if(i%1000==0) std::cout<<"SBNchi::SampleCovarianceVaryInput(SBNspec*, int) on MC :"<<i<<"/"<<num_MC<<". Ans: "<<thischi<<std::endl;
+   }
+   is_verbose = true;
 
-           std::vector<double> pval;
-           for(auto n: nlower){
-           pval.push_back(n/(double)num_MC);
+   std::vector<double> pval;
+   for(auto n: nlower){
+   pval.push_back(n/(double)num_MC);
 
-           }
+   }
 
-           return pval;
+   return pval;
 
-           }
+   }
 
 
-        //This one varies the input comparative spectrum, and as sucn has  only to calculate the matrix_systematics once
-        std::vector<double> SBNchi::SamplePoissonVaryInput_getpval(SBNspec *specin, int num_MC, std::vector<double> chival){
-        std::vector<int> nlower(chival.size(),0);
+//This one varies the input comparative spectrum, and as sucn has  only to calculate the matrix_systematics once
+std::vector<double> SBNchi::SamplePoissonVaryInput_getpval(SBNspec *specin, int num_MC, std::vector<double> chival){
+std::vector<int> nlower(chival.size(),0);
 
-        TRandom3 *rangen = new TRandom3(0);
+TRandom3 *rangen = new TRandom3(0);
 
-        TH1D ans("","",100,0,100);
+TH1D ans("","",100,0,100);
 //So save the core one that we will sample for
 ans.GetXaxis()->SetCanExtend(kTRUE);
 is_verbose = false;
 for(int i=0; i < num_MC;i++){
 
-        SBNspec tmp = *specin;
-        tmp.ScalePoisson(rangen);
-        tmp.CollapseVector(); //this line important isnt it!
-        //tmp.PrintFullVector();
+SBNspec tmp = *specin;
+tmp.ScalePoisson(rangen);
+tmp.CollapseVector(); //this line important isnt it!
+//tmp.PrintFullVector();
 
-        double thischi = this->CalcChi(&tmp);
-        ans.Fill(thischi);
+double thischi = this->CalcChi(&tmp);
+ans.Fill(thischi);
 
-        for(int j=0; j< chival.size(); j++){
-            if(thischi>=chival.at(j)) nlower.at(j)++;
-        }
+for(int j=0; j< chival.size(); j++){
+    if(thischi>=chival.at(j)) nlower.at(j)++;
+}
 
-        if(i%1000==0) std::cout<<"SBNchi::SamplePoissonVaryInput(SBNspec*, int) on MC :"<<i<<"/"<<num_MC<<". Ans: "<<thischi<<std::endl;
+if(i%1000==0) std::cout<<"SBNchi::SamplePoissonVaryInput(SBNspec*, int) on MC :"<<i<<"/"<<num_MC<<". Ans: "<<thischi<<std::endl;
 }
 std::vector<double> pval;
 for(auto n: nlower){

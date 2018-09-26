@@ -26,8 +26,7 @@
 </channel>
 
 <!-- ############################# MultiSims #####################################################-->
-<!-- <MultisimFile treename="events" filename="/gpfshome01/u/vgenty/data/1e1p.root" scale = "0.002" maxevents ="20000" > -->
-<MultisimFile treename="events" filename="/gpfshome01/u/vgenty/data/1e1p.root" scale = "0.004" maxevents ="10000" >
+ <MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1e1p.root" scale = "0.002" maxevents ="20000" > 
 	<parameters names = "ALL"/>
 	<branch
 		name="ereco"
@@ -36,7 +35,7 @@
 	/>
 </MultisimFile>
 
-<MultisimFile treename="events" filename="/gpfshome01/u/vgenty/data/signal.root" scale = "0.03" maxevents ="1000" >
+<MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/signal.root" scale = "0.03" maxevents ="1000" >
 	<parameters names = "ALL"/>
 	<branch
 		name="ereco"
@@ -46,8 +45,7 @@
 </MultisimFile>
 
 
-<!-- <MultisimFile treename="events" filename="/gpfshome01/u/vgenty/data/1m1p.root" scale = "0.01" maxevents ="50000" > -->
-<MultisimFile treename="events" filename="/gpfshome01/u/vgenty/data/1m1p.root" scale = "0.1" maxevents ="5000" >
+<MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1m1p.root" scale = "0.01" maxevents ="50000" >
 	<parameters names = "ALL"/>
 	<branch
 		name="ereco"
@@ -56,7 +54,7 @@
 	/>
 </MultisimFile>
 
-<MultisimFile treename="events" filename="/gpfshome01/u/vgenty/data/ccpi0.root" scale = "0.1" maxevents ="5000" >
+<MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/ccpi0.root" scale = "0.1" maxevents ="5000" >
 	<parameters names = "ALL"/>
 	<branch
 		name="ereco"
