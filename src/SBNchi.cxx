@@ -282,7 +282,7 @@ double SBNchi::CalcChi(SBNspec *sigSpec){
         for(int j =0; j<num_bins_total_compressed; j++){
             k++;
 
-            if(i==j && vec_matrix_inverted.at(i).at(j) > -1e16 && vec_matrix_inverted[i][j] < 0){
+            if(i==j && fabs(vec_matrix_inverted.at(i).at(j)) > 1e16 && vec_matrix_inverted[i][j] < 0){
                 std::cout<<"ERROR: SBNchi::CalcChi || diagonal of inverse covariance is negative! : "<<vec_matrix_inverted[i][j]<<" @ ("<<i<<","<<j<<")"<<std::endl;
             }
             vec_last_calculated_chi.at(i).at(j) =(core_spectrum.collapsed_vector.at(i)-sigSpec->collapsed_vector.at(i))*vec_matrix_inverted.at(i).at(j)*(core_spectrum.collapsed_vector.at(j)-sigSpec->collapsed_vector.at(j) );
