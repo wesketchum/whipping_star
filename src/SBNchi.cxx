@@ -1058,6 +1058,12 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
             this->CollapseVectorStandAlone(sampled_fullvector, collapsed);
 
             a_vec_chis[i] = this->CalcChi(a_vec_matrix_inverted, a_corein, collapsed);
+            //Just to get some pvalues that were asked for.
+
+                for(int j=0; j< num_chival; j++){
+        #pragma acc atomic update
+                            if(a_vec_chis[i]>=a_chival[j]) nlower[j]++;
+                    }
 
         }
 
@@ -1069,8 +1075,8 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
         //         std::cout << "@i=" << a_vec_chis[i] << std::endl;
         ans.Fill(a_vec_chis[i]);
     }
-    for(int n =0; n< num_chival; n++){
-            chival->at(n) = nlower[n]/(double)num_MC;
+      for(int n =0; n< num_chival; n++){
+        chival->at(n) = nlower[n]/(double)num_MC;
     }
 
 
