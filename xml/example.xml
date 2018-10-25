@@ -7,15 +7,15 @@
 		<bins
 			edges="100 200 300 400 500 600 700 800 900 1000 1200 1400 1600 1800 2000 2500 3000"
 		/>
-		<subchannel name="intrinsic" use="1" osc = "0"/>
-		<subchannel name="leesignal" use="1" osc = "0"/>
+		<subchannel name="intrinsic" use="1" osc = "11"/>
+		<subchannel name="leesignal" use="1" osc = "21"/>
 </channel>
 
 <channel name="numu" unit="MeV" use="1" numbins="16">
 		<bins
 			edges="100 200 300 400 500 600 700 800 900 1000 1200 1400 1600 1800 2000 2500 3000"
 		/>
-		<subchannel name="intrinsic" use="1" osc = "0"/>
+		<subchannel name="intrinsic" use="1" osc = "22"/>
 </channel>
 
 <channel name="ccpi0" unit="MeV" use="1" numbins="6">

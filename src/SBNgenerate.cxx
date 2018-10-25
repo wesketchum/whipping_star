@@ -16,8 +16,8 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
 
 	//gSystem->Load("../src/libranch_weightsMapDict.so");
 
-	std::string dict_location = "../../dict/AutoDict_map_string__vector_double____cxx.so";
-	gSystem->Load(  (dict_location).c_str());
+//	std::string dict_location = "../../dict/AutoDict_map_string__vector_double____cxx.so";
+//	gSystem->Load(  (dict_location).c_str());
 
 	//	gSystem->Load("/uboone/app/users/markrl/sbnfit/whipping_star/src/mdict_h.so");
 	//
