@@ -978,7 +978,7 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
     TRandom3 * rangen = new TRandom3(0);
 
     TH1D ans("","",150,0,150);
-    ans.GetXaxis()->SetCanExtend(kTRUE);
+    //ans.GetXaxis()->SetCanExtend(kTRUE);
     is_verbose = false;
 
     std::vector<float> vec_chis (num_MC, 0.0);
@@ -1300,7 +1300,7 @@ TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<dou
 
     TH1D ans("","",150,0,150);
     //So save the core one that we will sample for
-    ans.GetXaxis()->SetCanExtend(kTRUE);
+    //ans.GetXaxis()->SetCanExtend(kTRUE);
     is_verbose = false;
 
     for(int i=0; i < num_MC;i++){

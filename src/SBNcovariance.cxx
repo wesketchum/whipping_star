@@ -285,6 +285,7 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
         const auto branch_var_jt = branch_variables[fileid][t];
         int ih = spec_central_value.map_hist.at(branch_var_jt->associated_hist);
         double reco_var = *(static_cast<double*>(branch_var_jt->GetValue()));
+        //reco_var = 1.238*reco_var+0.025;
         int reco_bin = spec_central_value.GetGlobalBinNumber(reco_var,ih);
         spec_central_value.hist[ih].Fill(reco_var,global_weight);
 

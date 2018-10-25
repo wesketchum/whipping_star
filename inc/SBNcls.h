@@ -18,6 +18,7 @@
 #include "TLatex.h"
 #include "TText.h"
 
+#include "TMath.h"
 #include <ctime>
 #include "params.h"
 
@@ -59,7 +60,7 @@ class SBNcls{
 	int CalcCLS(int,std::string);
 	int SetSampleCovariance();
 	int SetSamplePoisson();
-
+    double pval2sig(double p);
 
 };
 

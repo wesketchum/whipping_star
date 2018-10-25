@@ -11,6 +11,10 @@ int SBNcls::SetSampleCovariance(){
    return which_sample;
 }
 
+double SBNcls::pval2sig(double pval){
+   return sqrt(2)*TMath::ErfInverse(1-pval);
+}
+
 int SBNcls::CalcCLS(int numMC, std::string tag){
 
 	if(which_sample == 0){
@@ -27,6 +31,8 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 	
 	double N_h1 = h1->GetTotalEvents();
 	double N_h0 = h0->GetTotalEvents();
+
+    double central_value_chi = chi.CalcChi(h1);
 
 	//step one, find median h1 
 	TH1D h1_pdf;
@@ -46,7 +52,9 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 
 	//Now calculate the pvalues associated with those h1 variations. 
 	TH1D h0_pdf;
-	std::vector<double> pval = quantiles; 
+	std::vector<double> pval = quantiles;
+    pval.push_back(central_value_chi); 
+
 	if(which_sample == 0){
 	 	h0_pdf = chi.SamplePoissonVaryInput(h0, numMC, &pval);
 	}
@@ -56,7 +64,7 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 
 
 	//lets do CLs
-	for(int p=0; p<pval.size();p++){
+	for(int p=0; p<pval.size()-1;p++){
 		vec_CLs.push_back(pval.at(p)/(1-prob_values.at(p)) );
 	}
 
@@ -114,11 +122,31 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 		TLatex * qvals = new TLatex();
 		qvals->SetTextSize(0.03);
 		qvals->SetTextAlign(32);
-		std::string details =  ("#splitline{"+quantile_names.at(i)+"}{1-#beta(" +to_string_prec(1-prob_values.at(i),3) + ") #alpha("+ to_string_prec(pval.at(i),3) +") CL_{s}("+to_string_prec(vec_CLs.at(i),3)+")}");
-		std::cout<<details<<std::endl;
+		std::string details =  ("#splitline{"+quantile_names.at(i)+"}{1-#beta(" +to_string_prec(1-prob_values.at(i),3) + ") #alpha("+ to_string_prec(pval.at(i),3) +" | "+to_string_prec(pval2sig(pval.at(i)),1)+ "#sigma) CL_{s}("+to_string_prec(vec_CLs.at(i),3)+")}");
+		std::string details2 =  ("#splitline{"+quantile_names.at(i)+"}{1-#beta(" +to_string_prec(1-prob_values.at(i),10) + ") #alpha("+ to_string_prec(pval.at(i),10) +" | "+to_string_prec(pval2sig(pval.at(i)),1)+ "#sigma) CL_{s}("+to_string_prec(vec_CLs.at(i),10)+")}");
+		std::cout<<details2<<std::endl;
 		qvals->DrawLatexNDC(0.875, 0.2+i*0.1,details.c_str()  );
 	}
-	
+
+    /*
+    TLine *lcv = new TLine(central_value_chi,minval,central_value_chi, maxval);
+    lcv->SetLineColor(kBlack);
+    lcv->SetLineStyle(2);
+    lcv->SetLineWidth(2);
+    TLatex * cvnam = new TLatex();
+    cvnam->SetTextSize(0.045);
+   	cvnam->SetTextAlign(12);  //align at top    
+    cvnam->SetTextAngle(-90);
+ 	cvnam->DrawLatex(central_value_chi, maxval*1.3 ,"CV");
+    lcv->Draw("same");
+	*/
+    std::string cv_details =  ("#splitline{CV}{#alpha("+ to_string_prec(pval.at(4),3) +" | "+to_string_prec(pval2sig(pval.at(4)),1)+ "#sigma)}");
+    std::cout<<"CV has a chi^2 of "<<central_value_chi<<std::endl;
+    std::cout<<cv_details<<std::endl;	
+
+
+
+
 	TLegend *leg = new TLegend(0.7,0.7,0.89,0.89);
 	leg->SetLineWidth(0);
 	leg->SetFillStyle(0);
@@ -133,6 +161,14 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 	cp->Write();	
 	cp->SaveAs(("SBNfit_Cls_"+tag+".pdf").c_str(),"pdf");	
 	fp->Close();
-			
+	
+
+
+
+
+
+
+
+
 	return 0;
 }

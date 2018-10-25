@@ -86,10 +86,11 @@ int main(int argc, char* argv[])
   std::string tag = "EXAMPLE3";
 
   SBNspec sig("EXAMPLE1.SBNspec.root",xml);
-  sig.Scale("leesignal",1.5);
-	
+  sig.Scale("leesignal",0.4);
+
   SBNspec bkg("EXAMPLE1.SBNspec.root",xml);
   bkg.Scale("leesignal",0.0);
+
 
   // Stats + sys
   TFile * fsys = new TFile("EXAMPLE1.SBNcovar.root","read");
@@ -98,7 +99,7 @@ int main(int argc, char* argv[])
   SBNchi *chi = new SBNchi(bkg,*cov);
   SBNchi *chi_statonly = new SBNchi(bkg);
 
-  SBNcls cls_factory(&sig, &bkg, *cov);
+  SBNcls cls_factory(&bkg, &sig, *cov);
   if(sample_from_covariance) cls_factory.SetSampleCovariance();
 
   cls_factory.CalcCLS(num_MC_events, tag);
