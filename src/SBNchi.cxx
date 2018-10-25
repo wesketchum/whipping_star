@@ -1069,6 +1069,9 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
         //         std::cout << "@i=" << a_vec_chis[i] << std::endl;
         ans.Fill(a_vec_chis[i]);
     }
+    for(int n =0; n< num_chival; n++){
+            chival->at(n) = nlower[n]/(double)num_MC;
+    }
 
 
 
