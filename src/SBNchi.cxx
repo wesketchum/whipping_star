@@ -27,9 +27,12 @@ SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin) : SBNconfig(in
         m.ResizeTo(used_bins.size(),matrix_systematicsin.GetNcols());
     }
 
+    //random number setup
+    rangen_twister = new std::mt19937(random_device_seed());
 
     matrix_fractional_covariance = m;
     matrix_systematics.Zero();
+   
 
 
     this->ReloadCoreSpectrum(&core_spectrum);
@@ -61,6 +64,8 @@ SBNchi::SBNchi(SBNspec in, std::string newxmlname) : SBNconfig(newxmlname), core
     matrix_systematics.Zero();
     matrix_systematics=matrix_fractional_covariance;
 
+    //merseinne
+    rangen_twister = new std::mt19937(random_device_seed());
 
     this->ReloadCoreSpectrum(&in);
 }
@@ -78,6 +83,7 @@ SBNchi::SBNchi(SBNspec in, bool is_is_stat_only): SBNconfig(in.xmlname), core_sp
 
 
 
+    rangen_twister = new std::mt19937(random_device_seed());
     if(is_is_stat_only){
         matrix_fractional_covariance.Zero();
         matrix_systematics.Zero();
@@ -592,12 +598,13 @@ TMatrixT<double> * SBNchi::GetCollapsedMatrix(){
 
 void SBNchi::FakeFillMatrix(TMatrixT <double> &M){
     //Fills a square matrix of dim matrix_size with random numbers for now.
-    TRandom3 *rangen = new TRandom3(0);
+    std::uniform_real_distribution<double> dist(0,1);
+
     int matrix_size=M.GetNrows();
     if(M.GetNrows()!=M.GetNcols()){std::cout<<"#ERROR: not a square matrix!"<<std::endl;}
     for(int i=0; i<matrix_size; i++){
         for (int j = i;j<matrix_size;j++){
-            M(i,j)=rangen->Uniform(0,1);
+            M(i,j)= dist(*rangen_twister);
             M(j,i)=M(i,j);
         }
     }
@@ -849,7 +856,6 @@ int SBNchi::PrintMatricies(std::string tag){
 
 
 int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
-    TRandom3 * rangen = new TRandom3(0);
     specin->CalcFullVector();
 
     double tol = 1e-7;
@@ -975,7 +981,6 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
         a_corein[i] = core_spectrum.collapsed_vector[i];
     }
 
-    TRandom3 * rangen = new TRandom3(0);
 
     TH1D ans("","",150,0,150);
     //ans.GetXaxis()->SetCanExtend(kTRUE);
@@ -1004,7 +1009,9 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
     // float sampled_fullvector[54];
     //  float collapsed[38];
 
-
+    //We will need a uniform dist and a Gaussian
+    std::uniform_int_distribution<int> dist_int(0,pow(2,32));
+    std::normal_distribution<float> dist_normal(0,1);
 
 #ifdef USE_GPU
     unsigned long long seed[num_MC];
@@ -1013,7 +1020,7 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
     curandState_t state;
 
     for(int i=0; i<num_MC; ++i) {
-        seed[i] = (int)rangen->Uniform(1e8);
+        seed[i] = dist_int(*rangen_twister);
     }
 #endif
 
@@ -1043,7 +1050,7 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
             }
 #else
             for(int a=0; a<num_bins_total; a++) {
-                gaus_sample[a]= (double)rangen->Gaus(0,1);
+                gaus_sample[a]= abs(dist_normal(*rangen_twister));
             }      
 #endif
 
@@ -1220,14 +1227,15 @@ SBNspec SBNchi::SampleCovariance(SBNspec *specin){
         u(i) = specin->full_vector.at(i);
     }
 
-    TRandom3 * rangen = new TRandom3(0);
 
+    std::normal_distribution<float> dist_normal(0,1);
     is_verbose = false;
 
     TVectorT<double> gaus_sample(n_t);
     TVectorT<double> multi_sample(n_t);
     for(int a=0; a<n_t; a++){
-        gaus_sample(a) = rangen->Gaus(0,1);	
+        gaus_sample(a) = abs(dist_normal(*rangen_twister));	
+
     }
 
     multi_sample = u + matrix_lower_triangular*gaus_sample;
@@ -1294,17 +1302,23 @@ TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<dou
     float* sampled_fullvector = new float[num_bins_total] ;
     float* collapsed = new float[num_bins_total_compressed];
 
-    TRandom3 *rangen = new TRandom3(0);
 
     TH1D ans("","",150,0,150);
     //So save the core one that we will sample for
     //ans.GetXaxis()->SetCanExtend(kTRUE);
     is_verbose = false;
 
+    std::vector< std::poisson_distribution<int>> dist_pois;
+    for(int j = 0; j < num_bins_total; j++){
+            dist_pois.push_back( std::poisson_distribution<int>(a_specin[j])); 
+    }
+
+
     for(int i=0; i < num_MC;i++){
 
         for(int j = 0; j < num_bins_total; j++){
-            sampled_fullvector[j] = rangen->Poisson( a_specin[j]); 
+
+            sampled_fullvector[j] = (float)dist_pois[j](*rangen_twister); 
         }
 
         this->CollapseVectorStandAlone(sampled_fullvector, collapsed);

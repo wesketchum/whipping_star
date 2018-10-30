@@ -105,9 +105,12 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 
 	h0_pdf.GetXaxis()->SetRangeUser(minbin,maxbin);
 
+    bool draw_both = true;
+
 	std::vector<std::string> quantile_names = {"-2#sigma","-1#sigma","Median","+1#sigma","+2#sigma"};
 	std::vector<int> cols ={kYellow-7, kGreen+1, kBlack,kGreen+1, kYellow-7};	
-	
+
+    if(draw_both){
 	for(int i=0; i< quantiles.size(); i++){	
 		TLine *l = new TLine(quantiles.at(i),minval, quantiles.at(i),maxval*1.05);
 		l->SetLineColor(cols.at(i));
@@ -127,6 +130,7 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 		std::cout<<details2<<std::endl;
 		qvals->DrawLatexNDC(0.875, 0.2+i*0.1,details.c_str()  );
 	}
+    }
 
     /*
     TLine *lcv = new TLine(central_value_chi,minval,central_value_chi, maxval);
@@ -140,7 +144,7 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
  	cvnam->DrawLatex(central_value_chi, maxval*1.3 ,"CV");
     lcv->Draw("same");
 	*/
-    std::string cv_details =  ("#splitline{CV}{#alpha("+ to_string_prec(pval.at(4),3) +" | "+to_string_prec(pval2sig(pval.at(4)),1)+ "#sigma)}");
+    std::string cv_details =  ("#splitline{CV}{#alpha("+ to_string_prec(pval.back(),5) +" | "+to_string_prec(pval2sig(pval.back()),5)+ "#sigma)}");
     std::cout<<"CV has a chi^2 of "<<central_value_chi<<std::endl;
     std::cout<<cv_details<<std::endl;	
 
@@ -151,13 +155,13 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 	leg->SetLineWidth(0);
 	leg->SetFillStyle(0);
 	leg->AddEntry(&h0_pdf,"H_{0}","lf");
-	leg->AddEntry(&h1_pdf,"H_{1}","lf");
+	if(draw_both)leg->AddEntry(&h1_pdf,"H_{1}","lf");
 	leg->Draw();
 
 	h0_pdf.GetXaxis()->SetTitle("#chi^{2}");
 	h0_pdf.GetYaxis()->SetTitle("PDF");
 
-	h1_pdf.Draw("hist same");	
+	if(draw_both) h1_pdf.Draw("hist same");	
 	cp->Write();	
 	cp->SaveAs(("SBNfit_Cls_"+tag+".pdf").c_str(),"pdf");	
 	fp->Close();

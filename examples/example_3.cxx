@@ -91,7 +91,6 @@ int main(int argc, char* argv[])
   SBNspec bkg("EXAMPLE1.SBNspec.root",xml);
   bkg.Scale("leesignal",0.0);
 
-
   // Stats + sys
   TFile * fsys = new TFile("EXAMPLE1.SBNcovar.root","read");
   TMatrixD * cov = (TMatrixD*)fsys->Get("frac_covariance_EXAMPLE1");
@@ -99,7 +98,7 @@ int main(int argc, char* argv[])
   SBNchi *chi = new SBNchi(bkg,*cov);
   SBNchi *chi_statonly = new SBNchi(bkg);
 
-  SBNcls cls_factory(&bkg, &sig, *cov);
+  SBNcls cls_factory(&bkg, &sig,* cov);
   if(sample_from_covariance) cls_factory.SetSampleCovariance();
 
   cls_factory.CalcCLS(num_MC_events, tag);

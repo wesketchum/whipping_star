@@ -4,6 +4,9 @@
 #include <cmath>
 #include <vector>
 #include <iostream>
+#include <ctime>
+#include <random>
+
 #include "SBNspec.h"
 #include "SBNconfig.h"
 
@@ -16,7 +19,6 @@
 #include "TStyle.h"
 #include "TLine.h"
 
-#include <ctime>
 #include "params.h"
 
 #include "TDecompChol.h"
@@ -65,6 +67,9 @@ class SBNchi : public SBNconfig{
 	std::vector<std::vector<double >> vec_matrix_inverted;
 	std::vector<std::vector<double >> vec_matrix_collapsed;
 
+    /***** Random Number Generation ****/
+    std::random_device random_device_seed;
+    std::mt19937 *rangen_twister; //merseinne twister
 
 
 
