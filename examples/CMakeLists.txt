@@ -9,6 +9,10 @@ target_link_libraries (example2 SBNfitlib tinyxmllib EventWeight)
 add_executable (example3 example_3.cxx)
 target_link_libraries (example3 SBNfitlib tinyxmllib EventWeight)
 
+add_executable (exampletest example_test.cxx)
+target_link_libraries (exampletest SBNfitlib tinyxmllib EventWeight)
+
+
 #add_executable (exampleI example_i.cxx)
 #target_link_libraries (exampleI SBNfitlib tinyxmllib EventWeight)
 

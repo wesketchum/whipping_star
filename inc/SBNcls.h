@@ -27,6 +27,8 @@
 #include "TMatrixDEigen.h"
 #include "TMatrixDSymEigen.h"
 
+#include "ngrid.h"
+
 namespace sbn{
 
 
