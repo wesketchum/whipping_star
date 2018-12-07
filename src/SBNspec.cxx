@@ -9,7 +9,7 @@ SBNspec::SBNspec(std::string whichxml, int which_universe, bool isverbose) : SBN
 	int ctr=0;
 	for(auto fn: fullnames){
 		for(int c=0; c<channel_names.size(); c++){
-			if(fn.find(channel_names[c])!=std::string::npos ){
+			if(fn.find("_"+channel_names[c]+"_")!=std::string::npos){
 				double * tbins =&bin_edges[c][0];
 				std::string thisname;
 				if(which_universe<0){
@@ -17,8 +17,8 @@ SBNspec::SBNspec(std::string whichxml, int which_universe, bool isverbose) : SBN
 				}else{
 					thisname = fn+"_MS"+std::to_string(which_universe);
 				}
-				TH1D thischan(thisname.c_str(),"",num_bins[c], tbins );
-				hist.push_back(thischan);
+				//TH1D thischan(thisname.c_str(),"",num_bins[c], tbins );i
+				hist.emplace_back(TH1D(thisname.c_str(), thisname.c_str(), num_bins[c], tbins ));
 				//auto it = hist.begin()+ctr;
 				//map_hist[fn] = &(*it);
 				map_hist[fn] = ctr;
