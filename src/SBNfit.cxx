@@ -94,9 +94,9 @@ double SBNfit::Minimize(){
 
   	const double *xs = min->X();
 
-	  bf_chi= MinimizerCalcChi(xs);;
-	  bf_params = xs;
-	  return bf_chi;
+    bf_chi= MinimizerCalcChi(xs);;
+    bf_params = xs;
+    return bf_chi;
 
 }
 

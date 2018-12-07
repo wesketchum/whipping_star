@@ -38,6 +38,9 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
     for(int fid=0; fid < num_files; ++fid) {
         const auto& fn = multisim_file.at(fid);
+
+
+
         files[fid] = TFile::Open(fn.c_str());
         trees[fid] = (TTree*)(files[fid]->Get(multisim_name.at(fid).c_str()));
         nentries[fid]= (int)trees.at(fid)->GetEntries();
@@ -72,6 +75,26 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         trees.at(fid)->SetBranchAddress("weights", &(f_weights[fid]) );
 
         for(const auto branch_variable : branch_variables[fid]) {
+            //quick check that this branch associated subchannel is in the known chanels;
+            int is_valid_subchannel = 0;
+            for(const auto &name: fullnames){
+                if(branch_variable->associated_hist==name){
+                    std::cout<<"SBNcovariance::SBNcovariance\t|| Found a valid subchannel for this branch: " <<name<<std::endl;
+                    is_valid_subchannel++;
+                }
+            }
+            if(is_valid_subchannel==0){
+                    std::cout<<"SBNcovariance::SBNcovariance\t|| ERROR ERROR: This branch did not match one defined in the .xml : " <<branch_variable->associated_hist<<std::endl;
+                    std::cout<<"SBNcovariance::SBNcovariance\t|| ERROR ERROR: There is probably a typo somehwhere in xml! "<<std::endl;
+                    exit(EXIT_FAILURE);
+
+            }else if(is_valid_subchannel>1){
+                    std::cout<<"SBNcovariance::SBNcovariance\t|| ERROR ERROR: This branch matched more than 1 subchannel!: " <<branch_variable->associated_hist<<std::endl;
+                    exit(EXIT_FAILURE);
+            }
+            
+
+
             trees.at(fid)->SetBranchAddress(branch_variable->name.c_str(),
                     branch_variable->GetValue());
         }

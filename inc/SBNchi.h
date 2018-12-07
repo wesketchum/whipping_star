@@ -70,8 +70,9 @@ class SBNchi : public SBNconfig{
     /***** Random Number Generation ****/
     std::random_device random_device_seed;
     std::mt19937 *rangen_twister; //merseinne twister
-
-
+    std::minstd_rand * rangen_linear;
+    std::ranlux24_base * rangen_carry;
+    void InitRandomNumberSeeds();
 
 	/*********************************** Member Functions ********************************/	
 

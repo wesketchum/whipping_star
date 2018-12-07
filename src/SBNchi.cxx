@@ -11,6 +11,8 @@ using namespace sbn;
  *		Constructors
  * ********************************************/
 
+
+
 SBNchi::SBNchi(std::string xml) : SBNconfig(xml,false){};
 
 SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin) : SBNconfig(in.xmlname), core_spectrum(in){
@@ -27,14 +29,11 @@ SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin) : SBNconfig(in
         m.ResizeTo(used_bins.size(),matrix_systematicsin.GetNcols());
     }
 
-    //random number setup
-    rangen_twister = new std::mt19937(random_device_seed());
-
     matrix_fractional_covariance = m;
     matrix_systematics.Zero();
    
 
-
+    this->InitRandomNumberSeeds();
     this->ReloadCoreSpectrum(&core_spectrum);
 }
 
@@ -64,8 +63,7 @@ SBNchi::SBNchi(SBNspec in, std::string newxmlname) : SBNconfig(newxmlname), core
     matrix_systematics.Zero();
     matrix_systematics=matrix_fractional_covariance;
 
-    //merseinne
-    rangen_twister = new std::mt19937(random_device_seed());
+    this->InitRandomNumberSeeds();
 
     this->ReloadCoreSpectrum(&in);
 }
@@ -81,9 +79,9 @@ SBNchi::SBNchi(SBNspec in, bool is_is_stat_only): SBNconfig(in.xmlname), core_sp
     matrix_fractional_covariance.ResizeTo(num_bins_total, num_bins_total);
 
 
+    this->InitRandomNumberSeeds();
 
 
-    rangen_twister = new std::mt19937(random_device_seed());
     if(is_is_stat_only){
         matrix_fractional_covariance.Zero();
         matrix_systematics.Zero();
@@ -101,6 +99,12 @@ SBNchi::SBNchi(SBNspec in, bool is_is_stat_only): SBNconfig(in.xmlname), core_sp
 /***********************************************
  *		Rest for now
  * ********************************************/
+void SBNchi::InitRandomNumberSeeds(){
+    rangen_twister = new std::mt19937(random_device_seed());
+    rangen_linear = new std::minstd_rand(random_device_seed());
+    rangen_carry = new std::ranlux24_base(random_device_seed());
+}
+
 
 int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
     otag = "SBNchi::ReloadCoreSpectrum\t|| ";
