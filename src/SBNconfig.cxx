@@ -116,6 +116,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                 channel_names.push_back(channel_name);
             }
 
+
             const char* channel_unit= pChan->Attribute("unit");
             if(channel_unit==NULL){
                 channel_units.push_back("");
@@ -127,12 +128,12 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
             if(channel_bool_tmp==NULL){
                 channel_bool.push_back(1);
             }else{
-                channel_bool.push_back(channel_bool_tmp);
+                channel_bool.push_back(strtod(channel_bool_tmp,&end));
             }
 
-
-
             if(is_verbose)	std::cout<<otag<<"Loading Channel : "<<channel_names.back()<<" with use_bool: "<<channel_bool.back()<<std::endl;
+
+
 
             // What are the bin edges and bin widths (bin widths just calculated from edges now)
             TiXmlElement *pBin = pChan->FirstChildElement("bins");
