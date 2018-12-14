@@ -21,6 +21,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
         if(is_verbose)	std::cout<<otag<<"Loaded XML configuration file: "<<whichxml<<std::endl;
     }else{
         std::cout<<otag<<"ERROR: Failed to load XML configuration file:  "<<whichxml<<std::endl;
+        std::cout<<otag<<"ERROR: This generally means broken .xml brackets or attribute syntax."<<std::endl;
         exit(EXIT_FAILURE);
     }
     TiXmlHandle hDoc(&doc);
@@ -44,7 +45,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
     }else{
         while(pMode){
             // What modes are we running in (e.g nu, nu bar, horn current=XXvolts....) Can have as many as we want
-            const char* mode_name= pChan->Attribute("name");
+            const char* mode_name= pMode->Attribute("name");
             if(mode_name==NULL){
                 std::cout<<otag<<"ERROR! Modes need a name! Please define a name attribute for all modes"<<std::endl;
                 exit(EXIT_FAILURE);
@@ -74,7 +75,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
         while(pDet){
             //std::cout<<"Detector: "<<pDet->Attribute("name")<<" "<<pDet->Attribute("use")<<std::endl;
 
-            const char* detector_name= pChan->Attribute("name");
+            const char* detector_name= pDet->Attribute("name");
             if(detector_name==NULL){
                 std::cout<<otag<<"ERROR! Detectors need a name! Please define a name attribute for all detectors"<<std::endl;
                 exit(EXIT_FAILURE);
@@ -177,8 +178,6 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                 }
 
 
-
-
                 //0 means dont oscillate, 11 means electron disapearance, -11 means antielectron dis..etc..
                 if(pSubChan->Attribute("osc"))
                 {
@@ -203,16 +202,33 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
     if(pMC){
         while(pMC)
         {
-            //pot.push_back(strtof(pMC->Attribute("pot"),&end));
-            //pot_scaling.push_back(strtof(pMC->Attribute("potscale"),&end));
-            multisim_name.push_back(pMC->Attribute("treename"));
-            multisim_file.push_back(pMC->Attribute("filename"));
+
+            const char* tree = pMC->Attribute("treename");
+            if(tree==NULL){
+                std::cout<<otag<<"ERROR! You must have an associated root TTree name  for all MultisimFile tags: e.g treename='events'  "<<std::endl;
+                exit(EXIT_FAILURE);
+            }else{
+                multisim_name.push_back(tree);
+            }
+
+
+            const char* file = pMC->Attribute("filename");
+            if(file==NULL){
+                std::cout<<otag<<"ERROR! You must have an associated root filename for all MultisimFile tags. e.g filename='myexample.root'  "<<std::endl;
+                exit(EXIT_FAILURE);
+            }else{
+                multisim_file.push_back(file);
+            }
+
+
             const char* maxevents = pMC->Attribute("maxevents");
             if(maxevents==NULL){
-                multisim_maxevents.push_back(1e7);
+                multisim_maxevents.push_back(1e8);
             }else{
                 multisim_maxevents.push_back(strtod(maxevents,&end) );
             }
+
+
             const char* scale = pMC->Attribute("scale");
             if(scale==NULL){
                 multisim_scale.push_back(1.0);
@@ -232,6 +248,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
             parameter_names.push_back(vstring);
             */
 
+            //Here we can grab some friend tree information
             TiXmlElement *pFriend;
             pFriend = pMC->FirstChildElement("friend");
             if(pFriend){
@@ -256,23 +273,53 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
             std::vector<BranchVariable*> TEMP_branch_variables;
             while(pBranch){
 
-                std::string bnam = pBranch->Attribute("name");
-                std::string btype = pBranch->Attribute("type");
-                std::string bhist = pBranch->Attribute("associated_subchannel");
+                const char* bnam = pBranch->Attribute("name");
+                const char* btype = pBranch->Attribute("type");
+                const char* bhist = pBranch->Attribute("associated_subchannel");
+                const char* badditional_weight = pBranch->Attribute("additional_weight");
+
+                if(bnam == NULL){
+                    std::cout<<otag<<"ERROR!: Each branch must include the name of the branch to use."<<std::endl;
+                    std::cout<<otag<<"ERROR!: e.g name=`ereco`."<<std::endl;
+                    exit(EXIT_FAILURE);
+                }
+    
+                if(btype == NULL){
+                    if(is_verbose)std::cout<<otag<<"WARNING: No branch type has been specified, assuming double."<<std::endl;
+                    btype= "double";
+                }
+
+                if(bhist == NULL){
+                    std::cout<<otag<<"ERROR!: Each branch must have an associated_subchannel to fill! On branch: "<<bnam<<std::endl;
+                    std::cout<<otag<<"ERROR!: e.g associated_subchannel='mode_det_chan_subchannel'"<<std::endl;
+                    exit(EXIT_FAILURE);
+                }
+
+                if(badditional_weight == NULL){
+                   multisim_additional_weight_bool.push_back(0);
+                   multisim_additional_weight_names.push_back("");
+                }else{
+                   multisim_additional_weight_names.push_back(badditional_weight);
+                   multisim_additional_weight_bool.push_back(1);
+                   if(is_verbose)std::cout<<otag<<"Setting an additional weight for branch "<<bnam<<" using the branch "<<badditional_weight<<" as a reweighting."<<std::endl;
+                }
+
+
+
 
                 //if(btype == "int"){
                 //	std::cout<<"NO INT ALLOWED "<<bnam<<std::endl;
                 //	exit(EXIT_FAILURE);
                 //TEMP_branch_variables.push_back( new BranchVariable_i(bnam,btype, bhist ) );
                 //}else
-                if(btype == "double"){
+                if((std::string)btype == "double"){
                     if(is_verbose)std::cout<<otag<<"Setting double variable "<<bnam<<" @ "<<bhist<<std::endl;
                     TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist ) );
                     //}else if(btype == "float"){
                     //	std::cout<<otag<<"Setting float variable "<<bnam<<" @ "<<bhist<<std::endl;
                     //	TEMP_branch_variables.push_back( new BranchVariable_f(bnam, btype, bhist ) );
             }else{
-                std::cout<<otag<<"ERROR: currently only double, allowed for reco variables (sorry!)\n";
+                std::cout<<otag<<"ERROR: currently only double, allowed for input branch variables (sorry!) input: "<<btype<<std::endl;
                 exit(EXIT_FAILURE);
             }
 

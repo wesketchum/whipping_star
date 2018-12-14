@@ -34,6 +34,8 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     trees.resize(num_files,nullptr);
     f_weights.resize(num_files,nullptr);
 
+    multisim_additional_weight.resize(num_files,1.0);
+
     int good_event = 0;
 
     for(int fid=0; fid < num_files; ++fid) {
@@ -93,11 +95,16 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                     exit(EXIT_FAILURE);
             }
             
-
-
             trees.at(fid)->SetBranchAddress(branch_variable->name.c_str(),
                     branch_variable->GetValue());
         }
+  
+        if(multisim_additional_weight_bool[fid]){
+        //we have an additional weight we want to apply at run time, otherwise its just set at 1. 
+            trees[fid]->SetBranchAddress(multisim_additional_weight_names[fid].c_str(), &multisim_additional_weight[fid]); 
+        }
+    
+
 
         trees.at(fid)->GetEntry(good_event);
 
@@ -214,7 +221,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double> >& thisfWeight,
         size_t fileid,
         int entryid) {
-    double global_weight = 1;
+    double global_weight = multisim_additional_weight[fileid];//this will be 1.0 unless specified in xml
 
     global_weight *= multisim_scale[fileid];
 
@@ -310,7 +317,7 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
         double reco_var = *(static_cast<double*>(branch_var_jt->GetValue()));
         //reco_var = 1.238*reco_var+0.025;
         int reco_bin = spec_central_value.GetGlobalBinNumber(reco_var,ih);
-        spec_central_value.hist[ih].Fill(reco_var,global_weight);
+        spec_central_value.hist[ih].Fill(reco_var, global_weight);
 
         for(int m=0; m<weights.size(); m++){
             if(reco_bin<0) continue;

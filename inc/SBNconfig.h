@@ -135,10 +135,14 @@ class SBNconfig {
 	// For some reason I have decided that the first multisim, weight[0] must be the central value, =1
 	int num_multisim_files;
 	//std::vector<int> num_multisim;
-	std::vector<std::string> multisim_name;	
+	std::vector<std::string> multisim_name;	 //name means treenae here
 	std::vector<std::string> multisim_file;	
-        std::map<std::string,std::vector<std::string>> multisim_file_friend_map;
-        std::map<std::string,std::vector<std::string>> multisim_file_friend_treename_map;
+    std::vector<std::string> multisim_additional_weight_names;
+    std::vector<bool> multisim_additional_weight_bool;
+    std::vector<double> multisim_additional_weight;
+ 
+    std::map<std::string,std::vector<std::string>> multisim_file_friend_map;
+    std::map<std::string,std::vector<std::string>> multisim_file_friend_treename_map;
 
 
 	std::vector<int> multisim_maxevents;	
