@@ -3,7 +3,7 @@ using namespace sbn;
 
 //standard constructor given an .xml
 SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
-    otag = "SBNconfig::SBNconfig\t|| ";
+    otag = "SBNconfig::SBNconfig\t||\t";
 
     if(is_verbose){std::cout<<otag<<"---------------------------------------------------------------"<<std::endl;}
 

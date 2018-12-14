@@ -6,7 +6,10 @@
 using namespace sbn;
 
 SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
-    std::cout << "SBNcovariance::SBNcovariance\t|| Start" << std::endl;
+    otag = "SBN covariance::SBNcovariance\t||\t";
+    
+    std::cout <<otag<<"Start" << std::endl;
+
 
     universes_used = 0;
     tolerence_positivesemi = 1e-5;
@@ -25,7 +28,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     variations.clear();
     std::vector<std::string> variations_tmp;
 
-    std::cout<<"SBNcovariance::SBNcovariance\t|| Construct for num_files=" << num_files << std::endl;
+    std::cout<<otag<<" Construct for num_files=" << num_files << std::endl;
 
     std::vector<int> nentries(num_files,0);
     std::vector<int> used_montecarlos(num_files,0);
@@ -47,12 +50,12 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         trees[fid] = (TTree*)(files[fid]->Get(montecarlo_name.at(fid).c_str()));
         nentries[fid]= (int)trees.at(fid)->GetEntries();
 
-        std::cout << "SBNcovariance::SBNcovariance\t||" << std::endl;
-        std::cout << "SBNcovariance::SBNcovariance\t|| TFile::Open() file=" << files[fid]->GetName() << " @" << files[fid] << std::endl;
+        std::cout << otag<<"" << std::endl;
+        std::cout << otag<<" TFile::Open() file=" << files[fid]->GetName() << " @" << files[fid] << std::endl;
 
         auto montecarlo_file_friend_treename_iter = montecarlo_file_friend_treename_map.find(fn);
         if (montecarlo_file_friend_treename_iter != montecarlo_file_friend_treename_map.end()) {
-            std::cout<<"SBNcovariance::SBNcovariance\t|| Detected friend trees" << std::endl;
+            std::cout<<otag<<" Detected friend trees" << std::endl;
 
             auto montecarlo_file_friend_iter = montecarlo_file_friend_map.find(fn);
             if (montecarlo_file_friend_iter == montecarlo_file_friend_map.end()) {
@@ -66,13 +69,13 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 std::string treefriendname = (*montecarlo_file_friend_treename_iter).second.at(k);
                 std::string treefriendfile = (*montecarlo_file_friend_iter).second.at(k);
 
-                std::cout << "SBNcovariance::SBNcovariance\t|| Adding a friend tree:  " <<treefriendname<<" from file: "<< treefriendfile << " to file " << fn << std::endl;
+                std::cout << otag<<" Adding a friend tree:  " <<treefriendname<<" from file: "<< treefriendfile << " to file " << fn << std::endl;
 
                 trees[fid]->AddFriend(treefriendname.c_str(),treefriendfile.c_str());
             }
         }
 
-        std::cout<<"SBNcovariance::SBNcovariance\t|| Read variations & universe size" << std::endl;
+        std::cout<<otag<<" Read variations & universe size" << std::endl;
 
         trees.at(fid)->SetBranchAddress("weights", &(f_weights[fid]) );
 
@@ -81,17 +84,17 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             int is_valid_subchannel = 0;
             for(const auto &name: fullnames){
                 if(branch_variable->associated_hist==name){
-                    std::cout<<"SBNcovariance::SBNcovariance\t|| Found a valid subchannel for this branch: " <<name<<std::endl;
+                    std::cout<<otag<<" Found a valid subchannel for this branch: " <<name<<std::endl;
                     is_valid_subchannel++;
                 }
             }
             if(is_valid_subchannel==0){
-                    std::cout<<"SBNcovariance::SBNcovariance\t|| ERROR ERROR: This branch did not match one defined in the .xml : " <<branch_variable->associated_hist<<std::endl;
-                    std::cout<<"SBNcovariance::SBNcovariance\t|| ERROR ERROR: There is probably a typo somehwhere in xml! "<<std::endl;
+                    std::cout<<otag<<" ERROR ERROR: This branch did not match one defined in the .xml : " <<branch_variable->associated_hist<<std::endl;
+                    std::cout<<otag<<" ERROR ERROR: There is probably a typo somehwhere in xml! "<<std::endl;
                     exit(EXIT_FAILURE);
 
             }else if(is_valid_subchannel>1){
-                    std::cout<<"SBNcovariance::SBNcovariance\t|| ERROR ERROR: This branch matched more than 1 subchannel!: " <<branch_variable->associated_hist<<std::endl;
+                    std::cout<<otag<<" ERROR ERROR: This branch matched more than 1 subchannel!: " <<branch_variable->associated_hist<<std::endl;
                     exit(EXIT_FAILURE);
             }
             
@@ -121,7 +124,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             if(it.first == bnbcorrection_str) 
                 continue;    
 
-            std::cout <<" SBNcovariance::SBNcovariance\t|| "
+            std::cout <<otag
                 << it.first << " has " << it.second.size() << " montecarlos in file " << fid << std::endl;
 
             used_montecarlos[fid] += it.second.size();
@@ -135,7 +138,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     variations.insert(variations.begin(),variations_tmp.begin(),unique_iter);
 
     // make a map and start filling, before filling find if already in map, if it is check size.
-    std::cout << "SBNcovariance::SBNcovariance\t|| Found " << variations.size() << " unique variations: " << std::endl;
+    std::cout << otag<<" Found " << variations.size() << " unique variations: " << std::endl;
 
     map_universe_to_var.clear();
     num_universes_per_variation.clear();
@@ -143,7 +146,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     for(size_t vid=0; vid<variations.size(); ++vid) {
         const auto &v =  variations[vid];
 
-        std::cout<<"SBNcovariance::SBNcovariance\t|| "<<v<<std::endl;
+        std::cout<<otag<<" "<<v<<std::endl;
         trees.front()->GetEntry(good_event);
         int thissize = (*(f_weights.front())).at(v).size(); // map lookup
 
@@ -157,64 +160,64 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     }
 
     for(int i=1; i<num_files; i++){
-        std::cout << "SBNcovariance::SBNcovariance\t|| File: " << i << " has " << used_montecarlos.at(i) << " montecarlos" << std::endl;
+        std::cout << otag<<" File: " << i << " has " << used_montecarlos.at(i) << " montecarlos" << std::endl;
         if(used_montecarlos.at(i)!= used_montecarlos.at(i-1)){
-            std::cerr << "SBNcovariance::SBNcovariance\t|| Warning, number of universes for are different between files" << std::endl;
-            std::cerr << "SBNcovariance::SBNcovariance\t|| The missing universes are Set to weights of 1. Make sure this is what you want!" << std::endl;
+            std::cerr << otag<<" Warning, number of universes for are different between files" << std::endl;
+            std::cerr << otag<<" The missing universes are Set to weights of 1. Make sure this is what you want!" << std::endl;
             for(int j=0; j<num_files; j++){
                 if(universes_used < used_montecarlos.at(j)) 
                     universes_used = used_montecarlos.at(j);
-                std::cerr << "SBNcovariance::SBNmultisom\t|| File " << j << " montecarlos: " << used_montecarlos.at(j) << std::endl;
+                std::cerr <<otag<<"File " << j << " montecarlos: " << used_montecarlos.at(j) << std::endl;
             }
         }
-        std::cout << "SBNcovariance::SBNcovariance\t|| Disregard, using the first file number of montecarlos anyways" << std::endl;
+        std::cout << otag<<" Disregard, using the first file number of montecarlos anyways" << std::endl;
         universes_used = used_montecarlos.at(0);
     }
 
     if(num_files == 1) 
         universes_used = used_montecarlos.front();
 
-    std::cout << "SBNcovariance::SBNcovariance\t|| -------------------------------------------------------------" << std::endl;
-    std::cout << "SBNcovariance::SBNcovariance\t|| Initilizing " << universes_used << " universes." << std::endl;
-    std::cout << "SBNcovariance::SBNcovariance\t|| -------------------------------------------------------------" << std::endl;
+    std::cout << otag<<" -------------------------------------------------------------" << std::endl;
+    std::cout << otag<<" Initilizing " << universes_used << " universes." << std::endl;
+    std::cout << otag<<" -------------------------------------------------------------" << std::endl;
 
     std::vector<double> base_vec (spec_central_value.num_bins_total,0.0);
 
-    std::cout << "SBNcovariance::SBNcovariance\t|| Full concatanated vector has : " << spec_central_value.num_bins_total << std::endl;
+    std::cout << otag<<" Full concatanated vector has : " << spec_central_value.num_bins_total << std::endl;
 
     multi_vecspec.clear();
     multi_vecspec.resize(universes_used,base_vec);
 
-    std::cout << "SBNcovariance::SBNcovariance\t|| multi_vecspec now initilized of size :" << multi_vecspec.size() << std::endl;
-    std::cout << "SBNcovariance::SBNcovariance\t|| Reading the data files" << std::endl;
+    std::cout << otag<<" multi_vecspec now initilized of size :" << multi_vecspec.size() << std::endl;
+    std::cout << otag<<" Reading the data files" << std::endl;
     watch.Reset();
     watch.Start();
 
     for(int j=0; j < num_files; j++){
-        std::cout << "SBNcovariance::SBNcovariance\t|| @ data file=" << files[j]->GetName() << std::endl;
+        std::cout << otag<<" @ data file=" << files[j]->GetName() << std::endl;
         int nevents = std::min(montecarlo_maxevents[j], nentries[j]);
         size_t nbytes = 0;
         for(int i=0; i < nevents; i++) {
             nbytes+= trees[j]->GetEntry(i);
             ProcessEvent(*(f_weights[j]),j,i);
         } //end of entry loop
-        std::cout << "SBNcovariance::SBNcovariance\t|| nbytes read=" << nbytes << std::endl;
+        std::cout << otag<<" nbytes read=" << nbytes << std::endl;
 
     } //end of file loop
 
     watch.Stop();
-    std::cout << "SBNcovariance::SBNcovariance\t|| done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
+    std::cout << otag<<" done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
 
     /***************************************************************
      *		Now some clean-up and Writing
      * ************************************************************/
 
     for(auto f: files){
-        std::cout << "SBNcovariance::SBNcovariance\t|| TFile::Close() file=" << f->GetName() << " @" << f << std::endl;
+        std::cout << otag<<" TFile::Close() file=" << f->GetName() << " @" << f << std::endl;
         f->Close();
     }
 
-    std::cout << "SBNcovariance::SBNcovariance\t|| End" << std::endl;
+    std::cout << otag<<" End" << std::endl;
 }
 
 
@@ -231,7 +234,7 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
 
     if(std::isinf(global_weight) or (global_weight != global_weight)){
         std::stringstream ss;
-        ss << "SBNcovariance::ProcessEvent\t|| ERROR  error @ " << entryid
+        ss << "SBNcovariance::ProcessEvent\t||\tERROR  error @ " << entryid
             << " in File " << montecarlo_file.at(fileid) 
             << " as its either inf/nan: " << global_weight << std::endl;
         throw std::runtime_error(ss.str());
@@ -278,13 +281,13 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
 
             if(is_inf or is_nan){
                 std::stringstream ss;
-                ss << "SBNcovariance::ProcessEvent\t|| ERROR! Killing :: event # " << entryid
+                ss << "SBNcovariance::ProcessEvent\t||\t ERROR! Killing :: event # " << entryid
                     << " in File " << montecarlo_file.at(fileid) << " weight: " << wei << " global bnb: " << global_weight << " in " << var << std::endl;
                 throw std::runtime_error(ss.str());
             }
 
             if(wei > abnormally_large_weight){
-                std::cout<<"ATTENTION! SBNcovariance::ProcessEvent\t|| HUGE weight: "<<wei<<" at "<<var<<" event "<<entryid<<" file "<<fileid<<std::endl;
+                std::cout<<"SBNcovariance::ProcessEvent\t||\tATTENTION!! HUGE weight: "<<wei<<" at "<<var<<" event "<<entryid<<" file "<<fileid<<std::endl;
             }
 
             weights[wid1] *= wei;
@@ -303,7 +306,7 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
     //So the size of weights must equal global universes ya?
     if(universes_used != num_universes_per_variation.size()){
         std::stringstream ss;
-        ss <<"SBNcovariance::SBNcovariance\t|| ERROR "<<std::endl;
+        ss <<otag<<" ERROR "<<std::endl;
         ss <<"weights.size() "<<weights.size()<<std::endl;
         ss <<"universes_used "<<universes_used<<std::endl;
         ss <<"multi_vecspec.size() "<<multi_vecspec.size()<<std::endl;
@@ -351,7 +354,7 @@ int SBNcovariance::FillHistograms(int file, int uni, double wei){
 
 int SBNcovariance::FormCovarianceMatrix(std::string tag){
 
-    std::cout<<"SBNcovariance::FormCovariancematrix\t|| Start" << std::endl;
+    std::cout<<"SBNcovariance::FormCovariancematrix\t||\tStart" << std::endl;
     full_covariance.ResizeTo(num_bins_total, num_bins_total);
     frac_covariance.ResizeTo(num_bins_total, num_bins_total);
     full_correlation.ResizeTo(num_bins_total, num_bins_total);
@@ -404,7 +407,7 @@ int SBNcovariance::FormCovarianceMatrix(std::string tag){
     double* a_frac_covariance  = frac_covariance.GetMatrixArray();
     double* a_full_correlation = full_correlation.GetMatrixArray();
 
-    std::cout << "SBNcovariance::FormCovariancematrix\t|| Form variation sz= (" << num_bins_total << "X" << num_bins_total << ") covariance matrix(s)" << std::endl;
+    std::cout << "SBNcovariance::FormCovariancematrix\t||\tForm variation sz= (" << num_bins_total << "X" << num_bins_total << ") covariance matrix(s)" << std::endl;
     watch.Reset();
     watch.Start();
 #pragma acc parallel loop						\
@@ -427,7 +430,7 @@ int SBNcovariance::FormCovarianceMatrix(std::string tag){
         }
     }
     watch.Stop();
-    std::cout << "SBNcovariance::FormCovariancematrix\t|| done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
+    std::cout << "SBNcovariance::FormCovariancematrix\t||\tdone CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
 
 
     // std::cout << "SBNcovariance::FormCovariancematrix\t|| Calculating on the CPU" << std::endl;
@@ -460,14 +463,14 @@ int SBNcovariance::FormCovarianceMatrix(std::string tag){
 
     watch.Reset();
     watch.Start();
-    std::cout << "SBNcovariance::FormCovariancematrix\t|| Summing over variations for covariance matrix" << std::endl;
+    std::cout << "SBNcovariance::FormCovariancematrix\t||\tSumming over variations for covariance matrix" << std::endl;
     for(int vid=0; vid<variations.size(); ++vid) {
         full_covariance += vec_full_covariance[vid];
     }
     watch.Stop();
-    std::cout << "SBNcovariance::FormCovariancematrix\t|| done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
+    std::cout << "SBNcovariance::FormCovariancematrix\t||\tdone CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
 
-    std::cout<<"SBNcovariance::FormCovariancematrix\t|| Now calculating fractional covariance and correlation matrix from full covariance."<<std::endl;
+    std::cout<<"SBNcovariance::FormCovariancematrix\t||\tNow calculating fractional covariance and correlation matrix from full covariance."<<std::endl;
     watch.Reset();
     watch.Start();
 
@@ -491,7 +494,7 @@ int SBNcovariance::FormCovarianceMatrix(std::string tag){
         }
     }
     watch.Stop();
-    std::cout << "SBNcovariance::FormCovariancematrix\t|| done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
+    std::cout << "SBNcovariance::FormCovariancematrix\t||\tdone CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
 
     /************************************************************
      *			Saving to file				    *
@@ -546,7 +549,7 @@ int SBNcovariance::FormCovarianceMatrix(std::string tag){
 
     qualityTesting();
 
-    std::cout<<"SBNcovariance::FormCovariancematrix\t|| End" << std::endl;
+    std::cout<<"SBNcovariance::FormCovariancematrix\t||\tEnd" << std::endl;
     return 0;
 }
 
@@ -561,8 +564,8 @@ int SBNcovariance::qualityTesting() {
     std::cout<<"SBNcovariance::qualityTesting\t||-----------------------------------------------------" << std::endl;
 
 
-    std::cout<<"SBNcovariance::qualityTesting\t|| Checking if generated matrix is indeed a valid covariance matrix." << std::endl;
-    std::cout<<"SBNcovariance::qualityTesting\t|| First checking if matrix is symmetric." << std::endl;
+    std::cout<<"SBNcovariance::qualityTesting\t||\tChecking if generated matrix is indeed a valid covariance matrix." << std::endl;
+    std::cout<<"SBNcovariance::qualityTesting\t||\tFirst checking if matrix is symmetric." << std::endl;
 
     double max_sym_violation = 0;
     for(int i=0; i<num_bins_total; i++){
@@ -574,20 +577,20 @@ int SBNcovariance::qualityTesting() {
 
 
     if(max_sym_violation < 1e-13){
-        std::cout<<"SBNcovariance::qualityTesting\t|| PASS: Generated covariance matrix is symmetric"<<std::endl;
+        std::cout<<"SBNcovariance::qualityTesting\t||\tPASS: Generated covariance matrix is symmetric"<<std::endl;
     }else{
-        std::cout<<"SBNcovariance::qualityTesting\t||  ERROR result is not symmetric! "<<max_sym_violation<<std::endl;
+        std::cout<<"SBNcovariance::qualityTesting\t||\tERROR result is not symmetric! "<<max_sym_violation<<std::endl;
         for(int i=0; i<num_bins_total; i++){
             for(int j=0; j<num_bins_total; j++){
                 double tnp = fabs((full_covariance(j,i)-full_covariance(i,j))/(full_covariance(j,i)+full_covariance(i,j)));
                 if(full_covariance(i,j) != full_covariance(j,i)) std::cout<<i<<" "<<j<<" "<<full_covariance(i,j)<<" "<<full_covariance(j,i)<<" "<<tnp<<std::endl;
             }
         }
-        std::cout<<"SBNcovariance::qualityTesting\t||  ERROR result is not symmetric!"<<std::endl;
+        std::cout<<"SBNcovariance::qualityTesting\t||\tERROR result is not symmetric!"<<std::endl;
         exit(EXIT_FAILURE);
     }
 
-    std::cout<<"SBNcovariance::qualityTesting\t|| Checking if generated matrix is positive semi-definite by looking at eigenvalues." << std::endl;
+    std::cout<<"SBNcovariance::qualityTesting\t||\tChecking if generated matrix is positive semi-definite by looking at eigenvalues." << std::endl;
     //if a matrix is (a) real and (b) symmetric (checked above) then to prove positive semi-definite, we just need to check eigenvalues and >=0;
     TMatrixDEigen eigen (full_covariance);
     TVectorD eigen_values = eigen.GetEigenValuesRe();
@@ -597,7 +600,7 @@ int SBNcovariance::qualityTesting() {
         if(eigen_values(i)<0){
             is_small_negative_eigenvalue = true;
             if(fabs(eigen_values(i))> tolerence_positivesemi ){
-                std::cout << "SBNcovariance::qualityTesting\t|| ERROR contains (at least one)  negative eigenvalue: " << eigen_values(i) << std::endl;
+                std::cout << "SBNcovariance::qualityTesting\t||\tERROR contains (at least one)  negative eigenvalue: " << eigen_values(i) << std::endl;
                 exit(EXIT_FAILURE);
             }
         }
@@ -605,11 +608,11 @@ int SBNcovariance::qualityTesting() {
 
 
     if(is_small_negative_eigenvalue){
-        std::cout<<"SBNcovariance::qualityTesting\t|| PASS: Generated covariance matrix is (allmost) positive semi-definite. It did contain small negative values of absolute value <= :"<<tolerence_positivesemi<<std::endl;
+        std::cout<<"SBNcovariance::qualityTesting\t||\tPASS: Generated covariance matrix is (allmost) positive semi-definite. It did contain small negative values of absolute value <= :"<<tolerence_positivesemi<<std::endl;
     }else{
-        std::cout<<"SBNcovariance::qualityTesting\t|| PASS: Generated covariance matrix is positive semi-definite."<<std::endl;
+        std::cout<<"SBNcovariance::qualityTesting\t||\tPASS: Generated covariance matrix is positive semi-definite."<<std::endl;
     }
-    std::cout<<"SBNcovariance::qualityTesting\t|| Congratulations, matrix is indeed a valid covariance matrix." << std::endl;
+    std::cout<<"SBNcovariance::qualityTesting\t||\tCongratulations, matrix is indeed a valid covariance matrix." << std::endl;
 
     return 0;
 }
@@ -618,7 +621,7 @@ int SBNcovariance::PrintVariations(std::string tag){
     TFile *fout = new TFile(("SBNfit_variation_plots_"+tag+".root").c_str(),"recreate");
     fout->cd();
 
-    std::cout << "SBNcovariance::PrintVariations\t|| Starting to Print all variations, this can take a little. " << std::endl;
+    std::cout << "SBNcovariance::PrintVariations\t||\tStarting to Print all variations, this can take a little. " << std::endl;
 
     std::vector<TDirectory*> vec_dir;
 
@@ -658,7 +661,7 @@ int SBNcovariance::PrintVariations(std::string tag){
         vec_canvas.push_back(tmpc);	
     }
 
-    std::cout<<"SBNcovariance::PrintVariations\t|| Starting universe loop. "<<std::endl;
+    std::cout<<"SBNcovariance::PrintVariations\t||Starting universe loop [This can take a while!] "<<std::endl;
     TRandom3 *rangen = new TRandom3(0);
     for(int m=0; m < universes_used; m++){
         std::string var = map_universe_to_var.at(m);
@@ -679,7 +682,7 @@ int SBNcovariance::PrintVariations(std::string tag){
 
     }//end universe loop
 
-    std::cout << "SBNcovariance::PrintVariations\t|| Finished. Just tidying up and writing TCanvas. " << std::endl;
+    std::cout << "SBNcovariance::PrintVariations\t||\tFinished. Just tidying up and writing TCanvas. " << std::endl;
 
 
     for(int v =0; v< variations.size(); v++){
@@ -707,7 +710,7 @@ int SBNcovariance::PrintVariations(std::string tag){
 
 
 int SBNcovariance::PrintMatricies(std::string tag) {
-    std::cout << "SBNcovariance::PrintMatricies\t|| Start" << std::endl;
+    std::cout << "SBNcovariance::PrintMatricies\t||\tStart" << std::endl;
 
     TFile* fout = new TFile(("SBNfit_covariance_plots_"+tag+".root").c_str(),"recreate");
     fout->cd();
@@ -830,7 +833,7 @@ int SBNcovariance::PrintMatricies(std::string tag) {
     fout->cd();
     fout->Close();
 
-    std::cout << "SBNcovariance::PrintMatricies\t|| End" << std::endl;
+    std::cout << "SBNcovariance::PrintMatricies\t||\tEnd" << std::endl;
     return 0;
 }
 
