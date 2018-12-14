@@ -17,8 +17,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     std::map<std::string, int> parameter_sims;
 
     //Initialise the central value SBNspec.
-    SBNspec tm(xmlname,-1,false);
-    spec_central_value = tm;
+    spec_central_value = SBNspec(xmlname,-1,false);
 
     int num_files = multisim_file.size();
 
