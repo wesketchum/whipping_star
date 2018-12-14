@@ -76,7 +76,7 @@ namespace sbn{
     TH2D * hist_full_cor;
     TH2D * hist_full_cov;
 
-    //Some checks on multisims
+    //Some checks on montecarlos
     double tolerence_positivesemi;
     int universes_used;
     double abnormally_large_weight;

@@ -131,22 +131,23 @@ class SBNconfig {
 	// If you have a large covariance matrix/spectrum (say containing nu and nubar mode) but only want to run with nu-mode (so you Set use=0 in nubarmode) the vector used_bins contains all the bins that are actually in use. 
 	std::vector<int> used_bins; 
 
-	//For generating a covariance matrix from scratch, this contains the number of multisims (weights in weight vector) and their names.
-	// For some reason I have decided that the first multisim, weight[0] must be the central value, =1
-	int num_multisim_files;
-	//std::vector<int> num_multisim;
-	std::vector<std::string> multisim_name;	 //name means treenae here
-	std::vector<std::string> multisim_file;	
-    std::vector<std::string> multisim_additional_weight_names;
-    std::vector<bool> multisim_additional_weight_bool;
-    std::vector<double> multisim_additional_weight;
- 
-    std::map<std::string,std::vector<std::string>> multisim_file_friend_map;
-    std::map<std::string,std::vector<std::string>> multisim_file_friend_treename_map;
+	//For generating a covariance matrix from scratch, this contains the number of montecarlos (weights in weight vector) and their names.
+	// For some reason I have decided that the first montecarlo, weight[0] must be the central value, =1
+	int num_montecarlo_files;
+	//std::vector<int> num_montecarlo;
+	std::vector<std::string> montecarlo_name;	 //name means treenae here
+	std::vector<std::string> montecarlo_file;	
+    std::vector<std::string> montecarlo_additional_weight_names;
+    std::vector<bool> montecarlo_additional_weight_bool;
+    std::vector<double> montecarlo_additional_weight;
 
 
-	std::vector<int> multisim_maxevents;	
-	std::vector<double> multisim_scale;	
+    std::map<std::string,std::vector<std::string>> montecarlo_file_friend_map;
+    std::map<std::string,std::vector<std::string>> montecarlo_file_friend_treename_map;
+
+
+	std::vector<int> montecarlo_maxevents;	
+	std::vector<double> montecarlo_scale;	
 	
 	std::vector<double> pot_scaling;
 	std::vector<double> pot;

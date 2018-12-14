@@ -38,7 +38,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
     pDet =  doc.FirstChildElement("detector");
     pChan = doc.FirstChildElement("channel");
     pCov  = doc.FirstChildElement("covariance");
-    pMC   = doc.FirstChildElement("MultisimFile");
+    pMC   = doc.FirstChildElement("MonteCarloFile");
     pData   = doc.FirstChildElement("data");
 
     if(!pMode){
@@ -207,35 +207,35 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
 
             const char* tree = pMC->Attribute("treename");
             if(tree==NULL){
-                std::cout<<otag<<"ERROR! You must have an associated root TTree name  for all MultisimFile tags: e.g treename='events'  "<<std::endl;
+                std::cout<<otag<<"ERROR! You must have an associated root TTree name  for all MonteCarloFile tags: e.g treename='events'  "<<std::endl;
                 exit(EXIT_FAILURE);
             }else{
-                multisim_name.push_back(tree);
+                montecarlo_name.push_back(tree);
             }
 
 
             const char* file = pMC->Attribute("filename");
             if(file==NULL){
-                std::cout<<otag<<"ERROR! You must have an associated root filename for all MultisimFile tags. e.g filename='myexample.root'  "<<std::endl;
+                std::cout<<otag<<"ERROR! You must have an associated root filename for all MonteCarloFile tags. e.g filename='myexample.root'  "<<std::endl;
                 exit(EXIT_FAILURE);
             }else{
-                multisim_file.push_back(file);
+                montecarlo_file.push_back(file);
             }
 
 
             const char* maxevents = pMC->Attribute("maxevents");
             if(maxevents==NULL){
-                multisim_maxevents.push_back(1e8);
+                montecarlo_maxevents.push_back(1e8);
             }else{
-                multisim_maxevents.push_back(strtod(maxevents,&end) );
+                montecarlo_maxevents.push_back(strtod(maxevents,&end) );
             }
 
 
             const char* scale = pMC->Attribute("scale");
             if(scale==NULL){
-                multisim_scale.push_back(1.0);
+                montecarlo_scale.push_back(1.0);
             }else{
-                multisim_scale.push_back(strtod(scale,&end) );
+                montecarlo_scale.push_back(strtod(scale,&end) );
             }
 
             /*
@@ -255,15 +255,15 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
             pFriend = pMC->FirstChildElement("friend");
             if(pFriend){
 
-                if( multisim_file_friend_treename_map.count(multisim_file.back())>0){
-                    (multisim_file_friend_treename_map[multisim_file.back()]).push_back( pFriend->Attribute("treename") );
-                    (multisim_file_friend_map[multisim_file.back()]).push_back(pFriend->Attribute("filename"));
+                if(montecarlo_file_friend_treename_map.count(montecarlo_file.back())>0){
+                    (montecarlo_file_friend_treename_map[montecarlo_file.back()]).push_back( pFriend->Attribute("treename") );
+                    (montecarlo_file_friend_map[montecarlo_file.back()]).push_back(pFriend->Attribute("filename"));
                 }else{
                     std::vector<std::string> temp_treename = {pFriend->Attribute("treename")};
                     std::vector<std::string> temp_filename = {pFriend->Attribute("filename")};
 
-                    multisim_file_friend_treename_map[multisim_file.back()] = temp_treename;
-                    multisim_file_friend_map[multisim_file.back()] = temp_filename;
+                    montecarlo_file_friend_treename_map[montecarlo_file.back()] = temp_treename;
+                    montecarlo_file_friend_map[montecarlo_file.back()] = temp_filename;
                 }
             }
 
@@ -298,11 +298,11 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                 }
 
                 if(badditional_weight == NULL){
-                   multisim_additional_weight_bool.push_back(0);
-                   multisim_additional_weight_names.push_back("");
+                   montecarlo_additional_weight_bool.push_back(0);
+                   montecarlo_additional_weight_names.push_back("");
                 }else{
-                   multisim_additional_weight_names.push_back(badditional_weight);
-                   multisim_additional_weight_bool.push_back(1);
+                   montecarlo_additional_weight_names.push_back(badditional_weight);
+                   montecarlo_additional_weight_bool.push_back(1);
                    if(is_verbose)std::cout<<otag<<"Setting an additional weight for branch "<<bnam<<" using the branch "<<badditional_weight<<" as a reweighting."<<std::endl;
                 }
 
@@ -349,7 +349,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
             }
             branch_variables.push_back(TEMP_branch_variables);
             //next file
-            pMC=pMC->NextSiblingElement("MultisimFile");
+            pMC=pMC->NextSiblingElement("MonteCarloFile");
         }
     }
 

@@ -32,26 +32,26 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
 	spec_osc_sin  = tm;
 	spec_osc_sinsq  = tm;
 
-	int num_files = multisim_file.size();
+	int num_files = montecarlo_file.size();
 
-	for(auto &fn: multisim_file){
+	for(auto &fn: montecarlo_file){
 		files.push_back(new TFile(fn.c_str()));
 	}
 
 
-	for(int i=0; i<multisim_name.size(); i++){
-		trees.push_back((TTree*)files.at(i)->Get(multisim_name.at(i).c_str()) );
+	for(int i=0; i<montecarlo_name.size(); i++){
+		trees.push_back((TTree*)files.at(i)->Get(montecarlo_name.at(i).c_str()) );
 	}
 
-  for(int i=0; i<multisim_file.size(); i++){
+  for(int i=0; i<montecarlo_file.size(); i++){
 
-  	if( multisim_file_friend_treename_map.count(multisim_file.at(i))>0){
-			for(int k=0; k< multisim_file_friend_treename_map.at(multisim_file.at(i)).size(); k++){
+  	if( montecarlo_file_friend_treename_map.count(montecarlo_file.at(i))>0){
+			for(int k=0; k< montecarlo_file_friend_treename_map.at(montecarlo_file.at(i)).size(); k++){
 
-	  		std::string treefriendname = (multisim_file_friend_treename_map.at(multisim_file.at(i))).at(k);
-	  		std::string treefriendfile = (multisim_file_friend_map.at(multisim_file.at(i))).at(k);
+	  		std::string treefriendname = (montecarlo_file_friend_treename_map.at(montecarlo_file.at(i))).at(k);
+	  		std::string treefriendfile = (montecarlo_file_friend_map.at(montecarlo_file.at(i))).at(k);
 
-				std::cout<<"SBNmultisim::SBNmultisim\t|| Adding a friend tree  "<< treefriendfile<<" to file "<<multisim_file.at(i)<<std::endl;
+				std::cout<<"SBNmontecarlo::SBNmontecarlo\t|| Adding a friend tree  "<< treefriendfile<<" to file "<<montecarlo_file.at(i)<<std::endl;
 
        	trees.at(i)->AddFriend( treefriendname.c_str()   ,  treefriendfile.c_str()   );
 			}
@@ -92,21 +92,21 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
 		delete f_weights->at(j);
 		f_weights->at(j)=0;
 
-		for(int i=0; i< std::min(  multisim_maxevents.at(j)  ,nentries.at(j)); i++){
+		for(int i=0; i< std::min(  montecarlo_maxevents.at(j)  ,nentries.at(j)); i++){
 			trees.at(j)->GetEntry(i);
 			std::map<std::string, std::vector<double>> * thisfWeight = f_weights->at(j);
 
-			if(i%100==0) std::cout<<"SBNgenerate::SBNgenerate\t|| On event: "<<i<<" of "<<nentries[j]<<" from File: "<<multisim_file[j]<<std::endl;
+			if(i%100==0) std::cout<<"SBNgenerate::SBNgenerate\t|| On event: "<<i<<" of "<<nentries[j]<<" from File: "<<montecarlo_file[j]<<std::endl;
 
 			double global_weight = 1;
-			global_weight = global_weight*multisim_scale.at(j);
+			global_weight = global_weight*montecarlo_scale.at(j);
 
 			if(thisfWeight->count("bnbcorrection_FluxHist")>0){
 				global_weight = global_weight*thisfWeight->at("bnbcorrection_FluxHist").front();
 			}
 
 			if(std::isinf(global_weight) || global_weight != global_weight){
-				std::cout<<"SBNgenerate::SBNgenerate\t|| ERROR  error @ "<<i<<" in File "<<multisim_file.at(j)<<" as its either inf/nan: "<<global_weight<<std::endl;
+				std::cout<<"SBNgenerate::SBNgenerate\t|| ERROR  error @ "<<i<<" in File "<<montecarlo_file.at(j)<<" as its either inf/nan: "<<global_weight<<std::endl;
 				exit(EXIT_FAILURE);
 			}
 

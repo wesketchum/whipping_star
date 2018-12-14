@@ -20,7 +20,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     SBNspec tm(xmlname,-1,false);
     spec_central_value = tm;
 
-    int num_files = multisim_file.size();
+    int num_files = montecarlo_file.size();
 
     variations.clear();
     std::vector<std::string> variations_tmp;
@@ -28,45 +28,45 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     std::cout<<"SBNcovariance::SBNcovariance\t|| Construct for num_files=" << num_files << std::endl;
 
     std::vector<int> nentries(num_files,0);
-    std::vector<int> used_multisims(num_files,0);
+    std::vector<int> used_montecarlos(num_files,0);
 
     files.resize(num_files,nullptr);
     trees.resize(num_files,nullptr);
     f_weights.resize(num_files,nullptr);
 
-    multisim_additional_weight.resize(num_files,1.0);
+    montecarlo_additional_weight.resize(num_files,1.0);
 
     int good_event = 0;
 
     for(int fid=0; fid < num_files; ++fid) {
-        const auto& fn = multisim_file.at(fid);
+        const auto& fn = montecarlo_file.at(fid);
 
 
 
         files[fid] = TFile::Open(fn.c_str());
-        trees[fid] = (TTree*)(files[fid]->Get(multisim_name.at(fid).c_str()));
+        trees[fid] = (TTree*)(files[fid]->Get(montecarlo_name.at(fid).c_str()));
         nentries[fid]= (int)trees.at(fid)->GetEntries();
 
         std::cout << "SBNcovariance::SBNcovariance\t||" << std::endl;
         std::cout << "SBNcovariance::SBNcovariance\t|| TFile::Open() file=" << files[fid]->GetName() << " @" << files[fid] << std::endl;
 
-        auto multisim_file_friend_treename_iter = multisim_file_friend_treename_map.find(fn);
-        if (multisim_file_friend_treename_iter != multisim_file_friend_treename_map.end()) {
+        auto montecarlo_file_friend_treename_iter = montecarlo_file_friend_treename_map.find(fn);
+        if (montecarlo_file_friend_treename_iter != montecarlo_file_friend_treename_map.end()) {
             std::cout<<"SBNcovariance::SBNcovariance\t|| Detected friend trees" << std::endl;
 
-            auto multisim_file_friend_iter = multisim_file_friend_map.find(fn);
-            if (multisim_file_friend_iter == multisim_file_friend_map.end()) {
+            auto montecarlo_file_friend_iter = montecarlo_file_friend_map.find(fn);
+            if (montecarlo_file_friend_iter == montecarlo_file_friend_map.end()) {
                 std::stringstream ss;
-                ss << "Looked for filename=" << fn << " in fnmultisim_file_friend_iter, but could not be found... bad config?" << std::endl;
+                ss << "Looked for filename=" << fn << " in fnmontecarlo_file_friend_iter, but could not be found... bad config?" << std::endl;
                 throw std::runtime_error(ss.str());
             }
 
-            for(int k=0; k < (*multisim_file_friend_iter).second.size(); k++){
+            for(int k=0; k < (*montecarlo_file_friend_iter).second.size(); k++){
 
-                std::string treefriendname = (*multisim_file_friend_treename_iter).second.at(k);
-                std::string treefriendfile = (*multisim_file_friend_iter).second.at(k);
+                std::string treefriendname = (*montecarlo_file_friend_treename_iter).second.at(k);
+                std::string treefriendfile = (*montecarlo_file_friend_iter).second.at(k);
 
-                std::cout << "SBNcovariance::SBNcovariance\t|| Adding a friend tree  " << treefriendfile << " to file " << fn << std::endl;
+                std::cout << "SBNcovariance::SBNcovariance\t|| Adding a friend tree:  " <<treefriendname<<" from file: "<< treefriendfile << " to file " << fn << std::endl;
 
                 trees[fid]->AddFriend(treefriendname.c_str(),treefriendfile.c_str());
             }
@@ -99,9 +99,9 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                     branch_variable->GetValue());
         }
   
-        if(multisim_additional_weight_bool[fid]){
+        if(montecarlo_additional_weight_bool[fid]){
         //we have an additional weight we want to apply at run time, otherwise its just set at 1. 
-            trees[fid]->SetBranchAddress(multisim_additional_weight_names[fid].c_str(), &multisim_additional_weight[fid]); 
+            trees[fid]->SetBranchAddress(montecarlo_additional_weight_names[fid].c_str(), &montecarlo_additional_weight[fid]); 
         }
     
 
@@ -115,16 +115,16 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             throw std::runtime_error(ss.str());
         }
 
-        //This bit will calculate how many "multisims" the file has. if ALL default is the inputted xml value
+        //This bit will calculate how many "montecarlos" the file has. if ALL default is the inputted xml value
 
         for(const auto& it : *f_weight) {
             if(it.first == bnbcorrection_str) 
                 continue;    
 
             std::cout <<" SBNcovariance::SBNcovariance\t|| "
-                << it.first << " has " << it.second.size() << " multisims in file " << fid << std::endl;
+                << it.first << " has " << it.second.size() << " montecarlos in file " << fid << std::endl;
 
-            used_multisims[fid] += it.second.size();
+            used_montecarlos[fid] += it.second.size();
 
             variations_tmp.push_back(it.first);
         }
@@ -157,22 +157,22 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     }
 
     for(int i=1; i<num_files; i++){
-        std::cout << "SBNcovariance::SBNcovariance\t|| File: " << i << " has " << used_multisims.at(i) << " multisims" << std::endl;
-        if(used_multisims.at(i)!= used_multisims.at(i-1)){
+        std::cout << "SBNcovariance::SBNcovariance\t|| File: " << i << " has " << used_montecarlos.at(i) << " montecarlos" << std::endl;
+        if(used_montecarlos.at(i)!= used_montecarlos.at(i-1)){
             std::cerr << "SBNcovariance::SBNcovariance\t|| Warning, number of universes for are different between files" << std::endl;
             std::cerr << "SBNcovariance::SBNcovariance\t|| The missing universes are Set to weights of 1. Make sure this is what you want!" << std::endl;
             for(int j=0; j<num_files; j++){
-                if(universes_used < used_multisims.at(j)) 
-                    universes_used = used_multisims.at(j);
-                std::cerr << "SBNcovariance::SBNmultisom\t|| File " << j << " multisims: " << used_multisims.at(j) << std::endl;
+                if(universes_used < used_montecarlos.at(j)) 
+                    universes_used = used_montecarlos.at(j);
+                std::cerr << "SBNcovariance::SBNmultisom\t|| File " << j << " montecarlos: " << used_montecarlos.at(j) << std::endl;
             }
         }
-        std::cout << "SBNcovariance::SBNcovariance\t|| Disregard, using the first file number of multisims anyways" << std::endl;
-        universes_used = used_multisims.at(0);
+        std::cout << "SBNcovariance::SBNcovariance\t|| Disregard, using the first file number of montecarlos anyways" << std::endl;
+        universes_used = used_montecarlos.at(0);
     }
 
     if(num_files == 1) 
-        universes_used = used_multisims.front();
+        universes_used = used_montecarlos.front();
 
     std::cout << "SBNcovariance::SBNcovariance\t|| -------------------------------------------------------------" << std::endl;
     std::cout << "SBNcovariance::SBNcovariance\t|| Initilizing " << universes_used << " universes." << std::endl;
@@ -192,7 +192,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
     for(int j=0; j < num_files; j++){
         std::cout << "SBNcovariance::SBNcovariance\t|| @ data file=" << files[j]->GetName() << std::endl;
-        int nevents = std::min(multisim_maxevents[j], nentries[j]);
+        int nevents = std::min(montecarlo_maxevents[j], nentries[j]);
         size_t nbytes = 0;
         for(int i=0; i < nevents; i++) {
             nbytes+= trees[j]->GetEntry(i);
@@ -221,9 +221,9 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double> >& thisfWeight,
         size_t fileid,
         int entryid) {
-    double global_weight = multisim_additional_weight[fileid];//this will be 1.0 unless specified in xml
+    double global_weight = montecarlo_additional_weight[fileid];//this will be 1.0 unless specified in xml
 
-    global_weight *= multisim_scale[fileid];
+    global_weight *= montecarlo_scale[fileid];
 
     const auto bnbcorr_iter = thisfWeight.find(bnbcorrection_str);
     if (bnbcorr_iter != thisfWeight.end())
@@ -232,7 +232,7 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
     if(std::isinf(global_weight) or (global_weight != global_weight)){
         std::stringstream ss;
         ss << "SBNcovariance::ProcessEvent\t|| ERROR  error @ " << entryid
-            << " in File " << multisim_file.at(fileid) 
+            << " in File " << montecarlo_file.at(fileid) 
             << " as its either inf/nan: " << global_weight << std::endl;
         throw std::runtime_error(ss.str());
     }
@@ -279,7 +279,7 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
             if(is_inf or is_nan){
                 std::stringstream ss;
                 ss << "SBNcovariance::ProcessEvent\t|| ERROR! Killing :: event # " << entryid
-                    << " in File " << multisim_file.at(fileid) << " weight: " << wei << " global bnb: " << global_weight << " in " << var << std::endl;
+                    << " in File " << montecarlo_file.at(fileid) << " weight: " << wei << " global bnb: " << global_weight << " in " << var << std::endl;
                 throw std::runtime_error(ss.str());
             }
 
