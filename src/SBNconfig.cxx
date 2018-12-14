@@ -40,11 +40,24 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
 
     if(!pMode){
         std::cout<<otag<<"ERROR: Need at least 1 mode defined in xml./n";
+        exit(EXIT_FAILURE);
     }else{
         while(pMode){
             // What modes are we running in (e.g nu, nu bar, horn current=XXvolts....) Can have as many as we want
-            mode_names.push_back(pMode->Attribute("name"));
-            mode_bool.push_back(strtod(pMode->Attribute("use"),&end));
+            const char* mode_name= pChan->Attribute("name");
+            if(mode_name==NULL){
+                std::cout<<otag<<"ERROR! Modes need a name! Please define a name attribute for all modes"<<std::endl;
+                exit(EXIT_FAILURE);
+            }else{
+                mode_names.push_back(mode_name);
+            }
+
+            const char* use_mode = pMode->Attribute("use");
+            if(use_mode==NULL){
+                mode_bool.push_back(1);
+            }else{
+                mode_bool.push_back(strtod(use_mode,&end) );
+            }
 
             pMode = pMode->NextSiblingElement("mode");
             if(is_verbose)	std::cout<<"SBNconfig::SBnconfig\t|| loading mode: "<<mode_names.back()<<" with use_bool "<<mode_bool.back()<<std::endl;
@@ -55,12 +68,27 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
     // How many detectors do we want!
     if(!pDet){
         std::cout<<otag<<"ERROR: Need at least 1 detector defined in xml./n";
+        exit(EXIT_FAILURE);
     }else{
 
         while(pDet){
             //std::cout<<"Detector: "<<pDet->Attribute("name")<<" "<<pDet->Attribute("use")<<std::endl;
-            detector_names.push_back(pDet->Attribute("name"));
-            detector_bool.push_back(strtod(pDet->Attribute("use"),&end));
+
+            const char* detector_name= pChan->Attribute("name");
+            if(detector_name==NULL){
+                std::cout<<otag<<"ERROR! Detectors need a name! Please define a name attribute for all detectors"<<std::endl;
+                exit(EXIT_FAILURE);
+            }else{
+                detector_names.push_back(detector_name);
+            }
+
+            const char* use_detector = pDet->Attribute("use");
+            if(use_detector==NULL){
+                detector_bool.push_back(1);
+            }else{
+                detector_bool.push_back(strtod(use_detector,&end) );
+            }
+
             pDet = pDet->NextSiblingElement("detector");
             if(is_verbose)	std::cout<<"SBNconfig::SBnconfig\t|| loading detector: "<<detector_names.back()<<" with use_bool "<<detector_bool.back()<<std::endl;
         }
@@ -70,14 +98,36 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
     int nchan = 0;
     if(!pChan){
         std::cout<<otag<<"ERROR: Need at least 1 channel defined in xml./n";
+        exit(EXIT_FAILURE);
     }else{
 
 
         while(pChan){
             // Read in how many bins this channel uses
-            channel_names.push_back(pChan->Attribute("name"));
-            channel_units.push_back(pChan->Attribute("unit"));
-            channel_bool.push_back(strtod(pChan->Attribute("use"),&end));
+
+            const char* channel_name= pChan->Attribute("name");
+            if(channel_name==NULL){
+                std::cout<<otag<<"ERROR! Channels need a name! Please define a name attribute for all channels"<<std::endl;
+                exit(EXIT_FAILURE);
+            }else{
+                channel_names.push_back(channel_name);
+            }
+
+            const char* channel_unit= pChan->Attribute("unit");
+            if(channel_unit==NULL){
+                channel_units.push_back("");
+            }else{
+                channel_units.push_back(channel_unit);
+            }
+
+            const char* channel_bool_tmp= pChan->Attribute("use");
+            if(channel_bool_tmp==NULL){
+                channel_bool.push_back(1);
+            }else{
+                channel_bool.push_back(channel_bool_tmp);
+            }
+
+
             num_bins.push_back(strtod(pChan->Attribute("numbins"), &end));
 
             if(is_verbose)	std::cout<<otag<<"Loading Channel : "<<channel_names.back()<<" with use_bool: "<<channel_bool.back()<<std::endl;
@@ -102,6 +152,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
             bin_edges.push_back(binedge);
             bin_widths.push_back(binwidth);
 
+
             // Now loop over all this channels subchanels. Not the names must be UNIQUE!!
             TiXmlElement *pSubChan;
 
@@ -109,8 +160,25 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
             int nsubchan=0;
             while(pSubChan){
                 //std::cout<<"Subchannel: "<<pSubChan->Attribute("name")<<" use: "<<pSubChan->Attribute("use")<<" osc: "<<pSubChan->Attribute("osc")<<std::endl;
-                subchannel_names[nchan].push_back(pSubChan->Attribute("name"));
-                subchannel_bool[nchan].push_back(strtod(pSubChan->Attribute("use"),&end));
+
+                const char* subchannel_name= pSubChan->Attribute("name");
+                if(subchannel_name==NULL){
+                    std::cout<<otag<<"ERROR! SubChannels need a name! Please define a unique name attribute for all subchannels"<<std::endl;
+                    exit(EXIT_FAILURE);
+                }else{
+                    subchannel_names[nchan].push_back(subchannel_name);
+                }
+
+                const char* subchannel_bool_tmp= pSubChan->Attribute("use");
+                if(subchannel_bool_tmp==NULL){
+                    subchannel_bool[nchan].push_back(1);
+                }else{
+                    subchannel_bool[nchan].push_back(strtod(subchannel_bool_tmp,&end));
+                }
+
+
+
+
                 //0 means dont oscillate, 11 means electron disapearance, -11 means antielectron dis..etc..
                 if(pSubChan->Attribute("osc"))
                 {
@@ -440,6 +508,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
 
 
     if(is_verbose){std::cout<<otag<<"Done!"<<std::endl;}
+    if(is_verbose){std::cout<<otag<<"---------------------------------------------------------------"<<std::endl;}
 
 
 
