@@ -24,6 +24,7 @@
 #include "TNtuple.h"
 #include "TLine.h"
 
+#include "TText.h"
 #include "TROOT.h"
 #include "TRint.h"
 #include "TGraph.h"
@@ -55,7 +56,7 @@ namespace sbn{
     int WriteOut();
     int PrintMatricies(std::string tag);
 
-    int plot_one(TMatrixD matrix, std::string tag, TFile *fin);
+    int plot_one(TMatrixD matrix, std::string tag, TFile *fin,bool,bool);
     int qualityTesting();
     virtual bool EventSelection(int file);
     virtual int FillHistograms(int file, int uni, double wei);
@@ -76,7 +77,7 @@ namespace sbn{
     TH2D * hist_full_cor;
     TH2D * hist_full_cov;
 
-    //Some checks on multisims
+    //Some checks on montecarlos
     double tolerence_positivesemi;
     int universes_used;
     double abnormally_large_weight;

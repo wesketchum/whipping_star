@@ -58,6 +58,7 @@ int main(int argc, char* argv[])
 	{
 		{"xml", 		required_argument, 	0, 'x'},
 		{"print", 		no_argument, 		0, 'p'},
+		{"tag", 		required_argument,	0, 't'},
 		{0,			no_argument, 		0,  0},
 	};
 
@@ -65,9 +66,12 @@ int main(int argc, char* argv[])
 	opterr=1;
 	int index;
 
+    //a tag to identify outputs and this specific run. defaults to EXAMPLE1
+    std::string tag = "EXAMPLE1";
+
 	while(iarg != -1)
 	{
-		iarg = getopt_long(argc,argv, "x:p", longopts, &index);
+		iarg = getopt_long(argc,argv, "x:t:p", longopts, &index);
 
 		switch(iarg)
 		{
@@ -77,15 +81,22 @@ int main(int argc, char* argv[])
 			case 'p':
 				print_mode=true;
 				break;
-
-			case '?':
+            case 't':
+                tag = optarg;
+                break;
+            case '?':
 			case 'h':
 				std::cout<<"Allowed arguments:"<<std::endl;
 				std::cout<<"\t-x\t--xml\t\tInput .xml file for SBNconfig"<<std::endl;
-				std::cout<<"\t-p\t--print\t\tRuns in print mode, making a lot of plots of canvases and Variations."<<std::endl;
+				std::cout<<"\t-t\t--tag\t\tA unique tag to identify the outputs."<<std::endl;
+				std::cout<<"\t-p\t--print\t\tRuns in print mode, making a lot more plots and Variations. (warning can take a while!) "<<std::endl;
 				return 0;
 		}
 	}
+
+	std::string dict_location = "../libio/libEventWeight.so";
+	std::cout<<"Trying to load dictionary: "<<dict_location<<std::endl;
+	gSystem->Load(  (dict_location).c_str());
 
 	/*************************************************************
 	 *************************************************************
@@ -94,9 +105,6 @@ int main(int argc, char* argv[])
 	 ************************************************************/
 	time_t start_time = time(0);
 	
-	//a tag to identify outputs
-	std::string tag = "EXAMPLE1";
-
 	std::cout<<"Begining Covariance Calculation for tag: "<<tag<<std::endl;
 
 	//Create a SBNcovariance object initilizing with the inputted xml
@@ -106,12 +114,12 @@ int main(int argc, char* argv[])
 	//Form the covariance matrix from loaded weights and MC events
 	example_covar.FormCovarianceMatrix(tag);
 
-	if(print_mode){
-		//and make some plots of the resulting things
-		//Will be outputted in the form: SBNfit_covariance_plots_TAG.root
-		example_covar.PrintMatricies(tag);
+    //and make some plots of the resulting things
+	//Will be outputted in the form: SBNfit_covariance_plots_TAG.root
+	example_covar.PrintMatricies(tag);
 
-		//Will be outputted in the form: SBNfit_variation_plots_TAG.root
+	if(print_mode){
+		//This takes a good bit longer, and prints every variation to file. 
 		example_covar.PrintVariations(tag);
 	}
 

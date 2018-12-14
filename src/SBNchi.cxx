@@ -137,7 +137,7 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
         for(int j =0; j<matrix_systematics.GetNrows(); j++)
         {
             if(is_fractional){
-                if(isnan(matrix_systematics(i,j)))
+                if(std::isnan(matrix_systematics(i,j)))
                     matrix_systematics(i,j) = 0;
                 else
                     matrix_systematics(i,j)=matrix_systematics(i,j)*core_spectrum.full_vector.at(i)*core_spectrum.full_vector.at(j);
@@ -870,7 +870,7 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
     {
         for(int j =0; j<U.GetNrows(); j++)
         {
-            if(isnan(U(i,j)))
+            if(std::isnan(U(i,j)))
                 U(i,j) = 0;
             else
                 U(i,j)=U(i,j)*specin->full_vector.at(i)*specin->full_vector.at(j);
