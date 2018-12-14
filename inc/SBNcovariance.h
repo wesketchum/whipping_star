@@ -56,7 +56,7 @@ namespace sbn{
     int WriteOut();
     int PrintMatricies(std::string tag);
 
-    int plot_one(TMatrixD matrix, std::string tag, TFile *fin);
+    int plot_one(TMatrixD matrix, std::string tag, TFile *fin,bool,bool);
     int qualityTesting();
     virtual bool EventSelection(int file);
     virtual int FillHistograms(int file, int uni, double wei);

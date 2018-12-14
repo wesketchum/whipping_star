@@ -714,198 +714,12 @@ int SBNcovariance::PrintMatricies(std::string tag) {
 
     gStyle->SetOptStat(0);
 
-    //correlation
-    TH2D h2_corr(full_correlation);
-    h2_corr.SetName("corr");
-    //h2_corr.Write();
-    TCanvas *c_corr = new TCanvas("full correlation matrix");
-    TPad *p_corr = (TPad*)c_corr->cd();
-    c_corr->SetFixedAspectRatio();
-    h2_corr.Draw("colz");
-    h2_corr.SetTitle("Full correlation matrix");
-    h2_corr.GetXaxis()->SetTitle("Reco Bin i");
-    h2_corr.GetYaxis()->SetTitle("Reco Bin j");
-
-    c_corr->SetFrameFillColor(kWhite);
-    c_corr->SetFillColor(kWhite);
-    p_corr->SetFillColor(kWhite);
-
-    c_corr->SetRightMargin(0.150);
-    int use_corr =0;
-
-    for(int im =0; im<num_modes; im++){
-        for(int id =0; id<num_detectors; id++){
-            for(int ic = 0; ic < num_channels; ic++){
-                for(int isc = 0; isc < num_subchannels.at(ic); isc++){
-
-                    
-                    std::string mode_det = mode_names[im] +"_" +detector_names[id];
-                    std::string chan_sub = channel_names[ic]+"_"+subchannel_names[ic][isc];
-
-                    TText * tmd = new TText(use_corr, num_bins_total*1.01, chan_sub.c_str());
-                    TText * tcs = new TText(use_corr, num_bins_total*1.04, mode_det.c_str());
-                	tmd->SetTextColor(kBlack);
-                	tcs->SetTextColor(kBlack);
-                    tmd->SetTextSize(0.03);
-                    tcs->SetTextSize(0.03);
-                    tmd->Draw();
-                    tcs->Draw();
- 
-
-                    if(isc<num_subchannels[ic]-1){
-                        TLine *lscv = new TLine(0, num_bins.at(ic)+use_corr, num_bins_total, num_bins.at(ic)+use_corr);
-                        TLine *lsch = new TLine(num_bins.at(ic)+use_corr,0, num_bins.at(ic)+use_corr, num_bins_total);
-                        lscv->SetLineWidth(2);
-                        lsch->SetLineWidth(2);
-                        lscv->SetLineColor(kRed);
-                        lsch->SetLineColor(kRed);
-                        
-                        lscv->Draw();
-                        lsch->Draw();
-
-                        use_corr+=num_bins.at(ic);
-
-                        }
-                }
-                TLine *lv = new TLine(0, num_bins.at(ic)+use_corr, num_bins_total, num_bins.at(ic)+use_corr);
-                TLine *lh = new TLine(num_bins.at(ic)+use_corr,0, num_bins.at(ic)+use_corr, num_bins_total);
-                lv->SetLineWidth(2);
-                lh->SetLineWidth(2);
-                use_corr+=num_bins.at(ic);
-                lv->Draw();
-                lh->Draw();
-
-            }
-        }
-    }
-    c_corr->Write();
-    c_corr->SaveAs(("SBNfit_correlation_matrix_"+tag+".pdf").c_str(),"pdf");
-
-
-    //full covariance
-    TH2D h2_full(full_covariance);
-    h2_full.SetName("full");
-    //h2_full.Write();
-    TCanvas *c_full = new TCanvas("full covariance matrix");
-    c_full->cd();
-    c_full->SetFixedAspectRatio();
-    h2_full.Draw("colz");
-    h2_full.SetTitle("Full covariance matrix");
-    h2_full.GetXaxis()->SetTitle("Reco Bin i");
-    h2_full.GetYaxis()->SetTitle("Reco Bin j");
-
-    c_full->SetRightMargin(0.150);
-    int use_full =0;
-    for(int im =0; im<num_modes; im++){
-        for(int id =0; id<num_detectors; id++){
-            for(int ic = 0; ic < num_channels; ic++){
-                for(int isc = 0; isc < num_subchannels.at(ic); isc++){
-
-                    
-                    std::string mode_det = mode_names[im] +"_" +detector_names[id];
-                    std::string chan_sub = channel_names[ic]+"_"+subchannel_names[ic][isc];
-
-                    TText * tmd = new TText(use_full, num_bins_total*1.01, chan_sub.c_str());
-                    TText * tcs = new TText(use_full, num_bins_total*1.04, mode_det.c_str());
-                	tmd->SetTextColor(kBlack);
-                	tcs->SetTextColor(kBlack);
-                    tmd->SetTextSize(0.03);
-                    tcs->SetTextSize(0.03);
-                    tmd->Draw();
-                    tcs->Draw();
- 
-
-                    if(isc<num_subchannels[ic]-1){
-                        TLine *lscv = new TLine(0, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
-                        TLine *lsch = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total);
-                        lscv->SetLineWidth(2);
-                        lsch->SetLineWidth(2);
-                        lscv->SetLineColor(kRed);
-                        lsch->SetLineColor(kRed);
-                        
-                        lscv->Draw();
-                        lsch->Draw();
-
-                        use_full+=num_bins.at(ic);
-
-                        }
-                }
-                TLine *lv = new TLine(0, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
-                TLine *lh = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total);
-                lv->SetLineWidth(2);
-                lh->SetLineWidth(2);
-                use_full+=num_bins.at(ic);
-                lv->Draw();
-                lh->Draw();
-
-            }
-        }
-    }
-    c_full->Write();
-    c_full->SaveAs(("SBNfit_covariance_matrix_"+tag+".pdf").c_str(),"pdf");
-   
-    //fracelation
-    TH2D h2_frac(frac_covariance);
-    h2_frac.SetName("frac");
-    //h2_frac.Write();
-    TCanvas *c_frac = new TCanvas("full fractional covariance matrix");
-    c_frac->cd();
-    c_frac->SetFixedAspectRatio();
-    h2_frac.Draw("colz");
-    h2_frac.SetTitle("Full fractional covariance matrix");
-    h2_frac.GetXaxis()->SetTitle("Reco Bin i");
-    h2_frac.GetYaxis()->SetTitle("Reco Bin j");
-    c_frac->SetRightMargin(0.150);
-
-    int use_frac =0;
-    for(int im =0; im<num_modes; im++){
-        for(int id =0; id<num_detectors; id++){
-            for(int ic = 0; ic < num_channels; ic++){
-               for(int isc = 0; isc < num_subchannels.at(ic); isc++){
-                    
-                    std::string mode_det = mode_names[im] +"_" +detector_names[id];
-                    std::string chan_sub = channel_names[ic]+"_"+subchannel_names[ic][isc];
-
-                    TText * tmd = new TText(use_frac, num_bins_total*1.01, chan_sub.c_str());
-                    TText * tcs = new TText(use_frac, num_bins_total*1.04, mode_det.c_str());
-                	tmd->SetTextColor(kBlack);
-                	tcs->SetTextColor(kBlack);
-                    tmd->SetTextSize(0.03);
-                    tcs->SetTextSize(0.03);
-                    tmd->Draw();
-                    tcs->Draw();
- 
-
-                    if(isc<num_subchannels[ic]-1){
-                        TLine *lscv = new TLine(0, num_bins.at(ic)+use_frac, num_bins_total, num_bins.at(ic)+use_frac);
-                        TLine *lsch = new TLine(num_bins.at(ic)+use_frac,0, num_bins.at(ic)+use_frac, num_bins_total);
-                        lscv->SetLineWidth(2);
-                        lsch->SetLineWidth(2);
-                        lscv->SetLineColor(kRed);
-                        lsch->SetLineColor(kRed);
-                        
-                        lscv->Draw();
-                        lsch->Draw();
-
-                        use_frac+=num_bins.at(ic);
-
-                        }
-               }
-                TLine *lv = new TLine(0, num_bins.at(ic)+use_frac, num_bins_total, num_bins.at(ic)+use_frac);
-                TLine *lh = new TLine(num_bins.at(ic)+use_frac,0, num_bins.at(ic)+use_frac, num_bins_total);
-                lv->SetLineWidth(2);
-                lh->SetLineWidth(2);
-                use_frac+=num_bins.at(ic);
-                lv->Draw();
-                lh->Draw();
-
-            }
-        }
-    }
-    c_frac->Write();
-    c_frac->SaveAs(("SBNfit_fractional_covariance_matrix_"+tag+".pdf").c_str(),"pdf");
-
+    this->plot_one(full_correlation, "SBNfit_correlation_matrix_"+tag, fout, true,false);
+    this->plot_one(full_covariance, "SBNfit_covariance_matrix_"+tag, fout, true,false);
+    this->plot_one(frac_covariance, "SBNfit_fractional_covariance_matrix_"+tag, fout, true,false);
     //Print the collapsed matricies too: Need to fudge this a bit
+
+    
     SBNchi collapse_chi(xmlname);
 
     TMatrixT<double > coll_correlation(num_bins_total_compressed,num_bins_total_compressed);
@@ -1008,9 +822,9 @@ int SBNcovariance::PrintMatricies(std::string tag) {
     c_coll_full->Write();
 
     for(int m=0; m< variations.size();m++){
-        this->plot_one(vec_full_correlation.at(m), variations.at(m)+" Correlation", fout);
-        this->plot_one(vec_frac_covariance.at(m), variations.at(m)+" Fractional Covariance", fout);
-        this->plot_one(vec_full_covariance.at(m), variations.at(m)+" Full Covariance", fout);
+        this->plot_one(vec_full_correlation.at(m), variations.at(m)+" Correlation", fout,false,true);
+        this->plot_one(vec_frac_covariance.at(m), variations.at(m)+" Fractional Covariance", fout,false,true);
+        this->plot_one(vec_full_covariance.at(m), variations.at(m)+" Full Covariance", fout,false,true);
     }
 
     fout->cd();
@@ -1021,46 +835,77 @@ int SBNcovariance::PrintMatricies(std::string tag) {
 }
 
 
-int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin){
+int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool plot_pdf, bool indiv){
     fin->cd();
+    if(indiv){
     TDirectory *individualDir = fin->GetDirectory("individualDir"); 
     if (!individualDir) { 
         individualDir = fin->mkdir("individualDir");       
+     }
+         fin->cd(); 
+      individualDir->cd();
     }
-    fin->cd(); 
-    individualDir->cd();
-
     TH2D h2_full(matrix);
     h2_full.SetName((tag+"_th2d").c_str());
     TCanvas *c_full = new TCanvas((tag+"_canvas").c_str());
-    c_full->cd();
+    TPad *p_full = (TPad*)c_full->cd();
     c_full->SetFixedAspectRatio();
     h2_full.Draw("colz");
     h2_full.SetTitle(tag.c_str());
     h2_full.GetXaxis()->SetTitle("Reco Bin i");
     h2_full.GetYaxis()->SetTitle("Reco Bin j");
 
+    c_full->SetFrameFillColor(kWhite);
+    c_full->SetFillColor(kWhite);
+    p_full->SetFillColor(kWhite);
+
+
     c_full->SetRightMargin(0.150);
+    c_full->SetTopMargin(0.150);
     int use_full =0;
+
     for(int im =0; im<num_modes; im++){
         for(int id =0; id<num_detectors; id++){
             for(int ic = 0; ic < num_channels; ic++){
-                for(int isc = 0; isc < num_subchannels.at(ic)-1; isc++){
-                    TLine *lscv = new TLine(0, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
-                    TLine *lsch = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total);
-                    lscv->SetLineWidth(2);
-                    lsch->SetLineWidth(2);
-                    lscv->SetLineColor(kRed);
-                    lsch->SetLineColor(kRed);
-                    use_full+=num_bins.at(ic);
-                    lscv->Draw();
-                    lsch->Draw();
+                for(int isc = 0; isc < num_subchannels.at(ic); isc++){
 
+                    
+                    std::string mode_det = mode_names[im] +" " +detector_names[id];
+                    std::string chan_sub = channel_names[ic]+" "+subchannel_names[ic][isc];
+
+                    TText * tmd = new TText(use_full*1.05, num_bins_total*1.015, chan_sub.c_str());
+                    TText * tcs = new TText(use_full*1.05, num_bins_total*1.055, mode_det.c_str());
+                	tmd->SetTextColor(kBlack);
+                	tcs->SetTextColor(kBlack);
+                    tmd->SetTextSize(0.03);
+                    tcs->SetTextSize(0.03);
+                    tmd->Draw();
+                    tcs->Draw();
+ 
+
+                    if(isc<num_subchannels[ic]-1){
+                        TLine *lscv = new TLine(0, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
+                        TLine *lsch = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total*1.045);
+                        lscv->SetLineWidth(3);
+                        lsch->SetLineWidth(3);
+                        lscv->SetLineColor(kRed);
+                        lsch->SetLineColor(kRed);
+                        lscv->SetLineStyle(9);
+                        lsch->SetLineStyle(9);
+
+                        lscv->Draw();
+                        lsch->Draw();
+
+                        use_full+=num_bins.at(ic);
+
+                        }
                 }
                 TLine *lv = new TLine(0, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
-                TLine *lh = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total);
-                lv->SetLineWidth(2);
-                lh->SetLineWidth(2);
+                TLine *lh = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total*1.045);
+                lv->SetLineWidth(3);
+                lh->SetLineWidth(3);
+                lv->SetLineColor(kRed);
+                lh->SetLineColor(kRed);
                 use_full+=num_bins.at(ic);
                 lv->Draw();
                 lh->Draw();
@@ -1069,6 +914,8 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin){
         }
     }
     c_full->Write();
+    if(plot_pdf) c_full->SaveAs((tag+".pdf").c_str(),"pdf");
+
 
     return 0;
 }

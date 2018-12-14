@@ -38,7 +38,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
     pDet =  doc.FirstChildElement("detector");
     pChan = doc.FirstChildElement("channel");
     pCov  = doc.FirstChildElement("covariance");
-    pMC   = doc.FirstChildElement("MonteCarloFile");
+    pMC   = doc.FirstChildElement("MultisimFile");
     pData   = doc.FirstChildElement("data");
 
     if(!pMode){
@@ -349,7 +349,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
             }
             branch_variables.push_back(TEMP_branch_variables);
             //next file
-            pMC=pMC->NextSiblingElement("MonteCarloFile");
+            pMC=pMC->NextSiblingElement("MultisimFile");
         }
     }
 
