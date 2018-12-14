@@ -5,6 +5,8 @@ using namespace sbn;
 SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
     otag = "SBNconfig::SBNconfig\t|| ";
 
+    if(is_verbose){std::cout<<otag<<"---------------------------------------------------------------"<<std::endl;}
+
     is_verbose = isverbose;
     has_oscillation_patterns = false;
 
