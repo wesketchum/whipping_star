@@ -852,8 +852,8 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool p
     c_full->SetFixedAspectRatio();
     h2_full.Draw("colz");
     h2_full.SetTitle(tag.c_str());
-    h2_full.GetXaxis()->SetTitle("Reco Bin i");
-    h2_full.GetYaxis()->SetTitle("Reco Bin j");
+    h2_full.GetXaxis()->SetTitle("Global Bin Number");
+    h2_full.GetYaxis()->SetTitle(" ");
 
     c_full->SetFrameFillColor(kWhite);
     c_full->SetFillColor(kWhite);
@@ -861,8 +861,12 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool p
 
 
     c_full->SetRightMargin(0.150);
+    c_full->SetLeftMargin(0.150);
     c_full->SetTopMargin(0.150);
     int use_full =0;
+
+    double percent_left = 0.15;
+    double nice_shift = num_bins_total*0.02;
 
     for(int im =0; im<num_modes; im++){
         for(int id =0; id<num_detectors; id++){
@@ -881,10 +885,23 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool p
                     tcs->SetTextSize(0.03);
                     tmd->Draw();
                     tcs->Draw();
- 
+
+
+                    TText * tlow_bin = new TText(-num_bins_total*percent_left, use_full+nice_shift*0.5, to_string_prec(bin_edges[ic].front(),0).c_str());
+                    TText * thigh_bin = new TText(-num_bins_total*percent_left, (use_full+num_bins[ic])-nice_shift*1.4, to_string_prec(bin_edges[ic].back(),0).c_str());
+                    tlow_bin->SetTextSize(0.02);
+                    thigh_bin->SetTextSize(0.02);
+                    tlow_bin->Draw();
+                    thigh_bin->Draw();
+
+                    TText * tunit = new TText(-num_bins_total*percent_left, use_full+0.5*num_bins[ic], channel_units[ic].c_str());
+                    tunit->SetTextSize(0.03);
+                    tunit->Draw();
+
+
 
                     if(isc<num_subchannels[ic]-1){
-                        TLine *lscv = new TLine(0, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
+                        TLine *lscv = new TLine(-num_bins_total*percent_left, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
                         TLine *lsch = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total*1.045);
                         lscv->SetLineWidth(3);
                         lsch->SetLineWidth(3);
@@ -900,7 +917,7 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool p
 
                         }
                 }
-                TLine *lv = new TLine(0, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
+                TLine *lv = new TLine(-num_bins_total*percent_left, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
                 TLine *lh = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total*1.045);
                 lv->SetLineWidth(3);
                 lh->SetLineWidth(3);
