@@ -184,9 +184,11 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                 if(pSubChan->Attribute("osc"))
                 {
                     has_oscillation_patterns = true;
+                    subchannel_osc_patterns.at(nchan).push_back(strtod(pSubChan->Attribute("osc"), &end));
+                }else{
+                    subchannel_osc_patterns.at(nchan).push_back(0);
                 }
 
-                subchannel_osc_patterns.at(nchan).push_back(strtod(pSubChan->Attribute("osc"), &end));
 
                 if(is_verbose)	std::cout<<otag<<"--> Subchannel: "<<subchannel_names.at(nchan).back()<<" with use_bool "<<subchannel_bool.at(nchan).back()<<" and osc_pattern "<<subchannel_osc_patterns.at(nchan).back()<<std::endl;
 

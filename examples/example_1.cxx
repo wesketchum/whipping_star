@@ -95,9 +95,6 @@ int main(int argc, char* argv[])
 	}
 
 	std::string dict_location = "../libio/libEventWeight.so";
-	gROOT->ProcessLine("#include <map>");
-	gROOT->ProcessLine("#include <vector>");
-	gROOT->ProcessLine("#include <string>");
 	std::cout<<"Trying to load dictionary: "<<dict_location<<std::endl;
 	gSystem->Load(  (dict_location).c_str());
 
