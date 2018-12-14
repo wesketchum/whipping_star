@@ -131,7 +131,6 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
             }
 
 
-            num_bins.push_back(strtod(pChan->Attribute("numbins"), &end));
 
             if(is_verbose)	std::cout<<otag<<"Loading Channel : "<<channel_names.back()<<" with use_bool: "<<channel_bool.back()<<std::endl;
 
@@ -147,10 +146,8 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
             for(int b = 0; b<binedge.size()-1; b++){
                 binwidth.push_back(fabs(binedge.at(b)-binedge.at(b+1)));
             }
-            if(binedge.size() != num_bins.back()+1){
-                std::cout<<otag<<"ERROR: num_bins: "<<num_bins.back()<<" but we have "<<binedge.size()<<" binedges! should be num+1"<<std::endl;
-                exit(EXIT_FAILURE);
-            }
+
+            num_bins.push_back(binedge.size()-1);
 
             bin_edges.push_back(binedge);
             bin_widths.push_back(binwidth);

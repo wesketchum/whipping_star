@@ -69,7 +69,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 std::string treefriendname = (*montecarlo_file_friend_treename_iter).second.at(k);
                 std::string treefriendfile = (*montecarlo_file_friend_iter).second.at(k);
 
-                std::cout << otag<<" Adding a friend tree:  " <<treefriendname<<" from file: "<< treefriendfile << " to file " << fn << std::endl;
+                std::cout << otag<<" Adding a friend tree:  " <<treefriendname<<" from file: "<< treefriendfile <<std::endl;
 
                 trees[fid]->AddFriend(treefriendname.c_str(),treefriendfile.c_str());
             }
@@ -608,7 +608,8 @@ int SBNcovariance::qualityTesting() {
 
 
     if(is_small_negative_eigenvalue){
-        std::cout<<"SBNcovariance::qualityTesting\t||\tPASS: Generated covariance matrix is (allmost) positive semi-definite. It did contain small negative values of absolute value <= :"<<tolerence_positivesemi<<std::endl;
+        std::cout<<"SBNcovariance::qualityTesting\t||\tPASS: Generated covariance matrix is (allmost) positive semi-definite."<<std::endl;
+        std::cout<<"SBNcovariance::qualityTesting\t||\tIt did contain small negative values of absolute value <= :"<<tolerence_positivesemi<<std::endl;
     }else{
         std::cout<<"SBNcovariance::qualityTesting\t||\tPASS: Generated covariance matrix is positive semi-definite."<<std::endl;
     }
