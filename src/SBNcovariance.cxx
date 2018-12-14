@@ -115,7 +115,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             throw std::runtime_error(ss.str());
         }
 
-        //This bit will calculate how many "montecarlos" the file has. if ALL default is the inputted xml value
+        //This bit will calculate how many "universes" the file has. if ALL default is the inputted xml value
 
         for(const auto& it : *f_weight) {
             if(it.first == bnbcorrection_str) 
