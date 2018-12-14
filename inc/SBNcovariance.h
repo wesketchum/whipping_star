@@ -24,6 +24,7 @@
 #include "TNtuple.h"
 #include "TLine.h"
 
+#include "TText.h"
 #include "TROOT.h"
 #include "TRint.h"
 #include "TGraph.h"
