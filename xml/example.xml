@@ -1,64 +1,72 @@
 <?xml version="1.0" ?>
 
+<!-- For this simple example we have one mode: Neutrino mode (nu) and one detector (uBooNE) -->
 <mode name="nu" />
 <detector name="uBooNE"  />
 
+
+<!-- We have three channels. Each "Channel" referes to a physically observable selelection. In this case nue-like, numu-like and ccpi0-like. -->
 <channel name="nue" unit="MeV"  >
-		<bins
-			edges="100 150 200 250 300 350 400 450 500 550 600 650 700 750 800 850 900 950 1000 1200 1400 1600 1800 2000 2500 3000"
-		/>
-		<subchannel name="intrinsic" />
-		<subchannel name="leesignal" />
+    <bins
+        edges="100 150 200 250 300 350 400 450 500 550 600 650 700 750 800 850 900 950 1000 1200 1400 1600 1800 2000 2500 3000"
+        />
+    <subchannel name="intrinsic" />
+    <subchannel name="leesignal" />
 </channel>
 
 <channel name="numu" unit="MeV"  >
-		<bins
-			edges="100 150 200 250 300 350 400 450 500 550 600 650 700 750 800 850 900 950 1000 1200 1400 1600 1800 2000 2500 3000"
-		/>
-		<subchannel name="intrinsic" />
+    <bins
+        edges="100 150 200 250 300 350 400 450 500 550 600 650 700 750 800 850 900 950 1000 1200 1400 1600 1800 2000 2500 3000"
+        />
+    <subchannel name="intrinsic" />
 </channel>
 
 <channel name="ccpi0" unit="MeV"  >
-		<bins
-			edges="0 200 400 600 800 1000 2000"
-		/>
-		<subchannel name="intrinsic" />
+    <bins
+        edges="0 200 400 600 800 1000 2000"
+        />
+    <subchannel name="intrinsic" />
 </channel>
 
-<!-- ############################# MultiSims #####################################################-->
- <MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1e1p.root" scale = "0.002" maxevents ="20000" > 
-	<branch
-		name="ereco"
-		type="double"
-		associated_subchannel="nu_uBooNE_nue_intrinsic"
-	/>
-</MultisimFile>
 
-<MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/signal.root" scale = "0.03" maxevents ="1000" >
-	<branch
-		name="ereco"
-		type="double"
-		associated_subchannel="nu_uBooNE_nue_leesignal"
-	/>
+
+<!-- ############################# BUILDING A COVARIANCE MATRIX  #####################################################-->
+<!-- This is where we define the location and some basic info for where the TTree files are saved that we wish to build a covariance matrix outof -->
+
+ <MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1e1p.root" scale = "0.002" maxevents ="20000" > 
+     <branch
+         name="ereco"
+         type="double"
+         associated_subchannel="nu_uBooNE_nue_intrinsic"
+         />
+ </MultisimFile>
+
+<!-- We get the LEE signal from the same NUE intrinsic file above, but we add a friend tree to reweight it by the LEE signal. This can also just be a branch inside your NUE intrinsic file as well but this example uses the more complicated friend tree format -->
+<MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1e1p.root" scale = "0.03" maxevents ="1000" >
+    <friend treename = "lee_signal_weights" filename="/uboone/data/users/markross/SBNfit_example_data/lee_signal_friend_tree.root"/>
+    <branch
+        name="ereco"
+        type="double"
+        associated_subchannel="nu_uBooNE_nue_leesignal"
+        additional_weight="lee_signal_weights.lee_weights"
+        />
 </MultisimFile>
 
 
 <MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1m1p.root" scale = "0.01" maxevents ="50000" >
-	<branch
-		name="ereco"
-		type="double"
-		associated_subchannel="nu_uBooNE_numu_intrinsic"
-	/>
+    <branch
+        name="ereco"
+        type="double"
+        associated_subchannel="nu_uBooNE_numu_intrinsic"
+        />
 </MultisimFile>
 
 <MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/ccpi0.root" scale = "0.1" maxevents ="5000" >
-	<branch
-		name="ereco"
-		type="double"
-		associated_subchannel="nu_uBooNE_ccpi0_intrinsic"
-	/>
+    <branch
+        name="ereco"
+        type="double"
+        associated_subchannel="nu_uBooNE_ccpi0_intrinsic"
+        />
 </MultisimFile>
 
 
-<data path="" />
-<covariance file="" name="" />

@@ -134,6 +134,7 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
     // systematics per scaled event
     for(int i =0; i<matrix_systematics.GetNcols(); i++)
     {
+        //std::cout<<"KRAK: "<<core_spectrum.full_vector.at(i)<<std::endl;
         for(int j =0; j<matrix_systematics.GetNrows(); j++)
         {
             if(is_fractional){
@@ -235,7 +236,10 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
     }
 
     std::cout<<otag<<"SUCCESS! Inverted."<<std::endl;
-    //McI.Print();
+   // matrix_systematics.Print();
+   // McI.Print();
+    //Mtotal.Print();
+
     vec_matrix_inverted = TMatrixDToVector(McI);
 
 
@@ -245,7 +249,8 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
 
 
     //if a matrix is (a) real and (b) symmetric (checked above) then to prove positive semi-definite, we just need to check eigenvalues and >=0;
-    TMatrixDEigen eigen (Mtotal);
+
+    TMatrixDEigen eigen (Mctotal);
     TVectorD eigen_values = eigen.GetEigenValuesRe();
 
 
@@ -254,6 +259,7 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
             is_small_negative_eigenvalue = true;
             if(fabs(eigen_values(i))> tolerence_positivesemi ){
                 std::cout<<otag<<"covariance matrix contains (at least one)  negative eigenvalue: "<<eigen_values(i)<<std::endl;
+                Mctotal.Print();
                 exit(EXIT_FAILURE);
             }
         }

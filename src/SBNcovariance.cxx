@@ -857,6 +857,7 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool p
     h2_full.SetTitle(tag.c_str());
     h2_full.GetXaxis()->SetTitle("Global Bin Number");
     h2_full.GetYaxis()->SetTitle(" ");
+    h2_full.GetYaxis()->SetLabelSize(0);
 
     c_full->SetFrameFillColor(kWhite);
     c_full->SetFillColor(kWhite);
@@ -864,8 +865,8 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool p
 
 
     c_full->SetRightMargin(0.150);
-    c_full->SetLeftMargin(0.150);
-    c_full->SetTopMargin(0.150);
+    c_full->SetLeftMargin(0.250);
+    c_full->SetTopMargin(0.10);
     int use_full =0;
 
     double percent_left = 0.15;
@@ -880,16 +881,21 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool p
                     std::string mode_det = mode_names[im] +" " +detector_names[id];
                     std::string chan_sub = channel_names[ic]+" "+subchannel_names[ic][isc];
 
-                    TText * tmd = new TText(use_full*1.05, num_bins_total*1.015, chan_sub.c_str());
-                    TText * tcs = new TText(use_full*1.05, num_bins_total*1.055, mode_det.c_str());
+                    
+                    TText * tmd = new TText(-num_bins_total*percent_left, use_full+nice_shift*0.5, (mode_det+" "+chan_sub).c_str() );
+
+                    //TText * tmd = new TText(use_full*1.05, num_bins_total*1.015, chan_sub.c_str());
+                    //TText * tcs = new TText(use_full*1.05, num_bins_total*1.055, mode_det.c_str());
                 	tmd->SetTextColor(kBlack);
-                	tcs->SetTextColor(kBlack);
+                	//tcs->SetTextColor(kBlack);
                     tmd->SetTextSize(0.03);
-                    tcs->SetTextSize(0.03);
+                    tmd->SetTextAlign(31);
+                    //tcs->SetTextSize(0.03);
                     tmd->Draw();
-                    tcs->Draw();
+                    //tcs->Draw();
 
-
+    
+                    /*
                     TText * tlow_bin = new TText(-num_bins_total*percent_left, use_full+nice_shift*0.5, to_string_prec(bin_edges[ic].front(),0).c_str());
                     TText * thigh_bin = new TText(-num_bins_total*percent_left, (use_full+num_bins[ic])-nice_shift*1.4, to_string_prec(bin_edges[ic].back(),0).c_str());
                     tlow_bin->SetTextSize(0.02);
@@ -900,7 +906,7 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool p
                     TText * tunit = new TText(-num_bins_total*percent_left, use_full+0.5*num_bins[ic], channel_units[ic].c_str());
                     tunit->SetTextSize(0.03);
                     tunit->Draw();
-
+                    */
 
 
                     if(isc<num_subchannels[ic]-1){
@@ -933,6 +939,8 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool p
             }
         }
     }
+
+
     c_full->Write();
     if(plot_pdf) c_full->SaveAs((tag+".pdf").c_str(),"pdf");
 
