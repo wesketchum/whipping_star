@@ -107,6 +107,10 @@ void SBNchi::InitRandomNumberSeeds(){
     rangen_twister = new std::mt19937(random_device_seed());
     rangen_linear = new std::minstd_rand(random_device_seed());
     rangen_carry = new std::ranlux24_base(random_device_seed());
+
+    rangen = new TRandom3(0);
+
+
 }
 
 
@@ -887,9 +891,10 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
         }
     }
 
+    //Lets NOT add these in here but treat them as Poisson later. Seems better
     for(int i =0; i<U.GetNcols(); i++)
     {
-        U(i,i) += specin->full_vector.at(i);
+    //U(i,i) += specin->full_vector.at(i);
     }
 
     //First up, we have some problems with positive semi-definite and not positive definite
@@ -996,8 +1001,7 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
         a_corein[i] = core_spectrum.collapsed_vector[i];
     }
 
-
-    TH1D ans("","",150,0,max_sample_chi_val );
+    TH1D ans("","",std::max(200,(int)max_sample_chi_val),0,max_sample_chi_val );
     //ans.GetXaxis()->SetCanExtend(kTRUE);
     is_verbose = false;
 
@@ -1065,7 +1069,7 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
             }
 #else
             for(int a=0; a<num_bins_total; a++) {
-                gaus_sample[a]= abs(dist_normal(*rangen_twister));
+                gaus_sample[a]= dist_normal(*rangen_twister);
             }      
 #endif
 
@@ -1074,7 +1078,10 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
                 for(int k = 0; k < num_bins_total; k++){
                     sampled_fullvector[j] += a_vec_matrix_lower_triangular[j][k] * gaus_sample[k];
                 }
+             
                 if(sampled_fullvector[j]<0) sampled_fullvector[j]=0.0;
+
+                sampled_fullvector[j] = rangen->Poisson(sampled_fullvector[j]);
                 
                 //std::cout<<"P: "<<a_specin[j]<<" "<<sampled_fullvector[j]<<std::endl;
 
@@ -1252,7 +1259,7 @@ SBNspec SBNchi::SampleCovariance(SBNspec *specin){
     TVectorT<double> gaus_sample(n_t);
     TVectorT<double> multi_sample(n_t);
     for(int a=0; a<n_t; a++){
-        gaus_sample(a) = abs(dist_normal(*rangen_twister));	
+        gaus_sample(a) = dist_normal(*rangen_twister);	
 
     }
 
@@ -1266,10 +1273,7 @@ SBNspec SBNchi::SampleCovariance(SBNspec *specin){
 
     sampled_spectra.CollapseVector(); //this line important isnt it!
 
-
     is_verbose = true;
-
-
 
     return sampled_spectra;
 }
@@ -1327,7 +1331,7 @@ TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<dou
     is_verbose = false;
 
     std::vector< std::poisson_distribution<int>> dist_pois;
-  //  std::vector< std::normal_distribution<float>> dist_pois;
+    //std::vector< std::normal_distribution<float>> dist_pois;
     for(int j = 0; j < num_bins_total; j++){
             //for tesing purposes
             dist_pois.push_back(std::poisson_distribution<int>(a_specin[j])); 
@@ -1355,7 +1359,7 @@ TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<dou
 
     }
    
-    TH1D ans("","",150,0,max_sample_chi_val);
+    TH1D ans("","",std::max(200,(int)max_sample_chi_val),0,max_sample_chi_val);
 
     
     for(int i=0; i<num_MC; i++){

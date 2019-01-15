@@ -8,7 +8,7 @@
 <!-- We have three channels. Each "Channel" referes to a physically observable selelection. In this case nue-like, numu-like and ccpi0-like. -->
 <channel name="nue" unit="MeV"  >
     <bins
-        edges="100 150 200 250 300 350 400 450 500 550 600 650 700 750 800 850 900 950 1000 1200 1400 1600 1800 2000 2500 3000"
+        edges="200 300 400 500 600 700 800 900 1000 1500 3000"
         />
     <subchannel name="intrinsic" />
     <subchannel name="leesignal" />
@@ -16,7 +16,7 @@
 
 <channel name="numu" unit="MeV"  >
     <bins
-        edges="100 150 200 250 300 350 400 450 500 550 600 650 700 750 800 850 900 950 1000 1200 1400 1600 1800 2000 2500 3000"
+        edges="100 200 300 400 500 600 700 800 900 1000 1500 3000"
         />
     <subchannel name="intrinsic" />
 </channel>
@@ -42,7 +42,7 @@
  </MultisimFile>
 
 <!-- We get the LEE signal from the same NUE intrinsic file above, but we add a friend tree to reweight it by the LEE signal. This can also just be a branch inside your NUE intrinsic file as well but this example uses the more complicated friend tree format -->
-<MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1e1p.root" scale = "0.0008" maxevents ="10000" >
+<MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1e1p.root" scale = "0.002" maxevents ="10000" >
     <friend treename = "lee_signal_weights" filename="/uboone/data/users/markross/SBNfit_example_data/lee_signal_friend_tree.root"/>
     <branch
         name="ereco"

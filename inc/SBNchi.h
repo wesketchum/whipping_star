@@ -73,6 +73,7 @@ class SBNchi : public SBNconfig{
     std::minstd_rand * rangen_linear;
     std::ranlux24_base * rangen_carry;
     void InitRandomNumberSeeds();
+    TRandom3 * rangen;
 
 	/*********************************** Member Functions ********************************/	
 
