@@ -46,7 +46,6 @@ using namespace sbn;
 int main(int argc, char* argv[])
 {
 
-	std::string xml = "unit1.xml";
 
 	/*************************************************************
 	 *************************************************************
@@ -100,7 +99,11 @@ int main(int argc, char* argv[])
     SBNspec signal_C("unit1c.root","unit1c.xml");
     SBNspec bkg_C("unit1c.root","unit1c.xml");
     bkg_C.Scale("leesignal",0.0);
-         
+
+    signal_A.WriteOut("unit1_signal_A");
+    signal_B.WriteOut("unit1_signal_B");
+    signal_C.WriteOut("unit1_signal_C");
+
 
    	SBNchi *sbnchi_A_statonly = new SBNchi(bkg_A);
    	SBNchi *sbnchi_B_statonly = new SBNchi(bkg_B);
@@ -133,7 +136,6 @@ int main(int argc, char* argv[])
     std::cout<<"Unit test 1: Stat+ Systematics, Analytical answer should be: 0.3222 for all THREE below."<<std::endl;
     std::cout<<"A: "<<chi_A_statplussys<<" B: "<<chi_B_statplussys<<" C: "<<chi_C_statplussys<<std::endl;
     
-
 
 
 

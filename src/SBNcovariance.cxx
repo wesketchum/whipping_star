@@ -500,9 +500,9 @@ int SBNcovariance::FormCovarianceMatrix(std::string tag){
      * *********************************************************/
     TFile *fout=new TFile((tag+".SBNcovar.root").c_str(),"RECREATE");
     fout->cd();
-    full_covariance.Write(("full_covariance_"+tag).c_str(),TObject::kWriteDelete);
-    frac_covariance.Write(("frac_covariance_"+tag).c_str(),TObject::kWriteDelete);
-    full_correlation.Write(("full_correlation_"+tag).c_str(),TObject::kWriteDelete);
+    full_covariance.Write("full_covariance",TObject::kWriteDelete);
+    frac_covariance.Write("frac_covariance",TObject::kWriteDelete);
+    full_correlation.Write("full_correlation",TObject::kWriteDelete);
 
     TDirectory *individualDir = fout->GetDirectory("individualDir"); 
     if (!individualDir) { 
@@ -512,9 +512,9 @@ int SBNcovariance::FormCovarianceMatrix(std::string tag){
     individualDir->cd();
 
     for(int m=0; m< variations.size();m++){
-        vec_full_correlation.at(m).Write( (variations.at(m)+"_full_correlation_"+tag).c_str(), TObject::kWriteDelete);
-        vec_frac_covariance.at(m).Write( (variations.at(m)+"_frac_covariance_"+tag).c_str(), TObject::kWriteDelete);
-        vec_full_covariance.at(m).Write( (variations.at(m)+"_full_covariance_"+tag).c_str(), TObject::kWriteDelete);
+        vec_full_correlation.at(m).Write( (variations.at(m)+"_full_correlation").c_str(), TObject::kWriteDelete);
+        vec_frac_covariance.at(m).Write( (variations.at(m)+"_frac_covariance").c_str(), TObject::kWriteDelete);
+        vec_full_covariance.at(m).Write( (variations.at(m)+"_full_covariance").c_str(), TObject::kWriteDelete);
     }
 
     std::vector<TH2D> h2_corr;
@@ -882,7 +882,7 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool p
                     std::string chan_sub = channel_names[ic]+" "+subchannel_names[ic][isc];
 
                     
-                    TText * tmd = new TText(-num_bins_total*percent_left, use_full+nice_shift*0.5, (mode_det+" "+chan_sub).c_str() );
+                    TText * tmd = new TText(-num_bins_total*percent_left*0.15, use_full+nice_shift*0.5, (mode_det+" "+chan_sub).c_str() );
 
                     //TText * tmd = new TText(use_full*1.05, num_bins_total*1.015, chan_sub.c_str());
                     //TText * tcs = new TText(use_full*1.05, num_bins_total*1.055, mode_det.c_str());

@@ -31,7 +31,9 @@ SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin) : SBNconfig(in
 
     matrix_fractional_covariance = m;
     matrix_systematics.Zero();
-   
+    max_sample_chi_val =150.0;
+
+  
 
     this->InitRandomNumberSeeds();
     this->ReloadCoreSpectrum(&core_spectrum);
@@ -56,6 +58,7 @@ SBNchi::SBNchi(SBNspec in, std::string newxmlname) : SBNconfig(newxmlname), core
         }
     }
 
+    max_sample_chi_val =150.0;
     matrix_fractional_covariance = FillSystematicsFromXML();
     last_calculated_chi = -9999999;
     core_spectrum.CollapseVector();
@@ -79,6 +82,7 @@ SBNchi::SBNchi(SBNspec in, bool is_is_stat_only): SBNconfig(in.xmlname), core_sp
     matrix_fractional_covariance.ResizeTo(num_bins_total, num_bins_total);
 
 
+    max_sample_chi_val =150.0;
     this->InitRandomNumberSeeds();
 
 
@@ -949,7 +953,8 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
 }
 
 
-TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC){ 
+TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, double maxchi){ 
+    max_sample_chi_val = maxchi;
     std::vector<double>  tmp;
     return SampleCovarianceVaryInput(specin,num_MC,&tmp);
 }
@@ -992,7 +997,7 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
     }
 
 
-    TH1D ans("","",150,0,150);
+    TH1D ans("","",150,0,max_sample_chi_val );
     //ans.GetXaxis()->SetCanExtend(kTRUE);
     is_verbose = false;
 
@@ -1070,6 +1075,9 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
                     sampled_fullvector[j] += a_vec_matrix_lower_triangular[j][k] * gaus_sample[k];
                 }
                 if(sampled_fullvector[j]<0) sampled_fullvector[j]=0.0;
+                
+                //std::cout<<"P: "<<a_specin[j]<<" "<<sampled_fullvector[j]<<std::endl;
+
             }
 
             this->CollapseVectorStandAlone(sampled_fullvector, collapsed);
@@ -1269,12 +1277,14 @@ SBNspec SBNchi::SampleCovariance(SBNspec *specin){
 
 
 
-TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC){ 
+TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC, double maxchi){ 
+    max_sample_chi_val = maxchi;
     std::vector<double>  tmp = {};
     return SamplePoissonVaryInput(specin,num_MC,&tmp);
 }
 //This one varies the input comparative spectrum, and as sucn has  only to calculate the matrix_systematics once
 TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<double> *chival){
+    
 
     float** a_vec_matrix_inverted = new float*[num_bins_total_compressed];
 
@@ -1312,15 +1322,16 @@ TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<dou
     float* sampled_fullvector = new float[num_bins_total] ;
     float* collapsed = new float[num_bins_total_compressed];
 
-
-    TH1D ans("","",150,0,150);
     //So save the core one that we will sample for
     //ans.GetXaxis()->SetCanExtend(kTRUE);
     is_verbose = false;
 
     std::vector< std::poisson_distribution<int>> dist_pois;
+  //  std::vector< std::normal_distribution<float>> dist_pois;
     for(int j = 0; j < num_bins_total; j++){
-            dist_pois.push_back( std::poisson_distribution<int>(a_specin[j])); 
+            //for tesing purposes
+            dist_pois.push_back(std::poisson_distribution<int>(a_specin[j])); 
+            //dist_pois.push_back(std::normal_distribution<float>(a_specin[j],sqrt(a_specin[j])));
     }
 
 
@@ -1328,7 +1339,11 @@ TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<dou
 
         for(int j = 0; j < num_bins_total; j++){
 
-            sampled_fullvector[j] = (float)dist_pois[j](*rangen_twister); 
+            //float p = dist_pois[j](*rangen_twister); 
+            int p = dist_pois[j](*rangen_twister); 
+
+            sampled_fullvector[j] =  (float)p;
+            //std::cout<<"P: "<<a_specin[j]<<" "<<sampled_fullvector[j]<<" "<<p<<std::endl;
         }
 
         this->CollapseVectorStandAlone(sampled_fullvector, collapsed);
@@ -1339,6 +1354,10 @@ TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<dou
         }
 
     }
+   
+    TH1D ans("","",150,0,max_sample_chi_val);
+
+    
     for(int i=0; i<num_MC; i++){
         ans.Fill(a_vec_chis[i]);
     }

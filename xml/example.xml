@@ -33,7 +33,7 @@
 <!-- ############################# BUILDING A COVARIANCE MATRIX  #####################################################-->
 <!-- This is where we define the location and some basic info for where the TTree files are saved that we wish to build a covariance matrix outof -->
 
- <MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1e1p.root" scale = "0.002" maxevents ="20000" > 
+ <MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1e1p.root" scale = "0.004" maxevents ="10000" > 
      <branch
          name="ereco"
          type="double"
@@ -42,7 +42,7 @@
  </MultisimFile>
 
 <!-- We get the LEE signal from the same NUE intrinsic file above, but we add a friend tree to reweight it by the LEE signal. This can also just be a branch inside your NUE intrinsic file as well but this example uses the more complicated friend tree format -->
-<MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1e1p.root" scale = "0.03" maxevents ="1000" >
+<MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1e1p.root" scale = "0.0008" maxevents ="10000" >
     <friend treename = "lee_signal_weights" filename="/uboone/data/users/markross/SBNfit_example_data/lee_signal_friend_tree.root"/>
     <branch
         name="ereco"
@@ -53,7 +53,7 @@
 </MultisimFile>
 
 
-<MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1m1p.root" scale = "0.01" maxevents ="50000" >
+<MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1m1p.root" scale = "0.01" maxevents ="10000" >
     <branch
         name="ereco"
         type="double"
