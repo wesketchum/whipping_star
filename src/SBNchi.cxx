@@ -296,7 +296,7 @@ double SBNchi::CalcChi(SBNspec *sigSpec){
     double tchi = 0;
 
     if(sigSpec->collapsed_vector.size()==0){
-        if(is_verbose)	std::cout<<"WARNING: SBNchi::CalcChi, inputted sigSpec has un-compressed vector, I am doing it now, but this is inefficient!"<<std::endl;
+//        if(is_verbose)	std::cout<<"WARNING: SBNchi::CalcChi, inputted sigSpec has un-compressed vector, I am doing it now, but this is inefficient!"<<std::endl;
         sigSpec->CollapseVector();
     }
 
