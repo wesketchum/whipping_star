@@ -149,7 +149,7 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
                 if(std::isnan(matrix_systematics(i,j)))
                     matrix_systematics(i,j) = 0;
                 else
-                    matrix_systematics(i,j)=matrix_systematics(i,j)*core_spectrum.full_vector.at(i)*core_spectrum.full_vector.at(j);
+                    matrix_systematics(i,j) = matrix_systematics(i,j)*core_spectrum.full_vector.at(i)*core_spectrum.full_vector.at(j);
             }
         }
     }
@@ -203,7 +203,7 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
             }
         }
 
-        if(is_verbose)	std::cout<<otag<<"WARNING: Biggest Relative Deviation from symmetry is i:"<<bi<<" j: "<<bj<<" of order "<<biggest_deviation<<" M(j,i)"<<Mtotal(bj,bi)<<" M(i,j)"<<Mtotal(bi,bj)<<std::endl;
+        if(is_verbose) std::cout<<otag<<"WARNING: Biggest Relative Deviation from symmetry is i:"<<bi<<" j: "<<bj<<" of order "<<biggest_deviation<<" M(j,i)"<<Mtotal(bj,bi)<<" M(i,j)"<<Mtotal(bi,bj)<<std::endl;
 
         if(biggest_deviation >tol){
 
@@ -1082,6 +1082,7 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
                 if(sampled_fullvector[j]<0) sampled_fullvector[j]=0.0;
 
                 sampled_fullvector[j] = rangen->Poisson(sampled_fullvector[j]);
+                //sampled_fullvector[j] = rangen->Poisson(a_specin[j]);
                 
                 //std::cout<<"P: "<<a_specin[j]<<" "<<sampled_fullvector[j]<<std::endl;
 

@@ -149,6 +149,7 @@ class SBNchi : public SBNconfig{
 		//some plotting things
 	TH2D* GetChiogram();
 	int PrintMatricies(std::string);
+    int DrawSampleCovariance(std::string);
 
 };
 

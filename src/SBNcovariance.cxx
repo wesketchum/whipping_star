@@ -215,7 +215,6 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         std::cout << otag<<" TFile::Close() file=" << f->GetName() << " @" << f << std::endl;
         f->Close();
     }
-
     std::cout << otag<<" End" << std::endl;
 }
 
@@ -662,7 +661,7 @@ int SBNcovariance::PrintVariations(std::string tag){
     }
 
     std::cout<<"SBNcovariance::PrintVariations\t||Starting universe loop [This can take a while!] "<<std::endl;
-    TRandom3 *rangen = new TRandom3(0);
+    TRandom3 *rangen = new TRandom3(20);
     for(int m=0; m < universes_used; m++){
         std::string var = map_universe_to_var.at(m);
         int which_matrix = map_var_to_matrix.at(var);

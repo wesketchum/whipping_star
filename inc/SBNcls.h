@@ -67,7 +67,7 @@ class SBNcls{
 	int SetSampleCovariance();
 	int SetSamplePoisson();
     double pval2sig(double p);
-
+    int DrawSampleCovariance(std::string);
 };
 
 

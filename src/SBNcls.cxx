@@ -85,8 +85,6 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
     h0_pdf.Scale(1.0/h0_pdf.Integral("width"));
 	h1_pdf.Scale(1.0/h1_pdf.Integral("width"));
 
-
-
 	h0_pdf.SetLineColor(kRed-7);
 	h1_pdf.SetLineColor(kBlue-4);
 	h0_pdf.SetFillColor(kRed-7);
