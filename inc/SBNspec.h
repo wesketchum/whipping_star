@@ -62,6 +62,7 @@ namespace sbn{
 
 			SBNspec(std::vector<double> input_full_vec, std::string whichxml);
 			SBNspec(std::vector<double> input_full_vec, std::string whichxml, bool isverbose);
+            SBNspec(std::vector<double> input_full_vec, std::string whichxml, int universe, bool isverbose);
 
 
 

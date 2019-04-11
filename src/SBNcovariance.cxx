@@ -6,7 +6,10 @@
 using namespace sbn;
 
 SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
-    std::cout << "SBNcovariance::SBNcovariance\t|| Start" << std::endl;
+    otag = "SBN covariance::SBNcovariance\t||\t";
+    
+    std::cout <<otag<<"Start" << std::endl;
+
 
     universes_used = 0;
     tolerence_positivesemi = 1e-5;
@@ -17,60 +20,61 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     std::map<std::string, int> parameter_sims;
 
     //Initialise the central value SBNspec.
-    SBNspec tm(xmlname,-1,false);
-    spec_central_value = tm;
+    spec_central_value = SBNspec(xmlname,-1,false);
 
-    int num_files = multisim_file.size();
+    int num_files = montecarlo_file.size();
 
     variations.clear();
     std::vector<std::string> variations_tmp;
 
-    std::cout<<"SBNcovariance::SBNcovariance\t|| Construct for num_files=" << num_files << std::endl;
+    std::cout<<otag<<" Construct for num_files=" << num_files << std::endl;
 
     std::vector<int> nentries(num_files,0);
-    std::vector<int> used_multisims(num_files,0);
+    std::vector<int> used_montecarlos(num_files,0);
 
     files.resize(num_files,nullptr);
     trees.resize(num_files,nullptr);
     f_weights.resize(num_files,nullptr);
 
+    montecarlo_additional_weight.resize(num_files,1.0);
+
     int good_event = 0;
 
     for(int fid=0; fid < num_files; ++fid) {
-        const auto& fn = multisim_file.at(fid);
+        const auto& fn = montecarlo_file.at(fid);
 
 
 
         files[fid] = TFile::Open(fn.c_str());
-        trees[fid] = (TTree*)(files[fid]->Get(multisim_name.at(fid).c_str()));
+        trees[fid] = (TTree*)(files[fid]->Get(montecarlo_name.at(fid).c_str()));
         nentries[fid]= (int)trees.at(fid)->GetEntries();
 
-        std::cout << "SBNcovariance::SBNcovariance\t||" << std::endl;
-        std::cout << "SBNcovariance::SBNcovariance\t|| TFile::Open() file=" << files[fid]->GetName() << " @" << files[fid] << std::endl;
+        std::cout << otag<<"" << std::endl;
+        std::cout << otag<<" TFile::Open() file=" << files[fid]->GetName() << " @" << files[fid] << std::endl;
 
-        auto multisim_file_friend_treename_iter = multisim_file_friend_treename_map.find(fn);
-        if (multisim_file_friend_treename_iter != multisim_file_friend_treename_map.end()) {
-            std::cout<<"SBNcovariance::SBNcovariance\t|| Detected friend trees" << std::endl;
+        auto montecarlo_file_friend_treename_iter = montecarlo_file_friend_treename_map.find(fn);
+        if (montecarlo_file_friend_treename_iter != montecarlo_file_friend_treename_map.end()) {
+            std::cout<<otag<<" Detected friend trees" << std::endl;
 
-            auto multisim_file_friend_iter = multisim_file_friend_map.find(fn);
-            if (multisim_file_friend_iter == multisim_file_friend_map.end()) {
+            auto montecarlo_file_friend_iter = montecarlo_file_friend_map.find(fn);
+            if (montecarlo_file_friend_iter == montecarlo_file_friend_map.end()) {
                 std::stringstream ss;
-                ss << "Looked for filename=" << fn << " in fnmultisim_file_friend_iter, but could not be found... bad config?" << std::endl;
+                ss << "Looked for filename=" << fn << " in fnmontecarlo_file_friend_iter, but could not be found... bad config?" << std::endl;
                 throw std::runtime_error(ss.str());
             }
 
-            for(int k=0; k < (*multisim_file_friend_iter).second.size(); k++){
+            for(int k=0; k < (*montecarlo_file_friend_iter).second.size(); k++){
 
-                std::string treefriendname = (*multisim_file_friend_treename_iter).second.at(k);
-                std::string treefriendfile = (*multisim_file_friend_iter).second.at(k);
+                std::string treefriendname = (*montecarlo_file_friend_treename_iter).second.at(k);
+                std::string treefriendfile = (*montecarlo_file_friend_iter).second.at(k);
 
-                std::cout << "SBNcovariance::SBNcovariance\t|| Adding a friend tree  " << treefriendfile << " to file " << fn << std::endl;
+                std::cout << otag<<" Adding a friend tree:  " <<treefriendname<<" from file: "<< treefriendfile <<std::endl;
 
                 trees[fid]->AddFriend(treefriendname.c_str(),treefriendfile.c_str());
             }
         }
 
-        std::cout<<"SBNcovariance::SBNcovariance\t|| Read variations & universe size" << std::endl;
+        std::cout<<otag<<" Read variations & universe size" << std::endl;
 
         trees.at(fid)->SetBranchAddress("weights", &(f_weights[fid]) );
 
@@ -79,25 +83,30 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             int is_valid_subchannel = 0;
             for(const auto &name: fullnames){
                 if(branch_variable->associated_hist==name){
-                    std::cout<<"SBNcovariance::SBNcovariance\t|| Found a valid subchannel for this branch: " <<name<<std::endl;
+                    std::cout<<otag<<" Found a valid subchannel for this branch: " <<name<<std::endl;
                     is_valid_subchannel++;
                 }
             }
             if(is_valid_subchannel==0){
-                    std::cout<<"SBNcovariance::SBNcovariance\t|| ERROR ERROR: This branch did not match one defined in the .xml : " <<branch_variable->associated_hist<<std::endl;
-                    std::cout<<"SBNcovariance::SBNcovariance\t|| ERROR ERROR: There is probably a typo somehwhere in xml! "<<std::endl;
+                    std::cout<<otag<<" ERROR ERROR: This branch did not match one defined in the .xml : " <<branch_variable->associated_hist<<std::endl;
+                    std::cout<<otag<<" ERROR ERROR: There is probably a typo somehwhere in xml! "<<std::endl;
                     exit(EXIT_FAILURE);
 
             }else if(is_valid_subchannel>1){
-                    std::cout<<"SBNcovariance::SBNcovariance\t|| ERROR ERROR: This branch matched more than 1 subchannel!: " <<branch_variable->associated_hist<<std::endl;
+                    std::cout<<otag<<" ERROR ERROR: This branch matched more than 1 subchannel!: " <<branch_variable->associated_hist<<std::endl;
                     exit(EXIT_FAILURE);
             }
             
-
-
             trees.at(fid)->SetBranchAddress(branch_variable->name.c_str(),
                     branch_variable->GetValue());
         }
+  
+        if(montecarlo_additional_weight_bool[fid]){
+        //we have an additional weight we want to apply at run time, otherwise its just set at 1. 
+            trees[fid]->SetBranchAddress(montecarlo_additional_weight_names[fid].c_str(), &montecarlo_additional_weight[fid]); 
+        }
+    
+
 
         trees.at(fid)->GetEntry(good_event);
 
@@ -108,16 +117,16 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             throw std::runtime_error(ss.str());
         }
 
-        //This bit will calculate how many "multisims" the file has. if ALL default is the inputted xml value
+        //This bit will calculate how many "universes" the file has. if ALL default is the inputted xml value
 
         for(const auto& it : *f_weight) {
             if(it.first == bnbcorrection_str) 
                 continue;    
 
-            std::cout <<" SBNcovariance::SBNcovariance\t|| "
-                << it.first << " has " << it.second.size() << " multisims in file " << fid << std::endl;
+            std::cout <<otag
+                << it.first << " has " << it.second.size() << " montecarlos in file " << fid << std::endl;
 
-            used_multisims[fid] += it.second.size();
+            used_montecarlos[fid] += it.second.size();
 
             variations_tmp.push_back(it.first);
         }
@@ -128,7 +137,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     variations.insert(variations.begin(),variations_tmp.begin(),unique_iter);
 
     // make a map and start filling, before filling find if already in map, if it is check size.
-    std::cout << "SBNcovariance::SBNcovariance\t|| Found " << variations.size() << " unique variations: " << std::endl;
+    std::cout << otag<<" Found " << variations.size() << " unique variations: " << std::endl;
 
     map_universe_to_var.clear();
     num_universes_per_variation.clear();
@@ -136,7 +145,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     for(size_t vid=0; vid<variations.size(); ++vid) {
         const auto &v =  variations[vid];
 
-        std::cout<<"SBNcovariance::SBNcovariance\t|| "<<v<<std::endl;
+        std::cout<<otag<<" "<<v<<std::endl;
         trees.front()->GetEntry(good_event);
         int thissize = (*(f_weights.front())).at(v).size(); // map lookup
 
@@ -150,73 +159,72 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     }
 
     for(int i=1; i<num_files; i++){
-        std::cout << "SBNcovariance::SBNcovariance\t|| File: " << i << " has " << used_multisims.at(i) << " multisims" << std::endl;
-        if(used_multisims.at(i)!= used_multisims.at(i-1)){
-            std::cerr << "SBNcovariance::SBNcovariance\t|| Warning, number of universes for are different between files" << std::endl;
-            std::cerr << "SBNcovariance::SBNcovariance\t|| The missing universes are Set to weights of 1. Make sure this is what you want!" << std::endl;
+        std::cout << otag<<" File: " << i << " has " << used_montecarlos.at(i) << " montecarlos" << std::endl;
+        if(used_montecarlos.at(i)!= used_montecarlos.at(i-1)){
+            std::cerr << otag<<" Warning, number of universes for are different between files" << std::endl;
+            std::cerr << otag<<" The missing universes are Set to weights of 1. Make sure this is what you want!" << std::endl;
             for(int j=0; j<num_files; j++){
-                if(universes_used < used_multisims.at(j)) 
-                    universes_used = used_multisims.at(j);
-                std::cerr << "SBNcovariance::SBNmultisom\t|| File " << j << " multisims: " << used_multisims.at(j) << std::endl;
+                if(universes_used < used_montecarlos.at(j)) 
+                    universes_used = used_montecarlos.at(j);
+                std::cerr <<otag<<"File " << j << " montecarlos: " << used_montecarlos.at(j) << std::endl;
             }
         }
-        std::cout << "SBNcovariance::SBNcovariance\t|| Disregard, using the first file number of multisims anyways" << std::endl;
-        universes_used = used_multisims.at(0);
+        std::cout << otag<<" Disregard, using the first file number of montecarlos anyways" << std::endl;
+        universes_used = used_montecarlos.at(0);
     }
 
     if(num_files == 1) 
-        universes_used = used_multisims.front();
+        universes_used = used_montecarlos.front();
 
-    std::cout << "SBNcovariance::SBNcovariance\t|| -------------------------------------------------------------" << std::endl;
-    std::cout << "SBNcovariance::SBNcovariance\t|| Initilizing " << universes_used << " universes." << std::endl;
-    std::cout << "SBNcovariance::SBNcovariance\t|| -------------------------------------------------------------" << std::endl;
+    std::cout << otag<<" -------------------------------------------------------------" << std::endl;
+    std::cout << otag<<" Initilizing " << universes_used << " universes." << std::endl;
+    std::cout << otag<<" -------------------------------------------------------------" << std::endl;
 
     std::vector<double> base_vec (spec_central_value.num_bins_total,0.0);
 
-    std::cout << "SBNcovariance::SBNcovariance\t|| Full concatanated vector has : " << spec_central_value.num_bins_total << std::endl;
+    std::cout << otag<<" Full concatanated vector has : " << spec_central_value.num_bins_total << std::endl;
 
     multi_vecspec.clear();
     multi_vecspec.resize(universes_used,base_vec);
 
-    std::cout << "SBNcovariance::SBNcovariance\t|| multi_vecspec now initilized of size :" << multi_vecspec.size() << std::endl;
-    std::cout << "SBNcovariance::SBNcovariance\t|| Reading the data files" << std::endl;
+    std::cout << otag<<" multi_vecspec now initilized of size :" << multi_vecspec.size() << std::endl;
+    std::cout << otag<<" Reading the data files" << std::endl;
     watch.Reset();
     watch.Start();
 
     for(int j=0; j < num_files; j++){
-        std::cout << "SBNcovariance::SBNcovariance\t|| @ data file=" << files[j]->GetName() << std::endl;
-        int nevents = std::min(multisim_maxevents[j], nentries[j]);
+        std::cout << otag<<" @ data file=" << files[j]->GetName() << std::endl;
+        int nevents = std::min(montecarlo_maxevents[j], nentries[j]);
         size_t nbytes = 0;
         for(int i=0; i < nevents; i++) {
             nbytes+= trees[j]->GetEntry(i);
             ProcessEvent(*(f_weights[j]),j,i);
         } //end of entry loop
-        std::cout << "SBNcovariance::SBNcovariance\t|| nbytes read=" << nbytes << std::endl;
+        std::cout << otag<<" nbytes read=" << nbytes << std::endl;
 
     } //end of file loop
 
     watch.Stop();
-    std::cout << "SBNcovariance::SBNcovariance\t|| done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
+    std::cout << otag<<" done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
 
     /***************************************************************
      *		Now some clean-up and Writing
      * ************************************************************/
 
     for(auto f: files){
-        std::cout << "SBNcovariance::SBNcovariance\t|| TFile::Close() file=" << f->GetName() << " @" << f << std::endl;
+        std::cout << otag<<" TFile::Close() file=" << f->GetName() << " @" << f << std::endl;
         f->Close();
     }
-
-    std::cout << "SBNcovariance::SBNcovariance\t|| End" << std::endl;
+    std::cout << otag<<" End" << std::endl;
 }
 
 
 void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double> >& thisfWeight,
         size_t fileid,
         int entryid) {
-    double global_weight = 1;
+    double global_weight = montecarlo_additional_weight[fileid];//this will be 1.0 unless specified in xml
 
-    global_weight *= multisim_scale[fileid];
+    global_weight *= montecarlo_scale[fileid];
 
     const auto bnbcorr_iter = thisfWeight.find(bnbcorrection_str);
     if (bnbcorr_iter != thisfWeight.end())
@@ -224,8 +232,8 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
 
     if(std::isinf(global_weight) or (global_weight != global_weight)){
         std::stringstream ss;
-        ss << "SBNcovariance::ProcessEvent\t|| ERROR  error @ " << entryid
-            << " in File " << multisim_file.at(fileid) 
+        ss << "SBNcovariance::ProcessEvent\t||\tERROR  error @ " << entryid
+            << " in File " << montecarlo_file.at(fileid) 
             << " as its either inf/nan: " << global_weight << std::endl;
         throw std::runtime_error(ss.str());
     }
@@ -271,13 +279,13 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
 
             if(is_inf or is_nan){
                 std::stringstream ss;
-                ss << "SBNcovariance::ProcessEvent\t|| ERROR! Killing :: event # " << entryid
-                    << " in File " << multisim_file.at(fileid) << " weight: " << wei << " global bnb: " << global_weight << " in " << var << std::endl;
+                ss << "SBNcovariance::ProcessEvent\t||\t ERROR! Killing :: event # " << entryid
+                    << " in File " << montecarlo_file.at(fileid) << " weight: " << wei << " global bnb: " << global_weight << " in " << var << std::endl;
                 throw std::runtime_error(ss.str());
             }
 
             if(wei > abnormally_large_weight){
-                std::cout<<"ATTENTION! SBNcovariance::ProcessEvent\t|| HUGE weight: "<<wei<<" at "<<var<<" event "<<entryid<<" file "<<fileid<<std::endl;
+                std::cout<<"SBNcovariance::ProcessEvent\t||\tATTENTION!! HUGE weight: "<<wei<<" at "<<var<<" event "<<entryid<<" file "<<fileid<<std::endl;
             }
 
             weights[wid1] *= wei;
@@ -296,7 +304,7 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
     //So the size of weights must equal global universes ya?
     if(universes_used != num_universes_per_variation.size()){
         std::stringstream ss;
-        ss <<"SBNcovariance::SBNcovariance\t|| ERROR "<<std::endl;
+        ss <<otag<<" ERROR "<<std::endl;
         ss <<"weights.size() "<<weights.size()<<std::endl;
         ss <<"universes_used "<<universes_used<<std::endl;
         ss <<"multi_vecspec.size() "<<multi_vecspec.size()<<std::endl;
@@ -310,7 +318,7 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
         double reco_var = *(static_cast<double*>(branch_var_jt->GetValue()));
         //reco_var = 1.238*reco_var+0.025;
         int reco_bin = spec_central_value.GetGlobalBinNumber(reco_var,ih);
-        spec_central_value.hist[ih].Fill(reco_var,global_weight);
+        spec_central_value.hist[ih].Fill(reco_var, global_weight);
 
         for(int m=0; m<weights.size(); m++){
             if(reco_bin<0) continue;
@@ -344,7 +352,7 @@ int SBNcovariance::FillHistograms(int file, int uni, double wei){
 
 int SBNcovariance::FormCovarianceMatrix(std::string tag){
 
-    std::cout<<"SBNcovariance::FormCovariancematrix\t|| Start" << std::endl;
+    std::cout<<"SBNcovariance::FormCovariancematrix\t||\tStart" << std::endl;
     full_covariance.ResizeTo(num_bins_total, num_bins_total);
     frac_covariance.ResizeTo(num_bins_total, num_bins_total);
     full_correlation.ResizeTo(num_bins_total, num_bins_total);
@@ -397,7 +405,7 @@ int SBNcovariance::FormCovarianceMatrix(std::string tag){
     double* a_frac_covariance  = frac_covariance.GetMatrixArray();
     double* a_full_correlation = full_correlation.GetMatrixArray();
 
-    std::cout << "SBNcovariance::FormCovariancematrix\t|| Form variation sz= (" << num_bins_total << "X" << num_bins_total << ") covariance matrix(s)" << std::endl;
+    std::cout << "SBNcovariance::FormCovariancematrix\t||\tForm variation sz= (" << num_bins_total << "X" << num_bins_total << ") covariance matrix(s)" << std::endl;
     watch.Reset();
     watch.Start();
 #pragma acc parallel loop						\
@@ -420,7 +428,7 @@ int SBNcovariance::FormCovarianceMatrix(std::string tag){
         }
     }
     watch.Stop();
-    std::cout << "SBNcovariance::FormCovariancematrix\t|| done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
+    std::cout << "SBNcovariance::FormCovariancematrix\t||\tdone CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
 
 
     // std::cout << "SBNcovariance::FormCovariancematrix\t|| Calculating on the CPU" << std::endl;
@@ -453,14 +461,14 @@ int SBNcovariance::FormCovarianceMatrix(std::string tag){
 
     watch.Reset();
     watch.Start();
-    std::cout << "SBNcovariance::FormCovariancematrix\t|| Summing over variations for covariance matrix" << std::endl;
+    std::cout << "SBNcovariance::FormCovariancematrix\t||\tSumming over variations for covariance matrix" << std::endl;
     for(int vid=0; vid<variations.size(); ++vid) {
         full_covariance += vec_full_covariance[vid];
     }
     watch.Stop();
-    std::cout << "SBNcovariance::FormCovariancematrix\t|| done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
+    std::cout << "SBNcovariance::FormCovariancematrix\t||\tdone CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
 
-    std::cout<<"SBNcovariance::FormCovariancematrix\t|| Now calculating fractional covariance and correlation matrix from full covariance."<<std::endl;
+    std::cout<<"SBNcovariance::FormCovariancematrix\t||\tNow calculating fractional covariance and correlation matrix from full covariance."<<std::endl;
     watch.Reset();
     watch.Start();
 
@@ -484,16 +492,16 @@ int SBNcovariance::FormCovarianceMatrix(std::string tag){
         }
     }
     watch.Stop();
-    std::cout << "SBNcovariance::FormCovariancematrix\t|| done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
+    std::cout << "SBNcovariance::FormCovariancematrix\t||\tdone CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
 
     /************************************************************
      *			Saving to file				    *
      * *********************************************************/
     TFile *fout=new TFile((tag+".SBNcovar.root").c_str(),"RECREATE");
     fout->cd();
-    full_covariance.Write(("full_covariance_"+tag).c_str(),TObject::kWriteDelete);
-    frac_covariance.Write(("frac_covariance_"+tag).c_str(),TObject::kWriteDelete);
-    full_correlation.Write(("full_correlation_"+tag).c_str(),TObject::kWriteDelete);
+    full_covariance.Write("full_covariance",TObject::kWriteDelete);
+    frac_covariance.Write("frac_covariance",TObject::kWriteDelete);
+    full_correlation.Write("full_correlation",TObject::kWriteDelete);
 
     TDirectory *individualDir = fout->GetDirectory("individualDir"); 
     if (!individualDir) { 
@@ -503,9 +511,9 @@ int SBNcovariance::FormCovarianceMatrix(std::string tag){
     individualDir->cd();
 
     for(int m=0; m< variations.size();m++){
-        vec_full_correlation.at(m).Write( (variations.at(m)+"_full_correlation_"+tag).c_str(), TObject::kWriteDelete);
-        vec_frac_covariance.at(m).Write( (variations.at(m)+"_frac_covariance_"+tag).c_str(), TObject::kWriteDelete);
-        vec_full_covariance.at(m).Write( (variations.at(m)+"_full_covariance_"+tag).c_str(), TObject::kWriteDelete);
+        vec_full_correlation.at(m).Write( (variations.at(m)+"_full_correlation").c_str(), TObject::kWriteDelete);
+        vec_frac_covariance.at(m).Write( (variations.at(m)+"_frac_covariance").c_str(), TObject::kWriteDelete);
+        vec_full_covariance.at(m).Write( (variations.at(m)+"_full_covariance").c_str(), TObject::kWriteDelete);
     }
 
     std::vector<TH2D> h2_corr;
@@ -539,7 +547,7 @@ int SBNcovariance::FormCovarianceMatrix(std::string tag){
 
     qualityTesting();
 
-    std::cout<<"SBNcovariance::FormCovariancematrix\t|| End" << std::endl;
+    std::cout<<"SBNcovariance::FormCovariancematrix\t||\tEnd" << std::endl;
     return 0;
 }
 
@@ -554,8 +562,8 @@ int SBNcovariance::qualityTesting() {
     std::cout<<"SBNcovariance::qualityTesting\t||-----------------------------------------------------" << std::endl;
 
 
-    std::cout<<"SBNcovariance::qualityTesting\t|| Checking if generated matrix is indeed a valid covariance matrix." << std::endl;
-    std::cout<<"SBNcovariance::qualityTesting\t|| First checking if matrix is symmetric." << std::endl;
+    std::cout<<"SBNcovariance::qualityTesting\t||\tChecking if generated matrix is indeed a valid covariance matrix." << std::endl;
+    std::cout<<"SBNcovariance::qualityTesting\t||\tFirst checking if matrix is symmetric." << std::endl;
 
     double max_sym_violation = 0;
     for(int i=0; i<num_bins_total; i++){
@@ -567,20 +575,20 @@ int SBNcovariance::qualityTesting() {
 
 
     if(max_sym_violation < 1e-13){
-        std::cout<<"SBNcovariance::qualityTesting\t|| PASS: Generated covariance matrix is symmetric"<<std::endl;
+        std::cout<<"SBNcovariance::qualityTesting\t||\tPASS: Generated covariance matrix is symmetric"<<std::endl;
     }else{
-        std::cout<<"SBNcovariance::qualityTesting\t||  ERROR result is not symmetric! "<<max_sym_violation<<std::endl;
+        std::cout<<"SBNcovariance::qualityTesting\t||\tERROR result is not symmetric! "<<max_sym_violation<<std::endl;
         for(int i=0; i<num_bins_total; i++){
             for(int j=0; j<num_bins_total; j++){
                 double tnp = fabs((full_covariance(j,i)-full_covariance(i,j))/(full_covariance(j,i)+full_covariance(i,j)));
                 if(full_covariance(i,j) != full_covariance(j,i)) std::cout<<i<<" "<<j<<" "<<full_covariance(i,j)<<" "<<full_covariance(j,i)<<" "<<tnp<<std::endl;
             }
         }
-        std::cout<<"SBNcovariance::qualityTesting\t||  ERROR result is not symmetric!"<<std::endl;
+        std::cout<<"SBNcovariance::qualityTesting\t||\tERROR result is not symmetric!"<<std::endl;
         exit(EXIT_FAILURE);
     }
 
-    std::cout<<"SBNcovariance::qualityTesting\t|| Checking if generated matrix is positive semi-definite by looking at eigenvalues." << std::endl;
+    std::cout<<"SBNcovariance::qualityTesting\t||\tChecking if generated matrix is positive semi-definite by looking at eigenvalues." << std::endl;
     //if a matrix is (a) real and (b) symmetric (checked above) then to prove positive semi-definite, we just need to check eigenvalues and >=0;
     TMatrixDEigen eigen (full_covariance);
     TVectorD eigen_values = eigen.GetEigenValuesRe();
@@ -590,7 +598,7 @@ int SBNcovariance::qualityTesting() {
         if(eigen_values(i)<0){
             is_small_negative_eigenvalue = true;
             if(fabs(eigen_values(i))> tolerence_positivesemi ){
-                std::cout << "SBNcovariance::qualityTesting\t|| ERROR contains (at least one)  negative eigenvalue: " << eigen_values(i) << std::endl;
+                std::cout << "SBNcovariance::qualityTesting\t||\tERROR contains (at least one)  negative eigenvalue: " << eigen_values(i) << std::endl;
                 exit(EXIT_FAILURE);
             }
         }
@@ -598,11 +606,12 @@ int SBNcovariance::qualityTesting() {
 
 
     if(is_small_negative_eigenvalue){
-        std::cout<<"SBNcovariance::qualityTesting\t|| PASS: Generated covariance matrix is (allmost) positive semi-definite. It did contain small negative values of absolute value <= :"<<tolerence_positivesemi<<std::endl;
+        std::cout<<"SBNcovariance::qualityTesting\t||\tPASS: Generated covariance matrix is (allmost) positive semi-definite."<<std::endl;
+        std::cout<<"SBNcovariance::qualityTesting\t||\tIt did contain small negative values of absolute value <= :"<<tolerence_positivesemi<<std::endl;
     }else{
-        std::cout<<"SBNcovariance::qualityTesting\t|| PASS: Generated covariance matrix is positive semi-definite."<<std::endl;
+        std::cout<<"SBNcovariance::qualityTesting\t||\tPASS: Generated covariance matrix is positive semi-definite."<<std::endl;
     }
-    std::cout<<"SBNcovariance::qualityTesting\t|| Congratulations, matrix is indeed a valid covariance matrix." << std::endl;
+    std::cout<<"SBNcovariance::qualityTesting\t||\tCongratulations, matrix is indeed a valid covariance matrix." << std::endl;
 
     return 0;
 }
@@ -611,7 +620,7 @@ int SBNcovariance::PrintVariations(std::string tag){
     TFile *fout = new TFile(("SBNfit_variation_plots_"+tag+".root").c_str(),"recreate");
     fout->cd();
 
-    std::cout << "SBNcovariance::PrintVariations\t|| Starting to Print all variations, this can take a little. " << std::endl;
+    std::cout << "SBNcovariance::PrintVariations\t||\tStarting to Print all variations, this can take a little. " << std::endl;
 
     std::vector<TDirectory*> vec_dir;
 
@@ -651,8 +660,8 @@ int SBNcovariance::PrintVariations(std::string tag){
         vec_canvas.push_back(tmpc);	
     }
 
-    std::cout<<"SBNcovariance::PrintVariations\t|| Starting universe loop. "<<std::endl;
-    TRandom3 *rangen = new TRandom3(0);
+    std::cout<<"SBNcovariance::PrintVariations\t||Starting universe loop [This can take a while!] "<<std::endl;
+    TRandom3 *rangen = new TRandom3(20);
     for(int m=0; m < universes_used; m++){
         std::string var = map_universe_to_var.at(m);
         int which_matrix = map_var_to_matrix.at(var);
@@ -672,7 +681,7 @@ int SBNcovariance::PrintVariations(std::string tag){
 
     }//end universe loop
 
-    std::cout << "SBNcovariance::PrintVariations\t|| Finished. Just tidying up and writing TCanvas. " << std::endl;
+    std::cout << "SBNcovariance::PrintVariations\t||\tFinished. Just tidying up and writing TCanvas. " << std::endl;
 
 
     for(int v =0; v< variations.size(); v++){
@@ -700,144 +709,19 @@ int SBNcovariance::PrintVariations(std::string tag){
 
 
 int SBNcovariance::PrintMatricies(std::string tag) {
-    std::cout << "SBNcovariance::PrintMatricies\t|| Start" << std::endl;
+    std::cout << "SBNcovariance::PrintMatricies\t||\tStart" << std::endl;
 
     TFile* fout = new TFile(("SBNfit_covariance_plots_"+tag+".root").c_str(),"recreate");
     fout->cd();
 
     gStyle->SetOptStat(0);
 
-    //correlation
-    TH2D h2_corr(full_correlation);
-    h2_corr.SetName("corr");
-    //h2_corr.Write();
-    TCanvas *c_corr = new TCanvas("full correlation matrix");
-    TPad *p_corr = (TPad*)c_corr->cd();
-    c_corr->SetFixedAspectRatio();
-    h2_corr.Draw("colz");
-    h2_corr.SetTitle("Full correlation matrix");
-    h2_corr.GetXaxis()->SetTitle("Reco Bin i");
-    h2_corr.GetYaxis()->SetTitle("Reco Bin j");
-
-    c_corr->SetFrameFillColor(kWhite);
-    c_corr->SetFillColor(kWhite);
-    p_corr->SetFillColor(kWhite);
-
-    c_corr->SetRightMargin(0.150);
-    int use_corr =0;
-    for(int im =0; im<num_modes; im++){
-        for(int id =0; id<num_detectors; id++){
-            for(int ic = 0; ic < num_channels; ic++){
-                for(int isc = 0; isc < num_subchannels.at(ic)-1; isc++){
-                    TLine *lscv = new TLine(0, num_bins.at(ic)+use_corr, num_bins_total, num_bins.at(ic)+use_corr);
-                    TLine *lsch = new TLine(num_bins.at(ic)+use_corr,0, num_bins.at(ic)+use_corr, num_bins_total);
-                    lscv->SetLineWidth(2);
-                    lsch->SetLineWidth(2);
-                    lscv->SetLineColor(kRed);
-                    lsch->SetLineColor(kRed);
-                    use_corr+=num_bins.at(ic);
-                    lscv->Draw();
-                    lsch->Draw();
-
-                }
-                TLine *lv = new TLine(0, num_bins.at(ic)+use_corr, num_bins_total, num_bins.at(ic)+use_corr);
-                TLine *lh = new TLine(num_bins.at(ic)+use_corr,0, num_bins.at(ic)+use_corr, num_bins_total);
-                lv->SetLineWidth(2);
-                lh->SetLineWidth(2);
-                use_corr+=num_bins.at(ic);
-                lv->Draw();
-                lh->Draw();
-
-            }
-        }
-    }
-    c_corr->Write();
-
-    //full covariance
-    TH2D h2_full(full_covariance);
-    h2_full.SetName("full");
-    //h2_full.Write();
-    TCanvas *c_full = new TCanvas("full covariance matrix");
-    c_full->cd();
-    c_full->SetFixedAspectRatio();
-    h2_full.Draw("colz");
-    h2_full.SetTitle("Full covariance matrix");
-    h2_full.GetXaxis()->SetTitle("Reco Bin i");
-    h2_full.GetYaxis()->SetTitle("Reco Bin j");
-
-    c_full->SetRightMargin(0.150);
-    int use_full =0;
-    for(int im =0; im<num_modes; im++){
-        for(int id =0; id<num_detectors; id++){
-            for(int ic = 0; ic < num_channels; ic++){
-                for(int isc = 0; isc < num_subchannels.at(ic)-1; isc++){
-                    TLine *lscv = new TLine(0, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
-                    TLine *lsch = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total);
-                    lscv->SetLineWidth(2);
-                    lsch->SetLineWidth(2);
-                    lscv->SetLineColor(kRed);
-                    lsch->SetLineColor(kRed);
-                    use_full+=num_bins.at(ic);
-                    lscv->Draw();
-                    lsch->Draw();
-
-                }
-                TLine *lv = new TLine(0, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
-                TLine *lh = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total);
-                lv->SetLineWidth(2);
-                lh->SetLineWidth(2);
-                use_full+=num_bins.at(ic);
-                lv->Draw();
-                lh->Draw();
-
-            }
-        }
-    }
-    c_full->Write();
-
-    //fracelation
-    TH2D h2_frac(frac_covariance);
-    h2_frac.SetName("frac");
-    //h2_frac.Write();
-    TCanvas *c_frac = new TCanvas("full fractional covariance matrix");
-    c_frac->cd();
-    c_frac->SetFixedAspectRatio();
-    h2_frac.Draw("colz");
-    h2_frac.SetTitle("Full fractional covariance matrix");
-    h2_frac.GetXaxis()->SetTitle("Reco Bin i");
-    h2_frac.GetYaxis()->SetTitle("Reco Bin j");
-    c_frac->SetRightMargin(0.150);
-
-    int use_frac =0;
-    for(int im =0; im<num_modes; im++){
-        for(int id =0; id<num_detectors; id++){
-            for(int ic = 0; ic < num_channels; ic++){
-                for(int isc = 0; isc < num_subchannels.at(ic)-1; isc++){
-                    TLine *lscv = new TLine(0, num_bins.at(ic)+use_frac, num_bins_total, num_bins.at(ic)+use_frac);
-                    TLine *lsch = new TLine(num_bins.at(ic)+use_frac,0, num_bins.at(ic)+use_frac, num_bins_total);
-                    lscv->SetLineWidth(2);
-                    lsch->SetLineWidth(2);
-                    lscv->SetLineColor(kRed);
-                    lsch->SetLineColor(kRed);
-                    use_frac+=num_bins.at(ic);
-                    lscv->Draw();
-                    lsch->Draw();
-
-                }
-                TLine *lv = new TLine(0, num_bins.at(ic)+use_frac, num_bins_total, num_bins.at(ic)+use_frac);
-                TLine *lh = new TLine(num_bins.at(ic)+use_frac,0, num_bins.at(ic)+use_frac, num_bins_total);
-                lv->SetLineWidth(2);
-                lh->SetLineWidth(2);
-                use_frac+=num_bins.at(ic);
-                lv->Draw();
-                lh->Draw();
-
-            }
-        }
-    }
-    c_frac->Write();
-
+    this->plot_one(full_correlation, "SBNfit_correlation_matrix_"+tag, fout, true,false);
+    this->plot_one(full_covariance, "SBNfit_covariance_matrix_"+tag, fout, true,false);
+    this->plot_one(frac_covariance, "SBNfit_fractional_covariance_matrix_"+tag, fout, true,false);
     //Print the collapsed matricies too: Need to fudge this a bit
+
+    
     SBNchi collapse_chi(xmlname);
 
     TMatrixT<double > coll_correlation(num_bins_total_compressed,num_bins_total_compressed);
@@ -940,59 +824,113 @@ int SBNcovariance::PrintMatricies(std::string tag) {
     c_coll_full->Write();
 
     for(int m=0; m< variations.size();m++){
-        this->plot_one(vec_full_correlation.at(m), variations.at(m)+" Correlation", fout);
-        this->plot_one(vec_frac_covariance.at(m), variations.at(m)+" Fractional Covariance", fout);
-        this->plot_one(vec_full_covariance.at(m), variations.at(m)+" Full Covariance", fout);
+        this->plot_one(vec_full_correlation.at(m), variations.at(m)+" Correlation", fout,false,true);
+        this->plot_one(vec_frac_covariance.at(m), variations.at(m)+" Fractional Covariance", fout,false,true);
+        this->plot_one(vec_full_covariance.at(m), variations.at(m)+" Full Covariance", fout,false,true);
     }
 
     fout->cd();
     fout->Close();
 
-    std::cout << "SBNcovariance::PrintMatricies\t|| End" << std::endl;
+    std::cout << "SBNcovariance::PrintMatricies\t||\tEnd" << std::endl;
     return 0;
 }
 
 
-int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin){
+int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool plot_pdf, bool indiv){
     fin->cd();
+    if(indiv){
     TDirectory *individualDir = fin->GetDirectory("individualDir"); 
     if (!individualDir) { 
         individualDir = fin->mkdir("individualDir");       
+     }
+         fin->cd(); 
+      individualDir->cd();
     }
-    fin->cd(); 
-    individualDir->cd();
-
     TH2D h2_full(matrix);
     h2_full.SetName((tag+"_th2d").c_str());
     TCanvas *c_full = new TCanvas((tag+"_canvas").c_str());
-    c_full->cd();
+    TPad *p_full = (TPad*)c_full->cd();
     c_full->SetFixedAspectRatio();
     h2_full.Draw("colz");
     h2_full.SetTitle(tag.c_str());
-    h2_full.GetXaxis()->SetTitle("Reco Bin i");
-    h2_full.GetYaxis()->SetTitle("Reco Bin j");
+    h2_full.GetXaxis()->SetTitle("Global Bin Number");
+    h2_full.GetYaxis()->SetTitle(" ");
+    h2_full.GetYaxis()->SetLabelSize(0);
+
+    c_full->SetFrameFillColor(kWhite);
+    c_full->SetFillColor(kWhite);
+    p_full->SetFillColor(kWhite);
+
 
     c_full->SetRightMargin(0.150);
+    c_full->SetLeftMargin(0.250);
+    c_full->SetTopMargin(0.10);
     int use_full =0;
+
+    double percent_left = 0.15;
+    double nice_shift = num_bins_total*0.02;
+
     for(int im =0; im<num_modes; im++){
         for(int id =0; id<num_detectors; id++){
             for(int ic = 0; ic < num_channels; ic++){
-                for(int isc = 0; isc < num_subchannels.at(ic)-1; isc++){
-                    TLine *lscv = new TLine(0, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
-                    TLine *lsch = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total);
-                    lscv->SetLineWidth(2);
-                    lsch->SetLineWidth(2);
-                    lscv->SetLineColor(kRed);
-                    lsch->SetLineColor(kRed);
-                    use_full+=num_bins.at(ic);
-                    lscv->Draw();
-                    lsch->Draw();
+                for(int isc = 0; isc < num_subchannels.at(ic); isc++){
 
+                    
+                    std::string mode_det = mode_names[im] +" " +detector_names[id];
+                    std::string chan_sub = channel_names[ic]+" "+subchannel_names[ic][isc];
+
+                    
+                    TText * tmd = new TText(-num_bins_total*percent_left*0.15, use_full+nice_shift*0.5, (mode_det+" "+chan_sub).c_str() );
+
+                    //TText * tmd = new TText(use_full*1.05, num_bins_total*1.015, chan_sub.c_str());
+                    //TText * tcs = new TText(use_full*1.05, num_bins_total*1.055, mode_det.c_str());
+                	tmd->SetTextColor(kBlack);
+                	//tcs->SetTextColor(kBlack);
+                    tmd->SetTextSize(0.03);
+                    tmd->SetTextAlign(31);
+                    //tcs->SetTextSize(0.03);
+                    tmd->Draw();
+                    //tcs->Draw();
+
+    
+                    /*
+                    TText * tlow_bin = new TText(-num_bins_total*percent_left, use_full+nice_shift*0.5, to_string_prec(bin_edges[ic].front(),0).c_str());
+                    TText * thigh_bin = new TText(-num_bins_total*percent_left, (use_full+num_bins[ic])-nice_shift*1.4, to_string_prec(bin_edges[ic].back(),0).c_str());
+                    tlow_bin->SetTextSize(0.02);
+                    thigh_bin->SetTextSize(0.02);
+                    tlow_bin->Draw();
+                    thigh_bin->Draw();
+
+                    TText * tunit = new TText(-num_bins_total*percent_left, use_full+0.5*num_bins[ic], channel_units[ic].c_str());
+                    tunit->SetTextSize(0.03);
+                    tunit->Draw();
+                    */
+
+
+                    if(isc<num_subchannels[ic]-1){
+                        TLine *lscv = new TLine(-num_bins_total*percent_left, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
+                        TLine *lsch = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total*1.045);
+                        lscv->SetLineWidth(3);
+                        lsch->SetLineWidth(3);
+                        lscv->SetLineColor(kRed);
+                        lsch->SetLineColor(kRed);
+                        lscv->SetLineStyle(9);
+                        lsch->SetLineStyle(9);
+
+                        lscv->Draw();
+                        lsch->Draw();
+
+                        use_full+=num_bins.at(ic);
+
+                        }
                 }
-                TLine *lv = new TLine(0, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
-                TLine *lh = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total);
-                lv->SetLineWidth(2);
-                lh->SetLineWidth(2);
+                TLine *lv = new TLine(-num_bins_total*percent_left, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
+                TLine *lh = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total*1.045);
+                lv->SetLineWidth(3);
+                lh->SetLineWidth(3);
+                lv->SetLineColor(kRed);
+                lh->SetLineColor(kRed);
                 use_full+=num_bins.at(ic);
                 lv->Draw();
                 lh->Draw();
@@ -1000,7 +938,11 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin){
             }
         }
     }
+
+
     c_full->Write();
+    if(plot_pdf) c_full->SaveAs((tag+".pdf").c_str(),"pdf");
+
 
     return 0;
 }

@@ -293,23 +293,28 @@ std::vector<double> SBNosc::Oscillate(std::string tag){
 		this->CalcFullVector();
 		this->CollapseVector();
 
-	std::vector<double > temp = collapsed_vector;
+	calcMassSplittings();
 
+	std::vector<double > temp = collapsed_vector;
 
 	for(auto ms: mass_splittings){
 
-			std::string name_sinsq = tag +"_SINSQ_dm_"+working_model.mass_tag;
-			std::string name_sin = tag +"_SIN_dm_"+working_model.mass_tag;
-
+			std::string name_sinsq = tag +"_SINSQ_dm_"+working_model.mass_tag+".SBNspec.root";
+			std::string name_sin = tag +"_SIN_dm_"+working_model.mass_tag+".SBNspec.root";
 
 			SBNspec single_frequency(name_sin , xmlname , false);
 			SBNspec single_frequency_square(name_sinsq , xmlname ,false);
-
 
 			if(has_been_scaled){
 				single_frequency.Scale(scale_hist_name, scale_hist_val);
 				single_frequency_square.Scale(scale_hist_name, scale_hist_val);
 			}
+
+    		//single_frequency.CalcFullVector();
+			//single_frequency_square.CalcFullVector();
+            //single_frequency.PrintFullVector();
+            //single_frequency_square.PrintFullVector();
+
 
 			double prob_mumu, prob_ee, prob_mue, prob_mue_sq, prob_muebar, prob_muebar_sq;
 
@@ -394,12 +399,11 @@ std::vector<double> SBNosc::Oscillate(std::string tag){
 
 					single_frequency.Scale(channel_names.at(i)+"_"+subchannel_names.at(i).at(j), osc_amp);
 					single_frequency_square.Scale(channel_names.at(i)+"_"+subchannel_names.at(i).at(j), osc_amp_sq );
-
 				}
 			}
 
 
-		//	std::cout<<"mm: "<<prob_mumu<<" ee: "<<prob_ee<<" mue: "<<prob_mue<<" mueSQ: "<<prob_mue_sq<<" mubar: "<<prob_muebar<<" muebarSQ: "<<prob_muebar_sq<<std::endl;
+	    	//std::cout<<"mm: "<<prob_mumu<<" ee: "<<prob_ee<<" mue: "<<prob_mue<<" mueSQ: "<<prob_mue_sq<<" mubar: "<<prob_muebar<<" muebarSQ: "<<prob_muebar_sq<<std::endl;
 			/*
 			single_frequency.Scale("elike_fulloscnue", prob_mue);
 			single_frequency.Scale("elike_fulloscbarnue", prob_muebar);
@@ -430,11 +434,11 @@ std::vector<double> SBNosc::Oscillate(std::string tag){
 			single_frequency_square.CalcFullVector();
 			single_frequency_square.CollapseVector();
 
+            
 			for(int i=0;i<temp.size(); i++){
 				temp[i] += single_frequency.collapsed_vector[i];
 				temp[i] += single_frequency_square.collapsed_vector[i];
 			}
-
 	}//Done looping over
 
 	return temp;

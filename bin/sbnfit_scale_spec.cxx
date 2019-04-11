@@ -40,14 +40,18 @@ using namespace sbn;
 
 /*************************************************************
  *************************************************************
- *		BEGIN example.cxx
+ *		BEGIN sbnfit_scale_spec.cxx
  ************************************************************
  ************************************************************/
 int main(int argc, char* argv[])
 {
 
 	std::string xml = "example.xml";
-	bool print_mode = false;
+    std::string input;
+    std::string output_tag;
+    std::string scale_string;
+    double scale_value;
+
 
 	/*************************************************************
 	 *************************************************************
@@ -57,71 +61,71 @@ int main(int argc, char* argv[])
 	const struct option longopts[] =
 	{
 		{"xml", 		required_argument, 	0, 'x'},
-		{"print", 		no_argument, 		0, 'p'},
+		{"input", 		required_argument,	0, 'i'},
+		{"scalestring", required_argument,	0, 's'},
+		{"value", 		required_argument,	0, 'v'},
 		{"tag", 		required_argument,	0, 't'},
-		{0,			no_argument, 		0,  0},
+		{"help", 		no_argument,	0, 'h'},
+		{0,			    no_argument, 		0,  0},
 	};
 
 	int iarg = 0;
 	opterr=1;
 	int index;
 
-    //a tag to identify outputs and this specific run. defaults to EXAMPLE1
-    std::string tag = "EXAMPLE1";
-
 	while(iarg != -1)
 	{
-		iarg = getopt_long(argc,argv, "x:t:p", longopts, &index);
+		iarg = getopt_long(argc,argv, "x:i:t:s:v:h", longopts, &index);
 
 		switch(iarg)
 		{
 			case 'x':
 				xml = optarg;
 				break;
-			case 'p':
-				print_mode=true;
+			case 'i':
+				input = optarg;
 				break;
             case 't':
-                tag = optarg;
+				output_tag = optarg;
+				break;
+            case 's':
+				scale_string= optarg;
+				break;
+            case 'v':
+                scale_value = strtod(optarg,NULL);
                 break;
             case '?':
 			case 'h':
-				std::cout<<"Allowed arguments:"<<std::endl;
-				std::cout<<"\t-x\t--xml\t\tInput .xml file for SBNconfig"<<std::endl;
-				std::cout<<"\t-t\t--tag\t\tA unique tag to identify the outputs."<<std::endl;
-				std::cout<<"\t-p\t--print\t\tRuns in print mode, making a lot more plots and Variations. (warning can take a while!) "<<std::endl;
-				return 0;
+		        std::cout<<"---------------------------------------------------"<<std::endl;
+				std::cout<<"sbnfit_scale_spec allows for the simple scaling of one or more subchannels in a existing SBNspec.root file to produce another."<<std::endl;
+				std::cout<<"---------------------------------------------------"<<std::endl;
+				std::cout<<"--- Required arguments: ---"<<std::endl;
+				std::cout<<"\t-x\t--xml\t\t\tInput configuration .xml file for SBNconfig"<<std::endl;
+				std::cout<<"\t-t\t--tag\t\t\tA unique tag to identify the outputs, will be saved as TAG.SBNspec.root "<<std::endl;
+                std::cout<<"\t-i\t--input\t\t\tInput SBNspec.root file"<<std::endl;
+                std::cout<<"\t-s\t--scalestring\t\tAny subchannel that contains this string will be scaled by `value` "<<std::endl;
+	            std::cout<<"\t-v\t--value\t\t\tWhat value do you want to scale by?"<<std::endl;
+                std::cout<<"\t-h\t--help\t\t\tThis help menu."<<std::endl;
+				std::cout<<"---------------------------------------------------"<<std::endl;
+        return 0;
 		}
 	}
-
-	//std::string dict_location = "../libio/libEventWeight.so";
-	//std::cout<<"Trying to load dictionary: "<<dict_location<<std::endl;
-	//gSystem->Load(  (dict_location).c_str());
-
 	/*************************************************************
 	 *************************************************************
 	 *			Main Program Flow
 	 ************************************************************
 	 ************************************************************/
 	time_t start_time = time(0);
-	
-	std::cout<<"Begining Covariance Calculation for tag: "<<tag<<std::endl;
 
-	//Create a SBNcovariance object initilizing with the inputted xml
-	//This will load all the files and weights as laid out
-	SBNcovariance example_covar(xml);
+    SBNspec input_spectrum(input,xml);
 
-	//Form the covariance matrix from loaded weights and MC events
-	example_covar.FormCovarianceMatrix(tag);
+    if(scale_string=="all") {
+            input_spectrum.ScaleAll(scale_value);
+}else{
+            input_spectrum.Scale(scale_string,scale_value);
+        }
+    input_spectrum.WriteOut(output_tag);
 
-    //and make some plots of the resulting things
-	//Will be outputted in the form: SBNfit_covariance_plots_TAG.root
-	example_covar.PrintMatricies(tag);
-
-	if(print_mode){
-		//This takes a good bit longer, and prints every variation to file. 
-		example_covar.PrintVariations(tag);
-	}
 
 	std::cout << "Total wall time: " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
 	return 0;

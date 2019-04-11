@@ -29,7 +29,7 @@ endif()
 
 
 
-FIND_PACKAGE(ROOT)# COMPONENTS Core Cint RIO Net Hist Graf Graf3d Gpad Tree Rint Postscript Matrix Physics MathCore Thread)
+FIND_PACKAGE(ROOT COMPONENTS MathCore MathMore)# COMPONENTS Core Cint RIO Net Hist Graf Graf3d Gpad Tree Rint Postscript Matrix Physics MathCore Thread)
 
 if(ROOT_FOUND)
 	message("Found ROOT using CMAKE FIND_PACKAGE")
@@ -86,5 +86,7 @@ message("@main CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 add_subdirectory(tinyxml)
 add_subdirectory(src)
 add_subdirectory(examples)
+add_subdirectory(bin)
+add_subdirectory(unit)
 
 

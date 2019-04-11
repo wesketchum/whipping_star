@@ -58,7 +58,8 @@ SBNspec::SBNspec(std::string rootfile, std::string whichxml, bool isverbose) : S
 }
 
 SBNspec::SBNspec(std::vector<double> input_full_vec, std::string whichxml) : SBNspec(input_full_vec, whichxml, false){ };
-SBNspec::SBNspec(std::vector<double> input_full_vec, std::string whichxml, bool isverbose) : SBNspec(whichxml,0,isverbose){
+SBNspec::SBNspec(std::vector<double> input_full_vec, std::string whichxml, bool isverbose) : SBNspec(input_full_vec,whichxml,-1,isverbose){};
+SBNspec::SBNspec(std::vector<double> input_full_vec, std::string whichxml, int universe, bool isverbose) : SBNspec(whichxml,universe,isverbose){
 
 	for(int i=0; i< input_full_vec.size(); i++){
 
@@ -216,9 +217,11 @@ int SBNspec::Scale(std::string name, double val){
 	for(auto& h: hist){
 		std::string test = h.GetName();
 
-		if(test.find(name)!=std::string::npos ){
+		if(test.find(name)!=std::string::npos){
 			//	std::cout<<name<<". found in: "<<test<<" at "<<test.find(name)<<std::endl;
 			h.Scale(val);
+
+            //std::cout<<"scaled "<<name<<" by "<<val<<std::endl;
 		}
 
 	}

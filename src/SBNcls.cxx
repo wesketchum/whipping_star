@@ -34,10 +34,11 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 
     double central_value_chi = chi.CalcChi(h1);
 
-	//step one, find median h1 
+    std::cout<<"SBNcls::CalcCLS\t|| Central Value Chi is : "<<central_value_chi<<std::endl;
 	TH1D h1_pdf;
-	if(which_sample == 0) h1_pdf = chi.SamplePoissonVaryInput(h1, numMC);
-	else if(which_sample ==1) h1_pdf = chi.SampleCovarianceVaryInput(h1, numMC);
+
+    if(which_sample == 0) h1_pdf = chi.SamplePoissonVaryInput(h1, numMC, central_value_chi*50);
+	else if(which_sample ==1) h1_pdf = chi.SampleCovarianceVaryInput(h1, numMC, central_value_chi*50);
 	
 	double sig1 = 0.5-(0.6827)/2.0;
 	double sig2 = 0.5-(0.9545)/2.0;
@@ -62,7 +63,6 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 		h0_pdf = chi.SampleCovarianceVaryInput(h0, numMC, &pval);
 	}
 
-
 	//lets do CLs
 	for(int p=0; p<pval.size()-1;p++){
 		vec_CLs.push_back(pval.at(p)/(1-prob_values.at(p)) );
@@ -82,8 +82,8 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 	h0_pdf.SetStats(false);
 	h1_pdf.SetStats(false);
 
-	h0_pdf.Scale(1/h0_pdf.GetSumOfWeights());
-	h1_pdf.Scale(1/h1_pdf.GetSumOfWeights());
+    h0_pdf.Scale(1.0/h0_pdf.Integral("width"));
+	h1_pdf.Scale(1.0/h1_pdf.Integral("width"));
 
 	h0_pdf.SetLineColor(kRed-7);
 	h1_pdf.SetLineColor(kBlue-4);
@@ -97,13 +97,14 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 	double maxval =std::max(  h0_pdf.GetMaximum(),h1_pdf.GetMaximum());
 	double minval = std::min( h0_pdf.GetBinContent(h0_pdf.FindFirstBinAbove(0)), h1_pdf.GetBinContent(h1_pdf.FindFirstBinAbove(0)));
 	std::cout<<"SBNcls::CalcCLS() || Minimum value: "<<minval<<" Maximum value: "<<maxval<<std::endl;
-	h0_pdf.SetMinimum(minval);
+	h0_pdf.SetMinimum(0.0);
 	h0_pdf.SetMaximum(maxval*1.35);
 
 	double minbin = std::min(h0_pdf.GetBinLowEdge(h0_pdf.FindFirstBinAbove(0))+h0_pdf.GetBinWidth(h0_pdf.FindFirstBinAbove(0)), h1_pdf.GetBinLowEdge(h1_pdf.FindFirstBinAbove(0))+h1_pdf.GetBinWidth(h1_pdf.FindFirstBinAbove(0)));
 	double maxbin = std::max(h0_pdf.GetBinLowEdge(h0_pdf.FindLastBinAbove(0))+h0_pdf.GetBinWidth(h0_pdf.FindLastBinAbove(0)), h1_pdf.GetBinLowEdge(h1_pdf.FindLastBinAbove(0))+h1_pdf.GetBinWidth(h1_pdf.FindLastBinAbove(0)));
 
-	h0_pdf.GetXaxis()->SetRangeUser(minbin,maxbin);
+	h0_pdf.GetXaxis()->SetRangeUser(0.0,maxbin);
+
 
     bool draw_both = true;
 
@@ -112,7 +113,7 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 
     if(draw_both){
 	for(int i=0; i< quantiles.size(); i++){	
-		TLine *l = new TLine(quantiles.at(i),minval, quantiles.at(i),maxval*1.05);
+		TLine *l = new TLine(quantiles.at(i),0.0, quantiles.at(i),maxval*1.05);
 		l->SetLineColor(cols.at(i));
 		l->SetLineWidth(2);
 	        TLatex * qnam = new TLatex();
@@ -125,7 +126,13 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 		TLatex * qvals = new TLatex();
 		qvals->SetTextSize(0.03);
 		qvals->SetTextAlign(32);
-		std::string details =  ("#splitline{"+quantile_names.at(i)+"}{1-#beta(" +to_string_prec(1-prob_values.at(i),3) + ") #alpha("+ to_string_prec(pval.at(i),3) +" | "+to_string_prec(pval2sig(pval.at(i)),1)+ "#sigma) CL_{s}("+to_string_prec(vec_CLs.at(i),3)+")}");
+        double sigma_val = pval2sig(pval.at(i));
+        std::string whatsigma = to_string_prec(sigma_val,1)+"#sigma";
+        if(sigma_val==0.0){
+            whatsigma = "inf ";
+        }
+
+		std::string details =  ("#splitline{"+quantile_names.at(i)+"}{1-#beta(" +to_string_prec(1-prob_values.at(i),3) + ") #alpha("+ to_string_prec(pval.at(i),3) +" | "+whatsigma+ ") CL_{s}("+to_string_prec(vec_CLs.at(i),3)+")}");
 		std::string details2 =  ("#splitline{"+quantile_names.at(i)+"}{1-#beta(" +to_string_prec(1-prob_values.at(i),10) + ") #alpha("+ to_string_prec(pval.at(i),10) +" | "+to_string_prec(pval2sig(pval.at(i)),1)+ "#sigma) CL_{s}("+to_string_prec(vec_CLs.at(i),10)+")}");
 		std::cout<<details2<<std::endl;
 		qvals->DrawLatexNDC(0.875, 0.2+i*0.1,details.c_str()  );
@@ -149,6 +156,24 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
     std::cout<<cv_details<<std::endl;	
 
 
+    //chi^2 prob bit
+    std::vector<double> analytical_chi;
+    std::vector<double> analytical_prob;
+
+    double analytical_sum =0;
+    for(double t=0; t< maxbin*10; t+=0.01){
+        analytical_chi.push_back(t);
+        analytical_prob.push_back( gsl_ran_chisq_pdf(t,h1->num_bins_total_compressed)   );
+        analytical_sum +=0.01*analytical_prob.back();
+    }
+
+    for(auto &p:analytical_prob){
+    //        p =p/analytical_sum;
+    }
+
+    TGraph *analytical_graph = new TGraph(analytical_chi.size(),&analytical_chi[0],&analytical_prob[0]);
+    analytical_graph->SetLineColor(kRed);
+    analytical_graph->Draw("same");
 
 
 	TLegend *leg = new TLegend(0.7,0.7,0.89,0.89);
@@ -156,6 +181,7 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 	leg->SetFillStyle(0);
 	leg->AddEntry(&h0_pdf,"H_{0}","lf");
 	if(draw_both)leg->AddEntry(&h1_pdf,"H_{1}","lf");
+    leg->AddEntry(analytical_graph,("#chi^{2} PDF "+std::to_string(h0->num_bins_total_compressed)+" dof").c_str(),"l");
 	leg->Draw();
 
 	h0_pdf.GetXaxis()->SetTitle("#chi^{2}");

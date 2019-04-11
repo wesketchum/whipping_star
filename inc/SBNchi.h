@@ -39,6 +39,7 @@ class SBNchi : public SBNconfig{
 	SBNchi(SBNspec,std::string);
 	//Either initilize from a SBNspec  a TMatrix you have calculated elsewhere
 	SBNchi(SBNspec,TMatrixT<double>);
+	SBNchi(SBNspec,TMatrixT<double>,bool);
 	//Initialise a stat_only one;
 	SBNchi(SBNspec, bool is_stat_only);
 	SBNchi(std::string);
@@ -73,6 +74,7 @@ class SBNchi : public SBNconfig{
     std::minstd_rand * rangen_linear;
     std::ranlux24_base * rangen_carry;
     void InitRandomNumberSeeds();
+    TRandom3 * rangen;
 
 	/*********************************** Member Functions ********************************/	
 
@@ -111,6 +113,7 @@ class SBNchi : public SBNconfig{
 	double CalcChiLog(SBNspec *sigSpec);
 
 	double CalcChi(std::vector<double> * sigVec);
+	float  CalcChi(std::vector<float> * sigVec);
 	double CalcChi(double* sigVec);
 
 	double CalcChi(double ** inv, double *, double *);
@@ -122,12 +125,16 @@ class SBNchi : public SBNconfig{
 	//Cholosky related
 	int PerformCholoskyDecomposition(SBNspec *specin);
 
-	SBNspec SampleCovariance(SBNspec *specin); 
+//	SBNspec SampleCovariance(SBNspec *specin); 
+    std::vector<float> SampleCovariance(SBNspec *specin); 
+
 	TH1D SamplePoissonVaryCore(SBNspec *specin, int num_MC);
-	TH1D SamplePoissonVaryInput(SBNspec *specin, int num_MC);
+	TH1D SamplePoissonVaryInput(SBNspec *specin, int num_MC, double maxchi);
 	TH1D SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<double>*);
-	TH1D SampleCovarianceVaryInput(SBNspec *specin, int num_MC);
+	TH1D SampleCovarianceVaryInput(SBNspec *specin, int num_MC, double maxchi);
 	TH1D SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<double>*);
+
+    double max_sample_chi_val;
 
 	int CollapseVectorStandAlone(std::vector<double> * full_vector, std::vector<double> *collapsed_vector);
 
@@ -146,6 +153,7 @@ class SBNchi : public SBNconfig{
 		//some plotting things
 	TH2D* GetChiogram();
 	int PrintMatricies(std::string);
+    int DrawSampleCovariance(std::string);
 
 };
 

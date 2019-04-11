@@ -40,7 +40,7 @@ using namespace sbn;
 
 /*************************************************************
  *************************************************************
- *		BEGIN example.cxx
+ *		BEGIN sbnfit_make_covariance.cxx
  ************************************************************
  ************************************************************/
 int main(int argc, char* argv[])
@@ -57,9 +57,10 @@ int main(int argc, char* argv[])
 	const struct option longopts[] =
 	{
 		{"xml", 		required_argument, 	0, 'x'},
-		{"print", 		no_argument, 		0, 'p'},
+		{"printall", 		no_argument, 		0, 'p'},
 		{"tag", 		required_argument,	0, 't'},
-		{0,			no_argument, 		0,  0},
+		{"help", 		no_argument,	0, 'h'},
+		{0,			    no_argument, 		0,  0},
 	};
 
 	int iarg = 0;
@@ -67,11 +68,11 @@ int main(int argc, char* argv[])
 	int index;
 
     //a tag to identify outputs and this specific run. defaults to EXAMPLE1
-    std::string tag = "EXAMPLE1";
+    std::string tag = "TEST";
 
 	while(iarg != -1)
 	{
-		iarg = getopt_long(argc,argv, "x:t:p", longopts, &index);
+		iarg = getopt_long(argc,argv, "x:t:ph", longopts, &index);
 
 		switch(iarg)
 		{
@@ -86,10 +87,17 @@ int main(int argc, char* argv[])
                 break;
             case '?':
 			case 'h':
-				std::cout<<"Allowed arguments:"<<std::endl;
-				std::cout<<"\t-x\t--xml\t\tInput .xml file for SBNconfig"<<std::endl;
-				std::cout<<"\t-t\t--tag\t\tA unique tag to identify the outputs."<<std::endl;
-				std::cout<<"\t-p\t--print\t\tRuns in print mode, making a lot more plots and Variations. (warning can take a while!) "<<std::endl;
+				std::cout<<"---------------------------------------------------"<<std::endl;
+				std::cout<<"sbnfit_make_covariance allows for the building of covariance matricies from input root files containing reconstructed variables and the EventWeight class std::map<std::string, std::vector<double>>."<<std::endl;
+				std::cout<<"---------------------------------------------------"<<std::endl;
+				std::cout<<"--- Required arguments: ---"<<std::endl;
+				std::cout<<"\t-x\t--xml\t\tInput configuration .xml file for SBNconfig"<<std::endl;
+				std::cout<<"\t-t\t--tag\t\tA unique tag to identify the outputs [Default to TEST]"<<std::endl;
+				std::cout<<"--- Optional arguments: ---"<<std::endl;
+				std::cout<<"\t-p\t--printall\tRuns in BONUS print mode, making individual spectra plots for ALLVariations. (warning can take a while!) "<<std::endl;
+                std::cout<<"\t-h\t--help\t\tThis help menu."<<std::endl;
+				std::cout<<"---------------------------------------------------"<<std::endl;
+	
 				return 0;
 		}
 	}

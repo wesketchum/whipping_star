@@ -17,6 +17,8 @@
 #include "TLine.h"
 #include "TLatex.h"
 #include "TText.h"
+#include "TMath.h"
+#include "TGraph.h"
 
 #include "TMath.h"
 #include <ctime>
@@ -28,6 +30,8 @@
 #include "TMatrixDSymEigen.h"
 
 #include "ngrid.h"
+#include <gsl/gsl_randist.h>
+
 
 namespace sbn{
 
@@ -38,10 +42,12 @@ class SBNcls{
 
 	SBNcls(SBNspec *inh0, SBNspec * inh1, TMatrixD matin) : h0(inh0), h1(inh1), covariance_matrix(matin), chi(*inh0, matin){
 		which_sample = 0; //default Poisson
+        maxchival = 210;
 		rangen= new TRandom3(0);
 	}
 	SBNcls(SBNspec *inh0, SBNspec * inh1) : h0(inh0), h1(inh1), chi(*inh0){
 		which_sample = 0; //default Poisson
+        maxchival = 210;
 		rangen= new TRandom3(0);
 	}
 
@@ -56,14 +62,13 @@ class SBNcls{
 	TRandom3 * rangen;
 
 	int which_sample;
-
-
+    double maxchival;
 	/****************** Member Functions *************/
 	int CalcCLS(int,std::string);
 	int SetSampleCovariance();
 	int SetSamplePoisson();
     double pval2sig(double p);
-
+    int DrawSampleCovariance(std::string);
 };
 
 
