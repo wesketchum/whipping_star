@@ -37,6 +37,9 @@
 
 #include "params.h"
 
+#include <sys/stat.h> 
+
+
 namespace sbn{
 
   class SBNcovariance : public SBNconfig {

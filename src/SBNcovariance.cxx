@@ -7,7 +7,7 @@ using namespace sbn;
 
 SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     otag = "SBN covariance::SBNcovariance\t||\t";
-    
+
     std::cout <<otag<<"Start" << std::endl;
 
 
@@ -88,24 +88,24 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 }
             }
             if(is_valid_subchannel==0){
-                    std::cout<<otag<<" ERROR ERROR: This branch did not match one defined in the .xml : " <<branch_variable->associated_hist<<std::endl;
-                    std::cout<<otag<<" ERROR ERROR: There is probably a typo somehwhere in xml! "<<std::endl;
-                    exit(EXIT_FAILURE);
+                std::cout<<otag<<" ERROR ERROR: This branch did not match one defined in the .xml : " <<branch_variable->associated_hist<<std::endl;
+                std::cout<<otag<<" ERROR ERROR: There is probably a typo somehwhere in xml! "<<std::endl;
+                exit(EXIT_FAILURE);
 
             }else if(is_valid_subchannel>1){
-                    std::cout<<otag<<" ERROR ERROR: This branch matched more than 1 subchannel!: " <<branch_variable->associated_hist<<std::endl;
-                    exit(EXIT_FAILURE);
+                std::cout<<otag<<" ERROR ERROR: This branch matched more than 1 subchannel!: " <<branch_variable->associated_hist<<std::endl;
+                exit(EXIT_FAILURE);
             }
-            
+
             trees.at(fid)->SetBranchAddress(branch_variable->name.c_str(),
                     branch_variable->GetValue());
         }
-  
+
         if(montecarlo_additional_weight_bool[fid]){
-        //we have an additional weight we want to apply at run time, otherwise its just set at 1. 
+            //we have an additional weight we want to apply at run time, otherwise its just set at 1. 
             trees[fid]->SetBranchAddress(montecarlo_additional_weight_names[fid].c_str(), &montecarlo_additional_weight[fid]); 
         }
-    
+
 
 
         trees.at(fid)->GetEntry(good_event);
@@ -662,27 +662,43 @@ int SBNcovariance::PrintVariations(std::string tag){
 
     std::cout<<"SBNcovariance::PrintVariations\t||Starting universe loop [This can take a while!] "<<std::endl;
     TRandom3 *rangen = new TRandom3(20);
-    for(int m=0; m < universes_used; m++){
+
+    std::string last_var = "";
+    int number_of_used_universes = 0;
+    int number_of_universes_to_plot = 7;
+
+    for(int m=universes_used-1; m >=0; m--){
         std::string var = map_universe_to_var.at(m);
-        int which_matrix = map_var_to_matrix.at(var);
 
-        vec_dir.at(which_matrix)->cd();
-
-        SBNspec temp_spec(multi_vecspec.at(m), xmlname,false);
-
-        for(int i=0; i< temp_spec.hist.size(); i++){
-            vec_canvas.at(which_matrix).at(i)->cd();
-            temp_spec.hist.at(i).Scale(1,"width");
-            temp_spec.hist.at(i).SetLineColor((int)rangen->Uniform(300,1000));	
-            temp_spec.hist.at(i).DrawCopy("same hist");
-        }	
+        if(var != last_var){
+            last_var = var;
+            number_of_used_universes = 0;
+        }
+        if(number_of_used_universes < number_of_universes_to_plot){
 
 
+            int which_matrix = map_var_to_matrix.at(var);
+
+            vec_dir.at(which_matrix)->cd();
+
+            SBNspec temp_spec(multi_vecspec.at(m), xmlname,false);
+
+            for(int i=0; i< temp_spec.hist.size(); i++){
+                vec_canvas.at(which_matrix).at(i)->cd();
+                temp_spec.hist.at(i).Scale(1,"width");
+                temp_spec.hist.at(i).SetLineColor(8-number_of_used_universes);	
+                temp_spec.hist.at(i).DrawCopy("same hist");
+            }	
+        number_of_used_universes++;
+        }//end 6 max  universes loop
 
     }//end universe loop
 
     std::cout << "SBNcovariance::PrintVariations\t||\tFinished. Just tidying up and writing TCanvas. " << std::endl;
 
+    if (access("variations",F_OK) == -1){
+	    	    mkdir("variations",0777);//Create a folder for pdf.
+   	}
 
     for(int v =0; v< variations.size(); v++){
         fout->cd();
@@ -693,11 +709,13 @@ int SBNcovariance::PrintVariations(std::string tag){
             TH1D * temp_cv_spec = (TH1D*)spec_central_value.hist.at(i).Clone((std::to_string(i)+variations.at(v)+"tmp2").c_str());
             temp_cv_spec->Scale(1,"width");
             temp_cv_spec->SetLineColor(kBlack);
-            temp_cv_spec->SetMarkerStyle(34);
-            temp_cv_spec->SetLineWidth(2);
+            temp_cv_spec->SetMarkerStyle(48);
+            temp_cv_spec->SetLineWidth(3);
             temp_cv_spec->DrawCopy("same hist p");
 
             vec_canvas.at(v).at(i)->Write();
+            vec_canvas.at(v).at(i)->SaveAs(("variations/Variation_"+tag+"_"+variations[v]+"_"+fullnames[i]+".pdf").c_str(),"pdf");
+
             delete temp_cv_spec;
         }
     }
@@ -721,7 +739,7 @@ int SBNcovariance::PrintMatricies(std::string tag) {
     this->plot_one(frac_covariance, "SBNfit_fractional_covariance_matrix_"+tag, fout, true,false);
     //Print the collapsed matricies too: Need to fudge this a bit
 
-    
+
     SBNchi collapse_chi(xmlname);
 
     TMatrixT<double > coll_correlation(num_bins_total_compressed,num_bins_total_compressed);
@@ -840,12 +858,12 @@ int SBNcovariance::PrintMatricies(std::string tag) {
 int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool plot_pdf, bool indiv){
     fin->cd();
     if(indiv){
-    TDirectory *individualDir = fin->GetDirectory("individualDir"); 
-    if (!individualDir) { 
-        individualDir = fin->mkdir("individualDir");       
-     }
-         fin->cd(); 
-      individualDir->cd();
+        TDirectory *individualDir = fin->GetDirectory("individualDir"); 
+        if (!individualDir) { 
+            individualDir = fin->mkdir("individualDir");       
+        }
+        fin->cd(); 
+        individualDir->cd();
     }
     TH2D h2_full(matrix);
     h2_full.SetName((tag+"_th2d").c_str());
@@ -876,36 +894,36 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool p
             for(int ic = 0; ic < num_channels; ic++){
                 for(int isc = 0; isc < num_subchannels.at(ic); isc++){
 
-                    
+
                     std::string mode_det = mode_names[im] +" " +detector_names[id];
                     std::string chan_sub = channel_names[ic]+" "+subchannel_names[ic][isc];
 
-                    
+
                     TText * tmd = new TText(-num_bins_total*percent_left*0.15, use_full+nice_shift*0.5, (mode_det+" "+chan_sub).c_str() );
 
                     //TText * tmd = new TText(use_full*1.05, num_bins_total*1.015, chan_sub.c_str());
                     //TText * tcs = new TText(use_full*1.05, num_bins_total*1.055, mode_det.c_str());
-                	tmd->SetTextColor(kBlack);
-                	//tcs->SetTextColor(kBlack);
+                    tmd->SetTextColor(kBlack);
+                    //tcs->SetTextColor(kBlack);
                     tmd->SetTextSize(0.03);
                     tmd->SetTextAlign(31);
                     //tcs->SetTextSize(0.03);
                     tmd->Draw();
                     //tcs->Draw();
 
-    
-                    /*
-                    TText * tlow_bin = new TText(-num_bins_total*percent_left, use_full+nice_shift*0.5, to_string_prec(bin_edges[ic].front(),0).c_str());
-                    TText * thigh_bin = new TText(-num_bins_total*percent_left, (use_full+num_bins[ic])-nice_shift*1.4, to_string_prec(bin_edges[ic].back(),0).c_str());
-                    tlow_bin->SetTextSize(0.02);
-                    thigh_bin->SetTextSize(0.02);
-                    tlow_bin->Draw();
-                    thigh_bin->Draw();
 
-                    TText * tunit = new TText(-num_bins_total*percent_left, use_full+0.5*num_bins[ic], channel_units[ic].c_str());
-                    tunit->SetTextSize(0.03);
-                    tunit->Draw();
-                    */
+                    /*
+                       TText * tlow_bin = new TText(-num_bins_total*percent_left, use_full+nice_shift*0.5, to_string_prec(bin_edges[ic].front(),0).c_str());
+                       TText * thigh_bin = new TText(-num_bins_total*percent_left, (use_full+num_bins[ic])-nice_shift*1.4, to_string_prec(bin_edges[ic].back(),0).c_str());
+                       tlow_bin->SetTextSize(0.02);
+                       thigh_bin->SetTextSize(0.02);
+                       tlow_bin->Draw();
+                       thigh_bin->Draw();
+
+                       TText * tunit = new TText(-num_bins_total*percent_left, use_full+0.5*num_bins[ic], channel_units[ic].c_str());
+                       tunit->SetTextSize(0.03);
+                       tunit->Draw();
+                       */
 
 
                     if(isc<num_subchannels[ic]-1){
@@ -923,7 +941,7 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool p
 
                         use_full+=num_bins.at(ic);
 
-                        }
+                    }
                 }
                 TLine *lv = new TLine(-num_bins_total*percent_left, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
                 TLine *lh = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total*1.045);
