@@ -649,9 +649,9 @@ int SBNcovariance::PrintVariations(std::string tag){
             if(maxval > 0) 	temp_cv_spec->SetMaximum(maxval*1.45);
             temp_cv_spec->SetStats(false);
             temp_cv_spec->SetLineColor(kBlack);
-            temp_cv_spec->SetLineWidth(2);
+            temp_cv_spec->SetLineWidth(2.5.5.5.5.5);
             temp_cv_spec->GetXaxis()->SetTitle(fullnames.at(i).c_str());
-            temp_cv_spec->GetYaxis()->SetTitle("Events/unit");
+            temp_cv_spec->GetYaxis()->SetTitle("Arbitary Units");
             temp_cv_spec->SetTitle((v + " || " +fullnames.at(i)).c_str());
             temp_cv_spec->DrawCopy("hist");
 
@@ -707,12 +707,17 @@ int SBNcovariance::PrintVariations(std::string tag){
         for(int i=0; i< spec_central_value.hist.size(); i++){
             vec_canvas.at(v).at(i)->cd();
             TH1D * temp_cv_spec = (TH1D*)spec_central_value.hist.at(i).Clone((std::to_string(i)+variations.at(v)+"tmp2").c_str());
+
+            TLegend *l = new TLegend(0.61,0.61,0.89,0.89);
+            l->SetLineColor(kWhite);
+            l->SetLineWidth(0);
             temp_cv_spec->Scale(1,"width");
             temp_cv_spec->SetLineColor(kBlack);
             temp_cv_spec->SetMarkerStyle(48);
             temp_cv_spec->SetLineWidth(3);
-            temp_cv_spec->DrawCopy("same hist p");
-
+            temp_cv_spec->DrawCopy("same hist");
+            l->AddEntry(temp_cv_spec,"Central Value","l");
+            l->Draw("same");
             vec_canvas.at(v).at(i)->Write();
             vec_canvas.at(v).at(i)->SaveAs(("variations/Variation_"+tag+"_"+variations[v]+"_"+fullnames[i]+".pdf").c_str(),"pdf");
 
