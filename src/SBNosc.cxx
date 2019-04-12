@@ -6,6 +6,11 @@ SBNosc::SBNosc(std::string name, std::string whichxml) : SBNspec(name, whichxml)
 	mass_step_size = 0.04;
 	which_mode = BOTH_ONLY;
 }
+SBNosc::SBNosc(SBNspec & specin): SBNspec(specin){
+	working_model.zero();
+	which_mode = BOTH_ONLY;
+}
+
 
 SBNosc::SBNosc(std::string name, std::string whichxml, NeutrinoModel in) : SBNosc(name, whichxml) {
 	LoadModel(in);
@@ -61,6 +66,8 @@ int SBNosc::calcMassSplittings(){
 
 	return 0;
 }
+
+
 
 
 int SBNosc::OscillateThis(std::string tag){
@@ -287,15 +294,26 @@ std::vector<double> SBNosc::OscillateWithAmp(double amp, double amp_sq){
 };
 */
 
-
 std::vector<double> SBNosc::Oscillate(std::string tag){
+
+    return this->Oscillate(tag,true);
+}
+std::vector<double> SBNosc::Oscillate(std::string tag, bool return_compressed){
+
+
 
 		this->CalcFullVector();
 		this->CollapseVector();
 
 	calcMassSplittings();
 
-	std::vector<double > temp = collapsed_vector;
+	std::vector<double> temp;
+    
+    if(return_compressed){
+        temp = collapsed_vector;
+    }else {
+        temp = full_vector;
+    }
 
 	for(auto ms: mass_splittings){
 
@@ -434,11 +452,22 @@ std::vector<double> SBNosc::Oscillate(std::string tag){
 			single_frequency_square.CalcFullVector();
 			single_frequency_square.CollapseVector();
 
-            
+           if(return_compressed){ 
 			for(int i=0;i<temp.size(); i++){
 				temp[i] += single_frequency.collapsed_vector[i];
 				temp[i] += single_frequency_square.collapsed_vector[i];
 			}
+
+           }else{
+        	for(int i=0;i<temp.size(); i++){
+				temp[i] += single_frequency.full_vector[i];
+				temp[i] += single_frequency_square.full_vector[i];
+			}
+
+
+
+           }
+
 	}//Done looping over
 
 	return temp;

@@ -581,7 +581,64 @@ void SBNchi::CollapseModes(TMatrixT <double> & M, TMatrixT <double> & Mc){
     return;
 }
 
+TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec){
 
+    TMatrixT<double> Mout( M->GetNcols(), M->GetNcols() );
+    // systematics per scaled event
+    for(int i =0; i<M->GetNcols(); i++)
+    {
+        //std::cout<<"KRAK: "<<core_spectrum.full_vector.at(i)<<std::endl;
+        for(int j =0; j<M->GetNrows(); j++)
+        {
+                    Mout(i,j) = (*M)(i,j)*spec[i]*spec[j];
+        }
+    }
+return Mout;
+}
+
+
+TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<double>& spec){
+
+    TMatrixT<double> Mout( M->GetNcols(), M->GetNcols() );
+    // systematics per scaled event
+    for(int i =0; i<M->GetNcols(); i++)
+    {
+        //std::cout<<"KRAK: "<<core_spectrum.full_vector.at(i)<<std::endl;
+        for(int j =0; j<M->GetNrows(); j++)
+        {
+                    Mout(i,j) = (*M)(i,j)*spec(i)*spec(j);
+        }
+    }
+return Mout;
+}
+
+
+  TMatrixT<double> SBNchi::InvertMatrix(TMatrixT<double> &M){
+
+    double invdet=0;
+
+    TMatrixT<double> McI(M.GetNrows(),M.GetNrows());
+    McI.Zero();
+
+    if(is_verbose) std::cout<<otag<<" About to do a SVD decomposition"<<std::endl;
+    TDecompSVD svd(M);
+    if (!svd.Decompose()) {
+        std::cout<<otag<<"Decomposition failed, matrix not symettric?, has nans?" << std::endl;
+        std::cout<<otag<<"ERROR: The matrix to invert failed a SVD decomp!"<<std::endl;
+        exit(EXIT_FAILURE);
+    } else {
+        McI = svd.Invert();
+    }
+    if( !McI.IsValid()){
+        std::cout<<otag<<"ERROR: The inverted matrix isnt valid! Something went wrong.."<<std::endl;
+        exit(EXIT_FAILURE);
+
+    }
+
+
+    return McI;
+
+  }
 
 
 

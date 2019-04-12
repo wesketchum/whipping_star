@@ -97,6 +97,11 @@ class SBNchi : public SBNconfig{
 	//layer 3 just loops layer_2 over all modes we have Setup
 	void CollapseModes(TMatrixT <double> & M, TMatrixT <double> & Mc);
 
+    TMatrixT<double> InvertMatrix(TMatrixT<double> &M);
+    TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<double>& spec);
+    TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec);
+
+
 	TMatrixT<double> * GetCollapsedMatrix();
 	int FillCollapsedCovarianceMatrix(TMatrixT<double>*);
 	int FillCollapsedCorrelationMatrix(TMatrixT<double>*);
