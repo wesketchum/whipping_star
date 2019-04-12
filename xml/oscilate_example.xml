@@ -1,0 +1,65 @@
+<?xml version="1.0" ?>
+
+<!-- For this simple example we have one mode: Neutrino mode (nu) and one detector (uBooNE) -->
+<mode name="nu" />
+<detector name="uBooNE"  />
+
+
+<!-- We have three channels. Each "Channel" referes to a physically observable selelection. In this case nue-like, numu-like and ccpi0-like. -->
+<channel name="nue" unit="MeV"  >
+    <bins
+        edges="200 300 400 500 600 700 800 900 1000 1500 3000"
+        />
+    <subchannel name="intrinsic" osc="0" />
+    <subchannel name="fullosc" osc = "21"/>
+</channel>
+
+<channel name="numu" unit="MeV"  >
+    <bins
+        edges="100 200 300 400 500 600 700 800 900 1000 1500 3000"
+        />
+    <subchannel name="intrinsic" osc = "0"/>
+</channel>
+
+
+
+<!-- ############################# BUILDING A COVARIANCE MATRIX  #####################################################-->
+<!-- This is where we define the location and some basic info for where the TTree files are saved that we wish to build a covariance matrix outof -->
+
+ <MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1e1p.root" scale = "0.1" maxevents ="1000" > 
+     <parameters names = "ALL"/>
+     <branch
+         name="ereco"
+         type="double"
+         associated_subchannel="nu_uBooNE_nue_intrinsic"
+    	 oscillate = "true"
+         true_param_name = "f_t"
+         true_L_name = "f_l"
+         />
+ </MultisimFile>
+
+<MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1m1p.root" scale = "1.00" maxevents ="500" >
+     <parameters names = "ALL"/>
+    <branch
+        name="ereco"
+        type="double"
+        associated_subchannel="nu_uBooNE_nue_fullosc"
+        oscillate = "true"
+        true_param_name = "f_t"
+        true_L_name = "f_l"
+        />
+</MultisimFile>
+
+<MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1m1p.root" scale = "1.00" maxevents ="500" >
+     <parameters names = "ALL"/>
+    <branch
+        name="ereco"
+        type="double"
+        associated_subchannel="nu_uBooNE_numu_intrinsic"
+        oscillate = "true"
+        true_param_name = "f_l"
+        true_L_name = "f_t"
+        />
+</MultisimFile>
+
+
