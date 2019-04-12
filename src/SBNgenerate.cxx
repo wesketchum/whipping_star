@@ -38,6 +38,9 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
 
 	int num_files = montecarlo_file.size();
 
+    montecarlo_additional_weight.resize(num_files,1.0);
+
+
 	for(auto &fn: montecarlo_file){
 		files.push_back(new TFile(fn.c_str()));
 	}
@@ -84,9 +87,15 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
 				trees.at(i)->SetBranchAddress( branch_variables.at(i).at(k)->true_L_name.c_str(), branch_variables.at(i).at(k)->GetTrueL() );
 			}
 		}
+
+        if(montecarlo_additional_weight_bool[i]){
+        //we have an additional weight we want to apply at run time, otherwise its just set at 1. 
+            trees[i]->SetBranchAddress(montecarlo_additional_weight_names[i].c_str(), &montecarlo_additional_weight[i]); 
+        }
+   
+
 	}
-
-
+      
 	std::cout<<"SBNgenerate::SBNgenerate\t|| -------------------------------------------------------------\n";
 	std::cout<<"SBNgenerate::SBNgenerate\t|| -------------------------------------------------------------\n";
 	std::vector<double> base_vec (spec_central_value.num_bins_total,0.0);
@@ -102,7 +111,7 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
 
 			if(i%100==0) std::cout<<"SBNgenerate::SBNgenerate\t|| On event: "<<i<<" of "<<nentries[j]<<" from File: "<<montecarlo_file[j]<<std::endl;
 
-			double global_weight = 1;
+			double global_weight = montecarlo_additional_weight[j];
 			global_weight = global_weight*montecarlo_scale.at(j);
 
 			if(thisfWeight->count("bnbcorrection_FluxHist")>0){

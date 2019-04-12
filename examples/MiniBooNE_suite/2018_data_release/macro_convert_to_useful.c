@@ -205,8 +205,8 @@ int macro_convert_to_useful(){
     for(int j=0; j< tot_size; j++){
 
         ans(i,j) = v_mat[i][j];
-        if(i==j && i >= nue_val.size() && i < nue_val.size()*2) ans(i,j) = ans(i,j) - nue_val[i];
-        if(i==j && i >= nue_val.size()*2) ans(i,j) = ans(i,j) - numu_val[i];
+        if(i==j && i >= nue_val.size() && i < nue_val.size()*2) ans(i,j) = ans(i,j) - sqrt(nue_val[i])/nue_val[i];
+        if(i==j && i >= nue_val.size()*2) ans(i,j) = ans(i,j) - sqrt(numu_val[i])/numu_val[i];
 
     }
     }
