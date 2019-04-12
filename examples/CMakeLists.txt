@@ -24,3 +24,7 @@ target_link_libraries (exampletest SBNfitlib tinyxmllib EventWeight)
 
 file(COPY ${CMAKE_SOURCE_DIR}/xml/example.xml DESTINATION ${CMAKE_SOURCE_DIR}/build/examples/)
 
+
+
+add_subdirectory(MiniBooNE_suite)
+
