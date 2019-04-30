@@ -31,7 +31,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
 
 
     // we have Modes, Detectors, Channels
-    TiXmlElement *pMode, *pDet, *pChan, *pCov, *pMC, *pData;
+    TiXmlElement *pMode, *pDet, *pChan, *pCov, *pMC, *pData,*pPOT;
 
 
     //Grab the first element. Note very little error checking here! make sure they exist.
@@ -41,6 +41,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
     pCov  = doc.FirstChildElement("covariance");
     pMC   = doc.FirstChildElement("MultisimFile");
     pData   = doc.FirstChildElement("data");
+    pPOT    = doc.FirstChildElement("plotpot");
 
     if(!pMode){
         std::cout<<otag<<"ERROR: Need at least 1 mode defined in xml./n";
@@ -51,6 +52,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
             const char* mode_name= pMode->Attribute("name");
             if(mode_name==NULL){
                 std::cout<<otag<<"ERROR! Modes need a name! Please define a name attribute for all modes"<<std::endl;
+            
                 exit(EXIT_FAILURE);
             }else{
                 mode_names.push_back(mode_name);
@@ -201,6 +203,16 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
         }
     }
 
+    while(pPOT){
+            const char* inplotpot = pPOT->Attribute("value");
+            if(inplotpot==NULL){
+                plot_pot = 1.0 ;
+            }else{
+                plot_pot = strtod(inplotpot,&end);
+            }
+            pPOT = pPOT->NextSiblingElement("plotpot");
+    }
+
     // if wea re creating a covariance matrix using a ntuple and weights, here is the info
     if(pMC){
         while(pMC)
@@ -238,6 +250,14 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
             }else{
                 montecarlo_scale.push_back(strtod(scale,&end) );
             }
+
+            const char* inpot = pMC->Attribute("pot");
+            if(inpot==NULL){
+                montecarlo_pot.push_back(-1.0);
+            }else{
+                montecarlo_pot.push_back(strtod(inpot,&end) );
+            }
+
 
             /*
             //Currently take all parameter variations in at once. Depreciated code. 

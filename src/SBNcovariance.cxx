@@ -14,7 +14,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     universes_used = 0;
     tolerence_positivesemi = 1e-5;
     is_small_negative_eigenvalue = false;
-    abnormally_large_weight = 1e3;
+    abnormally_large_weight = 1e2;
     bnbcorrection_str = "bnbcorrection_FluxHist";
 
     std::map<std::string, int> parameter_sims;
@@ -48,8 +48,18 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         trees[fid] = (TTree*)(files[fid]->Get(montecarlo_name.at(fid).c_str()));
         nentries[fid]= (int)trees.at(fid)->GetEntries();
 
+        //Some POT counting
+        double pot_scale = 1.0;
+        if(montecarlo_pot[fid]!=-1){
+            pot_scale = this->plot_pot/montecarlo_pot[fid];
+        }
+
+        montecarlo_scale[fid] = montecarlo_scale[fid]*pot_scale;
+
+
         std::cout << otag<<"" << std::endl;
         std::cout << otag<<" TFile::Open() file=" << files[fid]->GetName() << " @" << files[fid] << std::endl;
+        std::cout << otag<<" Has POT " <<montecarlo_pot[fid] <<" and "<<nentries[fid] <<" entries "<<std::endl;
 
         auto montecarlo_file_friend_treename_iter = montecarlo_file_friend_treename_map.find(fn);
         if (montecarlo_file_friend_treename_iter != montecarlo_file_friend_treename_map.end()) {
@@ -119,8 +129,10 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         //This bit will calculate how many "universes" the file has. if ALL default is the inputted xml value
 
         for(const auto& it : *f_weight) {
-            if(it.first == bnbcorrection_str) 
+            if(it.first == bnbcorrection_str) {
+                std::cout<<"Found a variation consistent with "<<bnbcorrection_str<<" . This will be instead applied as a general weight"<<std::endl;
                 continue;    
+            }
 
             /*if(it.first == "genie_ResDecayGamma_Genie") {
               std::cout<<otag<<"Skipping genie_ResDecayGamma_Genie cause!"<<std::endl;

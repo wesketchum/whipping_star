@@ -77,7 +77,9 @@ class SBNconfig {
 	int num_channels_xml;
 	int num_modes;
 	int num_modes_xml;
-	
+
+    double plot_pot;
+
 	//vectors of length num_channels
 	std::vector<int> num_subchannels; 
 	int* a_num_subchannels;
@@ -148,7 +150,9 @@ class SBNconfig {
 
 	std::vector<int> montecarlo_maxevents;	
 	std::vector<double> montecarlo_scale;	
-	
+	std::vector<double> montecarlo_pot;	
+
+
 	std::vector<double> pot_scaling;
 	std::vector<double> pot;
 	
