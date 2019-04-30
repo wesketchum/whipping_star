@@ -161,9 +161,9 @@ int macro_convert_to_useful(){
         m3_ereco =  tmp;
         m3_etrue = m3_ereco;
         m3_ltrue = 0.5;
-        m3_wei = numu_tot/(double)num_gen;
+        m3_wei = nue_tot/(double)num_gen;
     
-        t->Fill(tmp,numu_tot/(double)num_gen);
+        t->Fill(tmp,nue_tot/(double)num_gen);
         t3out->Fill();
     }
 
@@ -205,14 +205,54 @@ int macro_convert_to_useful(){
     for(int j=0; j< tot_size; j++){
 
         ans(i,j) = v_mat[i][j];
-        if(i==j && i >= nue_val.size() && i < nue_val.size()*2) ans(i,j) = ans(i,j) - sqrt(nue_val[i])/nue_val[i];
-        if(i==j && i >= nue_val.size()*2) ans(i,j) = ans(i,j) - sqrt(numu_val[i])/numu_val[i];
+        if(i==j && i >= nue_val.size() && i < nue_val.size()*2){
+            std::cout<<"Subtracting off "<<i<<" "<<j<<" "<<ans(i,j)<<" "<<1.0/nue_val[i-nue_val.size()]<<std::endl;
+            //ans(i,j) = ans(i,j) - 1.0/nue_val[i-nue_val.size()];
+        }
+        if(i==j && i >= nue_val.size()*2){
+            
+            std::cout<<"Subtracting off stat matrix! "<<i<<" "<<j<<" "<<ans(i,j)<<" "<<1.0/numu_val[i-2*nue_val.size()]<<std::endl;
+            //ans(i,j) = ans(i,j) - 1.0/numu_val[i-2*nue_val.size()];
+
+        }
 
     }
     }
    
-    ans.Write("full_covariance",TObject::kWriteDelete);
+    ans.Write("frac_covariance",TObject::kWriteDelete);
     f4->Close();
+
+   if(ans.IsSymmetric() ){
+        std::cout<<"Total frac systematics is symmetric"<<std::endl;
+    }else{
+
+        double tol = 1e-13;
+        double biggest_deviation = 0;
+        int bi =0;
+        int bj=0;
+
+        std::cout<<"WARNING: Stats + sys result appears to be not symmetric!"<<std::endl;
+        for(int i=0; i<ans.GetNrows(); i++){
+            for(int j=0; j<ans.GetNcols(); j++){
+                double dev = fabs(ans(i,j)-ans(j,i));
+                if(dev>biggest_deviation){
+                    biggest_deviation = 2*dev/(fabs(ans(i,j))+fabs(ans(j,i)));
+                    bi=i;
+                    bj=j;
+                }
+            }
+        }
+
+        std::cout<<"WARNING: Biggest Relative Deviation from symmetry is i:"<<bi<<" j: "<<bj<<" of order "<<biggest_deviation<<" M(j,i)"<<ans(bj,bi)<<" M(i,j)"<<ans(bi,bj)<<std::endl;
+
+        if(biggest_deviation >tol){
+            std::cout<<"ERROR: Thats too unsymettric, killing process. Better check your inputs."<<std::endl;
+        }else{
+            std::cout<<"WARNING: Thats within tolderence. Continuing."<<std::endl;
+        }
+    }
+
+
 
 
 

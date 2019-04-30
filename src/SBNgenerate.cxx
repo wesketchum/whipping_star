@@ -75,7 +75,7 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
 
 	for(int i=0; i< num_files; i++){
 		delete f_weights->at(i);	f_weights->at(i) = 0;
-		trees.at(i)->SetBranchAddress("weights", &f_weights->at(i) );
+		//trees.at(i)->SetBranchAddress("weights", &f_weights->at(i) );
 		delete f_weights->at(i);	f_weights->at(i) = 0;
 		for(int k=0; k<branch_variables.at(i).size(); k++){
 			std::cout<<"Setting Branch: "<<branch_variables.at(i).at(k)->name<<std::endl;
@@ -103,20 +103,20 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
 	for(int j=0;j<num_files;j++){
 
 		delete f_weights->at(j);
-		f_weights->at(j)=0;
+		//f_weights->at(j)=0;
 
 		for(int i=0; i< std::min(  montecarlo_maxevents.at(j)  ,nentries.at(j)); i++){
 			trees.at(j)->GetEntry(i);
-			std::map<std::string, std::vector<double>> * thisfWeight = f_weights->at(j);
+			//std::map<std::string, std::vector<double>> * thisfWeight = f_weights->at(j);
 
 			if(i%100==0) std::cout<<"SBNgenerate::SBNgenerate\t|| On event: "<<i<<" of "<<nentries[j]<<" from File: "<<montecarlo_file[j]<<std::endl;
 
 			double global_weight = montecarlo_additional_weight[j];
 			global_weight = global_weight*montecarlo_scale.at(j);
 
-			if(thisfWeight->count("bnbcorrection_FluxHist")>0){
-				global_weight = global_weight*thisfWeight->at("bnbcorrection_FluxHist").front();
-			}
+			//if(thisfWeight->count("bnbcorrection_FluxHist")>0){
+			//	global_weight = global_weight*thisfWeight->at("bnbcorrection_FluxHist").front();
+			//}
 
 			if(std::isinf(global_weight) || global_weight != global_weight){
 				std::cout<<"SBNgenerate::SBNgenerate\t|| ERROR  error @ "<<i<<" in File "<<montecarlo_file.at(j)<<" as its either inf/nan: "<<global_weight<<std::endl;

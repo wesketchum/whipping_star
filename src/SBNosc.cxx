@@ -300,8 +300,6 @@ std::vector<double> SBNosc::Oscillate(std::string tag){
 }
 std::vector<double> SBNosc::Oscillate(std::string tag, bool return_compressed){
 
-
-
 		this->CalcFullVector();
 		this->CollapseVector();
 
@@ -328,8 +326,8 @@ std::vector<double> SBNosc::Oscillate(std::string tag, bool return_compressed){
 				single_frequency_square.Scale(scale_hist_name, scale_hist_val);
 			}
 
-    		//single_frequency.CalcFullVector();
-			//single_frequency_square.CalcFullVector();
+    		single_frequency.CalcFullVector();
+			single_frequency_square.CalcFullVector();
             //single_frequency.PrintFullVector();
             //single_frequency_square.PrintFullVector();
 
@@ -447,7 +445,6 @@ std::vector<double> SBNosc::Oscillate(std::string tag, bool return_compressed){
 
 			single_frequency.CalcFullVector();
 			single_frequency.CollapseVector();
-
 
 			single_frequency_square.CalcFullVector();
 			single_frequency_square.CollapseVector();

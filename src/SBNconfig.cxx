@@ -226,7 +226,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
 
             const char* maxevents = pMC->Attribute("maxevents");
             if(maxevents==NULL){
-                montecarlo_maxevents.push_back(1e8);
+                montecarlo_maxevents.push_back(1e10);
             }else{
                 montecarlo_maxevents.push_back(strtod(maxevents,&end) );
             }

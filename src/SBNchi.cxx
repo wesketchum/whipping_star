@@ -202,6 +202,12 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
                     bi=i;
                     bj=j;
                 }
+                if(Mtotal(i,j)!=Mtotal(i,j)){
+ 
+                    std::cout<<"ERROR: we have NAN's  Better check your inputs."<<std::endl;
+                    exit(EXIT_FAILURE);
+                   
+                       }
             }
         }
 
@@ -591,6 +597,7 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<do
         for(int j =0; j<M->GetNrows(); j++)
         {
                     Mout(i,j) = (*M)(i,j)*spec[i]*spec[j];
+                    if(i==j) Mout(i,i) += spec[i];
         }
     }
 return Mout;
@@ -607,6 +614,7 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<doubl
         for(int j =0; j<M->GetNrows(); j++)
         {
                     Mout(i,j) = (*M)(i,j)*spec(i)*spec(j);
+                    if(i==j) Mout(i,i) +=spec(i);
         }
     }
 return Mout;
@@ -995,7 +1003,7 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
                 }
 
             }else{
-                std::cout<<"SBNchi::SampleCovariance\t|| 0 or negative eigenvalues! error."<<std::endl;
+                std::cout<<"SBNchi::SampleCovariance\t|| 0 or negative eigenvalues! error: Value "<<eigen_values(i)<<" Tolerence "<<tol<<std::endl;
                 exit(EXIT_FAILURE);
             }
         }

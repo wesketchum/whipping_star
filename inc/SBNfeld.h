@@ -72,6 +72,9 @@ namespace sbn{
 
         //Member Functions
         int FullFeldmanCousins();
+        int GlobalScan();
+        
+        
         int GenerateOscillatedSpectra();
         int LoadPreOscillatedSpectra();
 

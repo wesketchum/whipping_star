@@ -7,7 +7,7 @@ using namespace sbn;
 
 SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     otag = "SBN covariance::SBNcovariance\t||\t";
-    
+
     std::cout <<otag<<"Start" << std::endl;
 
 
@@ -44,7 +44,6 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         const auto& fn = montecarlo_file.at(fid);
 
 
-
         files[fid] = TFile::Open(fn.c_str());
         trees[fid] = (TTree*)(files[fid]->Get(montecarlo_name.at(fid).c_str()));
         nentries[fid]= (int)trees.at(fid)->GetEntries();
@@ -76,7 +75,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
         std::cout<<otag<<" Read variations & universe size" << std::endl;
 
-        trees.at(fid)->SetBranchAddress("weights", &(f_weights[fid]) );
+        trees.at(fid)->SetBranchAddress("eventweights", &(f_weights[fid]) );
 
         for(const auto branch_variable : branch_variables[fid]) {
             //quick check that this branch associated subchannel is in the known chanels;
@@ -88,24 +87,24 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 }
             }
             if(is_valid_subchannel==0){
-                    std::cout<<otag<<" ERROR ERROR: This branch did not match one defined in the .xml : " <<branch_variable->associated_hist<<std::endl;
-                    std::cout<<otag<<" ERROR ERROR: There is probably a typo somehwhere in xml! "<<std::endl;
-                    exit(EXIT_FAILURE);
+                std::cout<<otag<<" ERROR ERROR: This branch did not match one defined in the .xml : " <<branch_variable->associated_hist<<std::endl;
+                std::cout<<otag<<" ERROR ERROR: There is probably a typo somehwhere in xml! "<<std::endl;
+                exit(EXIT_FAILURE);
 
             }else if(is_valid_subchannel>1){
-                    std::cout<<otag<<" ERROR ERROR: This branch matched more than 1 subchannel!: " <<branch_variable->associated_hist<<std::endl;
-                    exit(EXIT_FAILURE);
+                std::cout<<otag<<" ERROR ERROR: This branch matched more than 1 subchannel!: " <<branch_variable->associated_hist<<std::endl;
+                exit(EXIT_FAILURE);
             }
-            
+
             trees.at(fid)->SetBranchAddress(branch_variable->name.c_str(),
                     branch_variable->GetValue());
         }
-  
+
         if(montecarlo_additional_weight_bool[fid]){
-        //we have an additional weight we want to apply at run time, otherwise its just set at 1. 
+            //we have an additional weight we want to apply at run time, otherwise its just set at 1. 
             trees[fid]->SetBranchAddress(montecarlo_additional_weight_names[fid].c_str(), &montecarlo_additional_weight[fid]); 
         }
-    
+
 
 
         trees.at(fid)->GetEntry(good_event);
@@ -122,6 +121,11 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         for(const auto& it : *f_weight) {
             if(it.first == bnbcorrection_str) 
                 continue;    
+
+            /*if(it.first == "genie_ResDecayGamma_Genie") {
+              std::cout<<otag<<"Skipping genie_ResDecayGamma_Genie cause!"<<std::endl;
+              continue;
+              }*/
 
             std::cout <<otag
                 << it.first << " has " << it.second.size() << " montecarlos in file " << fid << std::endl;
@@ -144,22 +148,45 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
     for(size_t vid=0; vid<variations.size(); ++vid) {
         const auto &v =  variations[vid];
+        int max_variation_length = 0;
+        int in_n_files = 0;
 
         std::cout<<otag<<" "<<v<<std::endl;
-        trees.front()->GetEntry(good_event);
-        int thissize = (*(f_weights.front())).at(v).size(); // map lookup
+        //Lets loop over all trees
 
-        for(int p=0; p < thissize; p++){
-            map_universe_to_var[num_universes_per_variation.size()] = v;
-            vec_universe_to_var.push_back(vid);
-            num_universes_per_variation.push_back(thissize);
+        for(size_t fid=0; fid<num_files; fid++){
+            trees[fid]->GetEntry(good_event);
+
+            //is this variation in this tree?
+            int is_found = (*(f_weights[fid])).count(v);
+
+            if(is_found==0){
+                std::cout<<otag<<"  WARNING @  variation " <<v<<"  in File " << montecarlo_file.at(fid)<<". Variation does not exist in file! "<<std::endl;
+            }else{
+
+
+                int thissize = (*(f_weights[fid])).at(v).size(); // map lookup
+                in_n_files++;       
+                max_variation_length = std::max(thissize,max_variation_length);
+
+            }
+
         }
 
-        map_var_to_num_universe[v] = thissize;
+        std::cout<<otag<<" "<<v<<" is of max length: "<<max_variation_length<<" and in "<<in_n_files<<" of "<<num_files<<" total files"<<std::endl;
+
+        for(int p=0; p < max_variation_length; p++){
+            map_universe_to_var[num_universes_per_variation.size()] = v;
+            vec_universe_to_var.push_back(vid);
+            num_universes_per_variation.push_back(max_variation_length);
+        }
+
+        map_var_to_num_universe[v] = max_variation_length;
     }
 
+    std::cout << otag<<" File: 0 | " << montecarlo_file.at(0) << " has " << used_montecarlos.at(0) << " montecarlos" << std::endl;
     for(int i=1; i<num_files; i++){
-        std::cout << otag<<" File: " << i << " has " << used_montecarlos.at(i) << " montecarlos" << std::endl;
+        std::cout << otag<<" File: " << i <<" |  "<<montecarlo_file[i]<< " has " << used_montecarlos.at(i) << " montecarlos" << std::endl;
         if(used_montecarlos.at(i)!= used_montecarlos.at(i-1)){
             std::cerr << otag<<" Warning, number of universes for are different between files" << std::endl;
             std::cerr << otag<<" The missing universes are Set to weights of 1. Make sure this is what you want!" << std::endl;
@@ -169,12 +196,10 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 std::cerr <<otag<<"File " << j << " montecarlos: " << used_montecarlos.at(j) << std::endl;
             }
         }
-        std::cout << otag<<" Disregard, using the first file number of montecarlos anyways" << std::endl;
-        universes_used = used_montecarlos.at(0);
     }
 
-    if(num_files == 1) 
-        universes_used = used_montecarlos.front();
+    //But in reality we want the max universes to be the sum of all max variaitons across all files, NOT the sum over all files max variations.
+    universes_used = num_universes_per_variation.size();
 
     std::cout << otag<<" -------------------------------------------------------------" << std::endl;
     std::cout << otag<<" Initilizing " << universes_used << " universes." << std::endl;
@@ -193,10 +218,11 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     watch.Start();
 
     for(int j=0; j < num_files; j++){
-        std::cout << otag<<" @ data file=" << files[j]->GetName() << std::endl;
         int nevents = std::min(montecarlo_maxevents[j], nentries[j]);
+        std::cout << otag<<" @ data file=" << files[j]->GetName() <<" which has "<<nevents<<std::endl;
         size_t nbytes = 0;
         for(int i=0; i < nevents; i++) {
+            if(i%100==0)std::cout<<i<<" / "<<nevents<<std::endl;
             nbytes+= trees[j]->GetEntry(i);
             ProcessEvent(*(f_weights[j]),j,i);
         } //end of entry loop
@@ -219,9 +245,12 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 }
 
 
-void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double> >& thisfWeight,
+void SBNcovariance::ProcessEvent(
+        const std::map<std::string, 
+        std::vector<double> >& thisfWeight,
         size_t fileid,
         int entryid) {
+
     double global_weight = montecarlo_additional_weight[fileid];//this will be 1.0 unless specified in xml
 
     global_weight *= montecarlo_scale[fileid];
@@ -250,19 +279,36 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
     for(const auto& var : variations){
 
         //check if variation is in this file, if it isn't: then just push back 1's of appropiate number to keep universes consistent
-        auto expected_num_universe_sz = map_var_to_num_universe.at(var);
+        //this is of length of whatever the maximum length that was found in ANY file
+        auto expected_num_universe_sz = map_var_to_num_universe.at(var); 
 
+        //is  
         var_iter = thisfWeight.find(var);
+        int quick_fix = 0;
 
         if (var_iter == thisfWeight.end()) {
-            woffset += expected_num_universe_sz;
-            continue;
-        }
+            //This we need to drop this for new version (where we add 1's)
+            //std::cout<<var<<" is not in this universe, adding "<<expected_num_universe_sz<<" to woffset "<<woffset<<std::endl;
+            //woffset += expected_num_universe_sz;
+            //continue;
+        }else {
+            //first one is what we expect, second is whats directly inside the map.
+            
+            if (expected_num_universe_sz != (*var_iter).second.size()) {
+                std::stringstream ss;
+                //std::cout<< "Number of universes is not the max in this file" << std::endl;
+                //throw std::runtime_error(ss.str());
 
-        if (expected_num_universe_sz != (*var_iter).second.size()) {
-            std::stringstream ss;
-            ss << "Expected number of universes has changed during fill operation" << std::endl;
-            throw std::runtime_error(ss.str());
+                if( (*var_iter).second.size() > expected_num_universe_sz && var_iter != thisfWeight.end()){
+                    ss << ". REALLY BAD!!  iter.size() " <<(*var_iter).second.size()<<" expected "<<expected_num_universe_sz<<" on var "<<var<<std::endl;
+                    throw std::runtime_error(ss.str());
+                }
+            }
+                   //so if this file contains smaller number of variations
+                    quick_fix = (*var_iter).second.size();
+                   //std::cout<< "So setting quick fix to the true number of universes in this varaiion : "<<quick_fix<< std::endl;
+             
+
         }
 
         if (woffset >= weights.size()) {
@@ -272,7 +318,12 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
         }
 
         for(size_t wid0 = 0, wid1 = woffset; wid1 < (woffset + expected_num_universe_sz); ++wid0, ++wid1) {
-            double wei = (*var_iter).second[wid0];
+            double wei = 1.0;
+//            std::cout<<"wid0 "<<wid0<<"/ "<<expected_num_universe_sz<<"  wid1 "<<wid1<<" / "<<weights.size()<<" woffset "<<woffset<<" quick_fix "<<quick_fix<<std::endl;
+            
+            if(wid0<quick_fix){
+                wei = (*var_iter).second[wid0];
+            }
 
             bool is_inf = std::isinf(wei);
             bool is_nan = (wei != wei);
@@ -721,7 +772,7 @@ int SBNcovariance::PrintMatricies(std::string tag) {
     this->plot_one(frac_covariance, "SBNfit_fractional_covariance_matrix_"+tag, fout, true,false);
     //Print the collapsed matricies too: Need to fudge this a bit
 
-    
+
     SBNchi collapse_chi(xmlname);
 
     TMatrixT<double > coll_correlation(num_bins_total_compressed,num_bins_total_compressed);
@@ -840,12 +891,12 @@ int SBNcovariance::PrintMatricies(std::string tag) {
 int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool plot_pdf, bool indiv){
     fin->cd();
     if(indiv){
-    TDirectory *individualDir = fin->GetDirectory("individualDir"); 
-    if (!individualDir) { 
-        individualDir = fin->mkdir("individualDir");       
-     }
-         fin->cd(); 
-      individualDir->cd();
+        TDirectory *individualDir = fin->GetDirectory("individualDir"); 
+        if (!individualDir) { 
+            individualDir = fin->mkdir("individualDir");       
+        }
+        fin->cd(); 
+        individualDir->cd();
     }
     TH2D h2_full(matrix);
     h2_full.SetName((tag+"_th2d").c_str());
@@ -876,36 +927,36 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool p
             for(int ic = 0; ic < num_channels; ic++){
                 for(int isc = 0; isc < num_subchannels.at(ic); isc++){
 
-                    
+
                     std::string mode_det = mode_names[im] +" " +detector_names[id];
                     std::string chan_sub = channel_names[ic]+" "+subchannel_names[ic][isc];
 
-                    
+
                     TText * tmd = new TText(-num_bins_total*percent_left*0.15, use_full+nice_shift*0.5, (mode_det+" "+chan_sub).c_str() );
 
                     //TText * tmd = new TText(use_full*1.05, num_bins_total*1.015, chan_sub.c_str());
                     //TText * tcs = new TText(use_full*1.05, num_bins_total*1.055, mode_det.c_str());
-                	tmd->SetTextColor(kBlack);
-                	//tcs->SetTextColor(kBlack);
+                    tmd->SetTextColor(kBlack);
+                    //tcs->SetTextColor(kBlack);
                     tmd->SetTextSize(0.03);
                     tmd->SetTextAlign(31);
                     //tcs->SetTextSize(0.03);
                     tmd->Draw();
                     //tcs->Draw();
 
-    
-                    /*
-                    TText * tlow_bin = new TText(-num_bins_total*percent_left, use_full+nice_shift*0.5, to_string_prec(bin_edges[ic].front(),0).c_str());
-                    TText * thigh_bin = new TText(-num_bins_total*percent_left, (use_full+num_bins[ic])-nice_shift*1.4, to_string_prec(bin_edges[ic].back(),0).c_str());
-                    tlow_bin->SetTextSize(0.02);
-                    thigh_bin->SetTextSize(0.02);
-                    tlow_bin->Draw();
-                    thigh_bin->Draw();
 
-                    TText * tunit = new TText(-num_bins_total*percent_left, use_full+0.5*num_bins[ic], channel_units[ic].c_str());
-                    tunit->SetTextSize(0.03);
-                    tunit->Draw();
-                    */
+                    /*
+                       TText * tlow_bin = new TText(-num_bins_total*percent_left, use_full+nice_shift*0.5, to_string_prec(bin_edges[ic].front(),0).c_str());
+                       TText * thigh_bin = new TText(-num_bins_total*percent_left, (use_full+num_bins[ic])-nice_shift*1.4, to_string_prec(bin_edges[ic].back(),0).c_str());
+                       tlow_bin->SetTextSize(0.02);
+                       thigh_bin->SetTextSize(0.02);
+                       tlow_bin->Draw();
+                       thigh_bin->Draw();
+
+                       TText * tunit = new TText(-num_bins_total*percent_left, use_full+0.5*num_bins[ic], channel_units[ic].c_str());
+                       tunit->SetTextSize(0.03);
+                       tunit->Draw();
+                       */
 
 
                     if(isc<num_subchannels[ic]-1){
@@ -923,7 +974,7 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool p
 
                         use_full+=num_bins.at(ic);
 
-                        }
+                    }
                 }
                 TLine *lv = new TLine(-num_bins_total*percent_left, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
                 TLine *lh = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total*1.045);

@@ -113,9 +113,9 @@ int main(int argc, char* argv[])
     std::cout<<"Begining FeldmanCousins for tag: "<<tag<<std::endl;
 
     NGrid mygrid;
-    mygrid.AddDimension("dm", -2, 2, 0.1);
-    mygrid.AddDimension("ue4",-4, 0, 0.1);
-    mygrid.AddFixedDimension("um4", 0.1);
+    mygrid.AddDimension("dm", -1, 1, 0.05);
+    mygrid.AddDimension("ue4",-2.2, 0, 0.05);
+    mygrid.AddFixedDimension("um4", 0);
 
     //Print the grid interesting bits
     mygrid.Print();
@@ -129,13 +129,12 @@ int main(int argc, char* argv[])
         myfeld.GenerateBackgroundSpectrum();
 
     }else if(mode_option == "genbkg"){
-
         myfeld.SetCoreSpectrum(tag+"_CV.SBNspec.root");
         myfeld.GenerateBackgroundSpectrum();
 
     }else if(mode_option == "fit"){
 
-        myfeld.SetCoreSpectrum(tag+"_CV.SBNspec.root");
+        myfeld.SetCoreSpectrum(tag+"_BKG_ONLY.SBNspec.root");
         myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
 
         std::cout<<"Loading precomputed spectra"<<std::endl;
@@ -148,11 +147,20 @@ int main(int argc, char* argv[])
         std::cout<<"Beginning to peform FullFeldmanCousins analysis"<<std::endl;
         myfeld.FullFeldmanCousins();
 
-    }else if(mode_option == "inject"){
+    }else if(mode_option == "global"){
 
+        myfeld.SetCoreSpectrum(tag+"_BKG_ONLY.SBNspec.root");
+        myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
 
+        std::cout<<"Loading precomputed spectra"<<std::endl;
+        myfeld.LoadPreOscillatedSpectra();
+        myfeld.LoadBackgroundSpectrum();
 
+        std::cout<<"Calculating the necessary SBNchi objects"<<std::endl;
+        myfeld.CalcSBNchis();
 
+        std::cout<<"Beginning to peform a globalScan analysis"<<std::endl;
+        myfeld.GlobalScan();
 
     }
 
