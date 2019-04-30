@@ -14,7 +14,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     universes_used = 0;
     tolerence_positivesemi = 1e-5;
     is_small_negative_eigenvalue = false;
-    abnormally_large_weight = 1e2;
+    abnormally_large_weight = 500.0;
     bnbcorrection_str = "bnbcorrection_FluxHist";
 
     std::map<std::string, int> parameter_sims;
@@ -349,6 +349,7 @@ void SBNcovariance::ProcessEvent(
 
             if(wei > abnormally_large_weight){
                 std::cout<<"SBNcovariance::ProcessEvent\t||\tATTENTION!! HUGE weight: "<<wei<<" at "<<var<<" event "<<entryid<<" file "<<fileid<<std::endl;
+                wei=1.0;
             }
 
             weights[wid1] *= wei;
@@ -887,9 +888,9 @@ int SBNcovariance::PrintMatricies(std::string tag) {
     c_coll_full->Write();
 
     for(int m=0; m< variations.size();m++){
-        this->plot_one(vec_full_correlation.at(m), variations.at(m)+" Correlation", fout,false,true);
-        this->plot_one(vec_frac_covariance.at(m), variations.at(m)+" Fractional Covariance", fout,false,true);
-        this->plot_one(vec_full_covariance.at(m), variations.at(m)+" Full Covariance", fout,false,true);
+        this->plot_one(vec_full_correlation.at(m), "varplot_Correlation_"+variations.at(m), fout,true,true);
+        this->plot_one(vec_frac_covariance.at(m), "varplot_Fractional_Covariance_"+variations.at(m), fout,true,true);
+        this->plot_one(vec_full_covariance.at(m), "varplot_Full_Covariance_"+variations.at(m), fout,true,true);
     }
 
     fout->cd();
