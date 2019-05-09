@@ -13,6 +13,7 @@ SBNgenerate::SBNgenerate(std::string xmlname) {
 SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfig(xmlname), nu_model(inModel) {
 
 
+    TRandom3 *rangen = new TRandom3(0);
 
 //	gROOT->ProcessLine("#include <map>");
 //	gROOT->ProcessLine("#include <vector>");
@@ -139,6 +140,12 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
 						//Working
 						double true_var = *(static_cast<double*>(branch_variables.at(j).at(t)->GetTrueValue()));
 						double true_L = *(static_cast<double*>(branch_variables.at(j).at(t)->GetTrueL()));
+            
+                        //first subtract off a random 50m
+                        true_L = true_L - rangen->Uniform(0,50.0);
+
+                        //WARNING need to change to km
+                        true_L = true_L/1000.0;
 
 						double osc_Probability_sin = nu_model.oscProbSin(true_var, true_L);
 						double osc_Probability_sinsq = nu_model.oscProbSinSq(true_var, true_L);
