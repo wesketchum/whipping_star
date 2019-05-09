@@ -119,9 +119,17 @@ int main(int argc, char* argv[])
     std::cout<<"Begining FeldmanCousins for tag: "<<tag<<std::endl;
 
     NGrid mygrid;
-    mygrid.AddDimension("m4", -1, 1.05, 0.05);//0.05
-    mygrid.AddFixedDimension("ue4", 0);
-    mygrid.AddDimension("um4",-2.0, 0.1, 0.1); //0.05
+    
+  //  mygrid.AddDimension("m4", -1, 1.05, 0.05);//0.05
+  //  mygrid.AddFixedDimension("ue4", 0);
+  //  mygrid.AddDimension("um4",-2.0, 0.1, 0.1); //0.05
+
+    mygrid.AddDimension("m4", -1, 1.1, 0.1);//0.05
+    mygrid.AddDimension("ue4", -2.3, 0.1, 0.1);
+    mygrid.AddFixedDimension("um4",0.0); //0.05
+
+
+
 
     //Print the grid interesting bits
     mygrid.Print();

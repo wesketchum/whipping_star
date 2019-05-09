@@ -116,7 +116,7 @@
          />
  </MultisimFile>
 
- <MultisimFile treename="simpletree_cc" filename="/a/data/westside/guanqun/SBNcopy/output_SBNOsc_NueSelection_Proposal_Uboone_Int_Lite.root" scale = "1.0" maxevents="5000000" pot="9.54117e+22"> 
+ <MultisimFile treename="simpletree_cc" filename="/a/data/westside/guanqun/SBNcopy/output_SBNOsc_NueSelection_Proposal_Uboone_Int_Lite.root" scale = "2.0" maxevents="5000000" pot="9.54117e+22"> 
      <branch
          name="reco_energy"
          type="double"
@@ -154,7 +154,7 @@
          />
  </MultisimFile>
 
- <MultisimFile treename="simpletree_cc" filename="/a/data/westside/guanqun/SBNcopy/output_SBNOsc_NueSelection_Proposal_Uboone_Numu_Lite.root" scale = "1.0" maxevents="5000000" pot="9.77391e+20"> 
+ <MultisimFile treename="simpletree_cc" filename="/a/data/westside/guanqun/SBNcopy/output_SBNOsc_NueSelection_Proposal_Uboone_Numu_Lite.root" scale = "2.0" maxevents="5000000" pot="9.77391e+20"> 
      <branch
          name="reco_energy"
          type="double"
@@ -190,7 +190,7 @@
          />
  </MultisimFile>
 
- <MultisimFile treename="simpletree_nc" filename="/a/data/westside/guanqun/SBNcopy/output_SBNOsc_NueSelection_Proposal_Uboone_Numu_Lite.root" scale = "1.0" maxevents="5000000" pot="9.77391e+20"> 
+ <MultisimFile treename="simpletree_nc" filename="/a/data/westside/guanqun/SBNcopy/output_SBNOsc_NueSelection_Proposal_Uboone_Numu_Lite.root" scale = "2.0" maxevents="5000000" pot="9.77391e+20"> 
      <branch
          name="reco_energy"
          type="double"
@@ -219,7 +219,7 @@
  <!-- NOW the Full OSC WARNING, only uBooNE works for some wierd reason -->
 
 
- <MultisimFile treename="simpletree_cc" filename="/a/data/westside/guanqun/SBNcopy/output_SBNOsc_NueSelection_Proposal_Uboone_Osc_Lite.root" scale = "1.0" maxevents="5000000" pot="6.83336e+19"> 
+ <MultisimFile treename="simpletree_cc" filename="/a/data/westside/guanqun/SBNcopy/output_SBNOsc_NueSelection_Proposal_Uboone_Osc_Lite.root" scale = "2.0" maxevents="5000000" pot="6.83336e+19"> 
      <branch
          name="reco_energy"
          type="double"
@@ -231,7 +231,7 @@
          />
  </MultisimFile>
 
- <MultisimFile treename="simpletree_cc" filename="/a/data/westside/guanqun/SBNcopy/output_SBNOsc_NueSelection_Proposal_Uboone_Osc_Lite.root" scale = "1.0" maxevents="5000000" pot="6.00881e+20"> 
+ <MultisimFile treename="simpletree_cc" filename="/a/data/westside/guanqun/SBNcopy/output_SBNOsc_NueSelection_Proposal_Uboone_Osc_Lite.root" scale = "2.0" maxevents="5000000" pot="6.00881e+20"> 
      <branch
          name="reco_energy"
          type="double"
