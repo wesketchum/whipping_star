@@ -40,6 +40,7 @@ class SBNchi : public SBNconfig{
 	//Either initilize from a SBNspec  a TMatrix you have calculated elsewhere
 	SBNchi(SBNspec,TMatrixT<double>);
 	SBNchi(SBNspec,TMatrixT<double>,bool);
+	SBNchi(SBNspec,TMatrixT<double>,std::string, bool);
 	//Initialise a stat_only one;
 	SBNchi(SBNspec, bool is_stat_only);
 	SBNchi(std::string);

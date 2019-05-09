@@ -15,7 +15,9 @@ using namespace sbn;
 
 SBNchi::SBNchi(std::string xml) : SBNconfig(xml,false){};
 SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin) : SBNchi(in,matrix_systematicsin,false){}
-SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin, bool is_verbose) : SBNconfig(in.xmlname, is_verbose), core_spectrum(in){
+SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin, bool is_verbose) : SBNchi(in,matrix_systematicsin,in.xmlname, is_verbose){}
+
+SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin, std::string inxml, bool is_verbose) : SBNconfig(inxml, is_verbose), core_spectrum(in){
 
 
     last_calculated_chi = -9999999;

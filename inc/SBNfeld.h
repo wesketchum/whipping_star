@@ -57,6 +57,8 @@ namespace sbn{
 
         bool m_bool_core_spectrum_set;
         bool m_bool_background_spectrum_set;
+    
+        bool m_bool_stat_only;
 
         std::string tag;
 
@@ -67,6 +69,7 @@ namespace sbn{
             m_num_total_gridpoints = m_grid.f_num_total_points;
             m_bool_core_spectrum_set = false;
             m_bool_background_spectrum_set = false;
+            m_bool_stat_only = false;
         }
 
 
@@ -86,6 +89,9 @@ namespace sbn{
         int SetCoreSpectrum(std::string);
         int SetFractionalCovarianceMatrix(TMatrixT<double> *);
         int SetFractionalCovarianceMatrix(std::string, std::string);
+        int SetEmptyFractionalCovarianceMatrix();
+
+        int SetStatOnly();
 
         NeutrinoModel convert3p1(std::vector<double> ingrid);
 

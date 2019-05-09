@@ -58,6 +58,7 @@ int main(int argc, char* argv[])
     {
         {"xml", 		required_argument, 	0, 'x'},
         {"printall", 		no_argument, 		0, 'p'},
+        {"stat", 		no_argument, 		0, 's'},
         {"tag", 		required_argument,	0, 't'},
         {"mode",        required_argument, 0 ,'m'},
         {"help", 		no_argument,	0, 'h'},
@@ -71,10 +72,11 @@ int main(int argc, char* argv[])
     //a tag to identify outputs and this specific run. defaults to EXAMPLE1
     std::string tag = "TEST";
     std::string mode_option;
+    bool bool_stat_only = false;
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "x:t:m:ph", longopts, &index);
+        iarg = getopt_long(argc,argv, "x:t:m:psh", longopts, &index);
 
         switch(iarg)
         {
@@ -87,6 +89,9 @@ int main(int argc, char* argv[])
             case 'm':
                 mode_option = optarg;
                 break;
+            case 's':
+                bool_stat_only = true;
+                break;
             case '?':
             case 'h':
                 std::cout<<"---------------------------------------------------"<<std::endl;
@@ -96,6 +101,7 @@ int main(int argc, char* argv[])
                 std::cout<<"\t-x\t--xml\t\tInput configuration .xml file for SBNconfig"<<std::endl;
                 std::cout<<"\t-t\t--tag\t\tA unique tag to identify the outputs [Default to TEST]"<<std::endl;
                 std::cout<<"--- Optional arguments: ---"<<std::endl;
+                std::cout<<"\t-s\t--stat\t\tStat only runs"<<std::endl;
                 std::cout<<"\t-h\t--help\t\tThis help menu."<<std::endl;
                 std::cout<<"---------------------------------------------------"<<std::endl;
 
@@ -113,13 +119,12 @@ int main(int argc, char* argv[])
     std::cout<<"Begining FeldmanCousins for tag: "<<tag<<std::endl;
 
     NGrid mygrid;
-    mygrid.AddDimension("dm", -1, 1, 0.05);
-    mygrid.AddDimension("ue4",-2.2, 0, 0.05);
-    mygrid.AddFixedDimension("um4", 0);
+    mygrid.AddDimension("m4", -1, 1, 0.1);//0.05
+    mygrid.AddFixedDimension("ue4", 0);
+    mygrid.AddDimension("um4",-2.3, 0, 0.1); //0.05
 
     //Print the grid interesting bits
     mygrid.Print();
-
 
     SBNfeld myfeld(mygrid,tag,xml);
 
@@ -150,11 +155,19 @@ int main(int argc, char* argv[])
     }else if(mode_option == "global"){
 
         myfeld.SetCoreSpectrum(tag+"_BKG_ONLY.SBNspec.root");
-        myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
+        
+        if(bool_stat_only){
+            myfeld.SetEmptyFractionalCovarianceMatrix();
+            myfeld.SetStatOnly();
+            std::cout<<"RUNNING Stat Only!"<<std::endl;
+        }else{
+            myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
+        }
 
         std::cout<<"Loading precomputed spectra"<<std::endl;
         myfeld.LoadPreOscillatedSpectra();
         myfeld.LoadBackgroundSpectrum();
+
 
         std::cout<<"Calculating the necessary SBNchi objects"<<std::endl;
         myfeld.CalcSBNchis();

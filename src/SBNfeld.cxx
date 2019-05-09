@@ -50,7 +50,7 @@ int SBNfeld::GenerateBackgroundSpectrum(){
     NeutrinoModel background_only_model(this_model.mNu[0],0.0,0.0); // quirk, this works better
 
     m_core_spectrum->LoadModel(background_only_model);
-    m_core_spectrum->SetAppMode();
+    m_core_spectrum->SetBothMode();
 
     std::vector<double> ans = m_core_spectrum->Oscillate(this->tag, false);
     SBNspec background(ans, m_core_spectrum->xmlname,false);
@@ -83,6 +83,13 @@ int SBNfeld::SetFractionalCovarianceMatrix(TMatrixT<double> * in){
     return 0;
 }
 
+int SBNfeld::SetEmptyFractionalCovarianceMatrix(){
+
+    m_full_fractional_covariance_matrix = new TMatrixT<double>(num_bins_total,num_bins_total);
+    m_full_fractional_covariance_matrix->Zero();
+    return 0;
+}
+
 int SBNfeld::LoadPreOscillatedSpectra(){
     //This is where we load the precalculated spectra and assemble into a actuall oscillate spectrum
     //we have a core spectrum loaded on the start of the SBNfeld class. This is the fullosc+intrinsics...etc..
@@ -104,7 +111,7 @@ int SBNfeld::LoadPreOscillatedSpectra(){
        // this_model.Printall();
         //And load thus model into our spectra. At this point its comuted all the necessary mass-splittins and which frequencies they are
         m_core_spectrum->LoadModel(this_model);
-        m_core_spectrum->SetAppMode();
+        m_core_spectrum->SetBothMode();
 
         //And apply this oscillaion! Adding to it the bkgSpec that it was initilised with.
         //NOTE we want to return the FULL spectrum, not compressed so we can calculate the covariance matrix, hense the false in this Oscilate
@@ -136,9 +143,22 @@ int SBNfeld::CalcSBNchis(){
     //This is where we will calculate a vector of SBNchi's
     //i.e m_sbnchi_grid;
 
+   TMatrixT<double> stat_only_matrix(num_bins_total,num_bins_total);
+   stat_only_matrix.Zero();
+
     for(size_t t =0; t < m_num_total_gridpoints; t++){
         //Setup a SBNchi for this true point
-        m_sbnchi_grid.push_back(new SBNchi(*m_cv_spec_grid.at(t), *m_full_fractional_covariance_matrix, false)) ;
+        std::cout<<"Setting up grid point SBNchi "<<t<<std::endl;
+
+        if(m_bool_stat_only){
+            m_sbnchi_grid.push_back(new SBNchi(*m_cv_spec_grid.at(t), stat_only_matrix, this->xmlname, false)) ;
+
+        }else{
+            m_sbnchi_grid.push_back(new SBNchi(*m_cv_spec_grid.at(t), *m_full_fractional_covariance_matrix, this->xmlname, false)) ;
+
+        }
+
+
     }
 
     return 0;
@@ -311,6 +331,7 @@ double SBNfeld::CalcChi(std::vector<float>& data, std::vector<double>& predictio
 int SBNfeld::GlobalScan(){
 
     //Ok take the background only spectrum and form a background only covariance matrix. CalcCovarianceMatrix includes stats
+    
     TMatrixT<double> background_full_covariance_matrix = m_sbnchi_grid[0]->CalcCovarianceMatrix(m_full_fractional_covariance_matrix, *m_tvec_background_spectrum);
     TMatrixT<double> background_collapsed_covariance_matrix(m_background_spectrum->num_bins_total_compressed, m_background_spectrum->num_bins_total_compressed);
     m_sbnchi_grid[0]->CollapseModes(background_full_covariance_matrix, background_collapsed_covariance_matrix);    
@@ -336,3 +357,8 @@ int SBNfeld::GlobalScan(){
     return 0;
 };
 
+
+int SBNfeld::SetStatOnly(){
+    m_bool_stat_only = true;
+    return 0;
+}
