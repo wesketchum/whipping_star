@@ -53,6 +53,7 @@ namespace sbn{
 
         SBNosc *m_core_spectrum;
         SBNosc *m_background_spectrum;
+        SBNchi* m_background_chi;
         TVectorT<double> * m_tvec_background_spectrum;
 
         bool m_bool_core_spectrum_set;
@@ -76,7 +77,7 @@ namespace sbn{
         //Member Functions
         int FullFeldmanCousins();
         int GlobalScan();
-        
+        int RasterScan(); 
         
         int GenerateOscillatedSpectra();
         int LoadPreOscillatedSpectra();

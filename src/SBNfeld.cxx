@@ -50,7 +50,9 @@ int SBNfeld::GenerateBackgroundSpectrum(){
     NeutrinoModel background_only_model(this_model.mNu[0],0.0,0.0); // quirk, this works better
 
     m_core_spectrum->LoadModel(background_only_model);
-    m_core_spectrum->SetBothMode();
+
+    //Is this a troublesome line?!? Shouldn't be right?!
+    m_core_spectrum->SetAppMode();
 
     std::vector<double> ans = m_core_spectrum->Oscillate(this->tag, false);
     SBNspec background(ans, m_core_spectrum->xmlname,false);
@@ -111,7 +113,7 @@ int SBNfeld::LoadPreOscillatedSpectra(){
        // this_model.Printall();
         //And load thus model into our spectra. At this point its comuted all the necessary mass-splittins and which frequencies they are
         m_core_spectrum->LoadModel(this_model);
-        m_core_spectrum->SetBothMode();
+        m_core_spectrum->SetAppMode();
 
         //And apply this oscillaion! Adding to it the bkgSpec that it was initilised with.
         //NOTE we want to return the FULL spectrum, not compressed so we can calculate the covariance matrix, hense the false in this Oscilate
@@ -123,10 +125,17 @@ int SBNfeld::LoadPreOscillatedSpectra(){
         std::cout<<std::endl;
         m_cv_spec_grid.push_back(new SBNspec(ans, m_core_spectrum->xmlname,t, false));
         m_cv_spec_grid.back()->CollapseVector();
+
+        std::string tlog  = std::to_string(m_vec_grid[t][0])+"_"+std::to_string(m_vec_grid[t][1])+"_"+std::to_string(m_vec_grid[t][2]);
+        m_core_spectrum->CompareSBNspecs(m_cv_spec_grid.back(),tlog); 
+
     }
 
     return 0;
 }
+
+
+
 
 int SBNfeld::LoadBackgroundSpectrum(){
     m_background_spectrum= new SBNosc(this->tag+"_BKG_ONLY.SBNspec.root",this->xmlname);
@@ -134,7 +143,7 @@ int SBNfeld::LoadBackgroundSpectrum(){
 
     m_background_spectrum->CollapseVector();
     m_tvec_background_spectrum = new TVectorT<double>(m_background_spectrum->full_vector.size(), &(m_background_spectrum->full_vector)[0]);
-
+    m_background_chi = new SBNchi(*m_background_spectrum, *m_full_fractional_covariance_matrix, this->xmlname, false);
     return 0;
 }
 
@@ -346,6 +355,7 @@ int SBNfeld::GlobalScan(){
         SBNchi  * true_chi = m_sbnchi_grid.at(t); 
         std::vector<double> true_spec_vec =true_spec->full_vector;
 
+        //double chiSq = m_background_chi->CalcChi(true_spec); 
         double chiSq = true_chi->CalcChi(m_background_spectrum); 
         std::cout<<"ANS: "<<t<<" "<<chiSq;
          for(int k=0; k<m_vec_grid[t].size();k++){
@@ -362,3 +372,10 @@ int SBNfeld::SetStatOnly(){
     m_bool_stat_only = true;
     return 0;
 }
+
+
+
+int SBNfeld::RasterScan(){
+    return 0;
+};
+
