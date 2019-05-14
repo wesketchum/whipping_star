@@ -15,7 +15,9 @@ using namespace sbn;
 
 SBNchi::SBNchi(std::string xml) : SBNconfig(xml,false){};
 SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin) : SBNchi(in,matrix_systematicsin,false){}
-SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin, bool is_verbose) : SBNconfig(in.xmlname, is_verbose), core_spectrum(in){
+SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin, bool is_verbose) : SBNchi(in,matrix_systematicsin,in.xmlname, is_verbose){}
+
+SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin, std::string inxml, bool is_verbose) : SBNconfig(inxml, is_verbose), core_spectrum(in){
 
 
     last_calculated_chi = -9999999;
@@ -241,7 +243,15 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
     if (!svd.Decompose()) {
         std::cout <<otag<<"Decomposition failed, matrix not symettric?, has nans?" << std::endl;
         std::cout<<otag<<"ERROR: The matrix to invert failed a SVD decomp!"<<std::endl;
+        
+        for(int i=0; i< num_bins_total_compressed; i++){
+        for(int j=0; j< num_bins_total_compressed; j++){
+            std::cout<<i<<" "<<j<<" "<<Mctotal(i,j)<<std::endl;
+        }
+        }
+        
         exit(EXIT_FAILURE);
+        return 0;
     } else {
         McI = svd.Invert();
     }
@@ -596,7 +606,12 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<do
         //std::cout<<"KRAK: "<<core_spectrum.full_vector.at(i)<<std::endl;
         for(int j =0; j<M->GetNrows(); j++)
         {
-                    Mout(i,j) = (*M)(i,j)*spec[i]*spec[j];
+                    if(  std::isnan( (*M)(i,j) )){
+                        Mout(i,j) = 0.0;
+                    }else{
+
+                        Mout(i,j) = (*M)(i,j)*spec[i]*spec[j];
+                     }
                     if(i==j) Mout(i,i) += spec[i];
         }
     }
@@ -613,7 +628,11 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<doubl
         //std::cout<<"KRAK: "<<core_spectrum.full_vector.at(i)<<std::endl;
         for(int j =0; j<M->GetNrows(); j++)
         {
+            if(  std::isnan( (*M)(i,j))){
+                        Mout(i,j) = 0.0;
+                    }else{
                     Mout(i,j) = (*M)(i,j)*spec(i)*spec(j);
+                     }
                     if(i==j) Mout(i,i) +=spec(i);
         }
     }
@@ -631,9 +650,17 @@ return Mout;
     if(is_verbose) std::cout<<otag<<" About to do a SVD decomposition"<<std::endl;
     TDecompSVD svd(M);
     if (!svd.Decompose()) {
-        std::cout<<otag<<"Decomposition failed, matrix not symettric?, has nans?" << std::endl;
+        std::cout<<otag<<" (InvertMatrix) Decomposition failed, matrix not symettric?, has nans?" << std::endl;
         std::cout<<otag<<"ERROR: The matrix to invert failed a SVD decomp!"<<std::endl;
+ 
+        for(int i=0; i< M.GetNrows(); i++){
+        for(int j=0; j< M.GetNrows(); j++){
+            std::cout<<i<<" "<<j<<" "<<M(i,j)<<std::endl;
+        }
+        }
+        
         exit(EXIT_FAILURE);
+
     } else {
         McI = svd.Invert();
     }

@@ -18,12 +18,12 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
     char *end;
 
     //Setup TiXml documents
-    TiXmlDocument doc( whichxml.c_str() );
+    TiXmlDocument doc(whichxml.c_str());
     bool loadOkay = doc.LoadFile();
     if(loadOkay){
         if(is_verbose)	std::cout<<otag<<"Loaded XML configuration file: "<<whichxml<<std::endl;
     }else{
-        std::cout<<otag<<"ERROR: Failed to load XML configuration file:  "<<whichxml<<std::endl;
+        std::cout<<otag<<"ERROR: Failed to load XML configuration file: "<<whichxml<<std::endl;
         std::cout<<otag<<"ERROR: This generally means broken .xml brackets or attribute syntax."<<std::endl;
         exit(EXIT_FAILURE);
     }

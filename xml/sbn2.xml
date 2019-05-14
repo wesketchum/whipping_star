@@ -1,0 +1,252 @@
+<?xml version="1.0" ?>
+
+<mode name="nu" />
+<detector name="uBooNE" />
+<detector name="ICARUS" />
+<detector name="SBND" />
+
+<channel name="numu" unit="GeV">
+	<bins
+		edges ="0 0.25 0.500 0.700 0.900 1.100 1.300 1.500 1.700 1.900 3.00"
+		/>
+    <subchannel name="intrinsic" osc="0" />
+    <subchannel name="nc" osc = "0"/>
+</channel>
+
+
+<channel name="nue" unit="GeV">
+	<bins
+		edges ="0 0.25 0.500 0.700 0.900 1.100 1.300 1.500 1.700 1.900 3.00 "
+		/>
+    <subchannel name="intrinsic" osc="0" />
+    <subchannel name="ncbkg" osc = "0"/>
+    <subchannel name="ccbkg" osc = "0"/>
+    <subchannel name="fullosc" osc = "0"/>
+</channel>
+
+ 
+ <MultisimFile treename="simpletree_cc" filename="/uboone/data/users/gge/SBNfile/output_SBNOsc_NumuSelection_Proposal_Icarus_Lite.root" scale = "1.0" maxevents="5000" pot="118884300000000000000.000000"> 
+     <branch
+         name="reco_energy"
+         type="double"
+         associated_subchannel="nu_ICARUS_numu_intrinsic"
+    	 oscillate = "true"
+         true_param_name = "true_energy"
+         true_L_name = "true_baseline"
+         additional_weight="weight"
+         />
+ </MultisimFile>
+ 
+ <MultisimFile treename="simpletree_nc" filename="/uboone/data/users/gge/SBNfile/output_SBNOsc_NumuSelection_Proposal_Icarus_Lite.root" scale = "1.0" maxevents="5000" pot="118884300000000000000.000000"> 
+     <branch
+         name="reco_energy"
+         type="double"
+         associated_subchannel="nu_ICARUS_numu_nc"
+    	 oscillate = "true"
+         true_param_name = "true_energy"
+         true_L_name = "true_baseline"
+         additional_weight="weight"
+         />
+ </MultisimFile>
+ 
+ <MultisimFile treename="simpletree_cc" filename="/uboone/data/users/gge/SBNfile/output_SBNOsc_NumuSelection_Proposal_Uboone_Lite.root" scale = "1.0" maxevents="5000" pot="983150000000000065536.000000"> 
+     <branch
+         name="reco_energy"
+         type="double"
+         associated_subchannel="nu_uBooNE_numu_intrinsic"
+    	 oscillate = "true"
+         true_param_name = "true_energy"
+         true_L_name = "true_baseline"
+         additional_weight="weight"
+         />
+ </MultisimFile>
+ 
+ <MultisimFile treename="simpletree_nc" filename="/uboone/data/users/gge/SBNfile/output_SBNOsc_NumuSelection_Proposal_Uboone_Lite.root" scale = "1.0" maxevents="5000" pot="983150000000000065536.000000"> 
+     <branch
+         name="reco_energy"
+         type="double"
+         associated_subchannel="nu_uBooNE_numu_nc"
+    	 oscillate = "true"
+         true_param_name = "true_energy"
+         true_L_name = "true_baseline"
+         additional_weight="weight"
+         />
+ </MultisimFile>
+
+
+<MultisimFile treename="simpletree_cc" filename="/uboone/data/users/gge/SBNfile/output_SBNOsc_NumuSelection_Proposal_SBND_Lite.root" scale = "1.0" maxevents="5000" pot="47883366000000000000.000000"> 
+     <branch
+         name="reco_energy"
+         type="double"
+         associated_subchannel="nu_SBND_numu_intrinsic"
+    	 oscillate = "true"
+         true_param_name = "true_energy"
+         true_L_name = "true_baseline"
+         additional_weight="weight"
+         />
+ </MultisimFile>
+ 
+ <MultisimFile treename="simpletree_nc" filename="/uboone/data/users/gge/SBNfile/output_SBNOsc_NumuSelection_Proposal_SBND_Lite.root" scale = "1.0" maxevents="5000" pot="47883366000000000000.000000"> 
+     <branch
+         name="reco_energy"
+         type="double"
+         associated_subchannel="nu_SBND_numu_nc"
+    	 oscillate = "true"
+         true_param_name = "true_energy"
+         true_L_name = "true_baseline"
+         additional_weight="weight"
+         />
+ </MultisimFile>
+
+ <MultisimFile treename="simpletree_cc" filename="/uboone/data/users/gge/SBNfile/output_SBNOsc_NueSelection_Proposal_Icarus_Int_Lite.root" scale = "1.0" maxevents="5000"> 
+     <branch
+         name="reco_energy"
+         type="double"
+         associated_subchannel="nu_ICARUS_nue_intrinsic"
+    	 oscillate = "true"
+         true_param_name = "true_energy"
+         true_L_name = "true_baseline"
+         additional_weight="weight"
+         />
+ </MultisimFile>
+
+ <MultisimFile treename="simpletree_cc" filename="/uboone/data/users/gge/SBNfile/output_SBNOsc_NueSelection_Proposal_Uboone_Int_Lite.root" scale = "1.0" maxevents="5000"> 
+     <branch
+         name="reco_energy"
+         type="double"
+         associated_subchannel="nu_uBooNE_nue_intrinsic"
+    	 oscillate = "true"
+         true_param_name = "true_energy"
+         true_L_name = "true_baseline"
+         additional_weight="weight"
+         />
+ </MultisimFile>
+
+ <MultisimFile treename="simpletree_cc" filename="/uboone/data/users/gge/SBNfile/output_SBNOsc_NueSelection_Proposal_SBND_Int_Lite.root" scale = "1.0" maxevents="5000"> 
+     <branch
+         name="reco_energy"
+         type="double"
+         associated_subchannel="nu_SBND_nue_intrinsic"
+    	 oscillate = "true"
+         true_param_name = "true_energy"
+         true_L_name = "true_baseline"
+         additional_weight="weight"
+         />
+ </MultisimFile>
+
+ <!-- NOW the NuMU Backgrounds, CC and NC seperate  -->
+
+ <MultisimFile treename="simpletree_cc" filename="/uboone/data/users/gge/SBNfile/output_SBNOsc_NueSelection_Proposal_Icarus_Numu_Lite.root" scale = "1.0" maxevents="5000"> 
+     <branch
+         name="reco_energy"
+         type="double"
+         associated_subchannel="nu_ICARUS_nue_ccbkg"
+    	 oscillate = "true"
+         true_param_name = "true_energy"
+         true_L_name = "true_baseline"
+         additional_weight="weight"
+         />
+ </MultisimFile>
+
+ <MultisimFile treename="simpletree_cc" filename="/uboone/data/users/gge/SBNfile/output_SBNOsc_NueSelection_Proposal_Uboone_Numu_Lite.root" scale = "1.0" maxevents="5000"> 
+     <branch
+         name="reco_energy"
+         type="double"
+         associated_subchannel="nu_uBooNE_nue_ccbkg"
+    	 oscillate = "true"
+         true_param_name = "true_energy"
+         true_L_name = "true_baseline"
+         additional_weight="weight"
+         />
+ </MultisimFile>
+
+ <MultisimFile treename="simpletree_cc" filename="/uboone/data/users/gge/SBNfile/output_SBNOsc_NueSelection_Proposal_SBND_Numu_Lite.root" scale = "1.0" maxevents="5000"> 
+     <branch
+         name="reco_energy"
+         type="double"
+         associated_subchannel="nu_SBND_nue_ccbkg"
+    	 oscillate = "true"
+         true_param_name = "true_energy"
+         true_L_name = "true_baseline"
+         additional_weight="weight"
+         />
+ </MultisimFile>
+
+ <MultisimFile treename="simpletree_nc" filename="/uboone/data/users/gge/SBNfile/output_SBNOsc_NueSelection_Proposal_Icarus_Numu_Lite.root" scale = "1.0" maxevents="5000"> 
+     <branch
+         name="reco_energy"
+         type="double"
+         associated_subchannel="nu_ICARUS_nue_ncbkg"
+    	 oscillate = "true"
+         true_param_name = "true_energy"
+         true_L_name = "true_baseline"
+         additional_weight="weight"
+         />
+ </MultisimFile>
+
+ <MultisimFile treename="simpletree_nc" filename="/uboone/data/users/gge/SBNfile/output_SBNOsc_NueSelection_Proposal_Uboone_Numu_Lite.root" scale = "1.0" maxevents="5000"> 
+     <branch
+         name="reco_energy"
+         type="double"
+         associated_subchannel="nu_uBooNE_nue_ncbkg"
+    	 oscillate = "true"
+         true_param_name = "true_energy"
+         true_L_name = "true_baseline"
+         additional_weight="weight"
+         />
+ </MultisimFile>
+
+ <MultisimFile treename="simpletree_nc" filename="/uboone/data/users/gge/SBNfile/output_SBNOsc_NueSelection_Proposal_SBND_Numu_Lite.root" scale = "1.0" maxevents="5000"> 
+     <branch
+         name="reco_energy"
+         type="double"
+         associated_subchannel="nu_SBND_nue_ncbkg"
+    	 oscillate = "true"
+         true_param_name = "true_energy"
+         true_L_name = "true_baseline"
+         additional_weight="weight"
+         />
+ </MultisimFile>
+
+
+
+ <!-- NOW the Full OSC WARNING, only uBooNE works for some wierd reason -->
+
+
+ <MultisimFile treename="simpletree_cc" filename="/uboone/data/users/gge/SBNfile/output_SBNOsc_NueSelection_Proposal_Uboone_Osc_Lite.root" scale = "1.0" maxevents="5000"> 
+     <branch
+         name="reco_energy"
+         type="double"
+         associated_subchannel="nu_ICARUS_nue_fullosc"
+    	 oscillate = "true"
+         true_param_name = "true_energy"
+         true_L_name = "true_baseline"
+         additional_weight="weight"
+         />
+ </MultisimFile>
+
+ <MultisimFile treename="simpletree_cc" filename="/uboone/data/users/gge/SBNfile/output_SBNOsc_NueSelection_Proposal_Uboone_Osc_Lite.root" scale = "1.0" maxevents="5000"> 
+     <branch
+         name="reco_energy"
+         type="double"
+         associated_subchannel="nu_uBooNE_nue_fullosc"
+    	 oscillate = "true"
+         true_param_name = "true_energy"
+         true_L_name = "true_baseline"
+         additional_weight="weight"
+         />
+ </MultisimFile>
+
+ <MultisimFile treename="simpletree_cc" filename="/uboone/data/users/gge/SBNfile/output_SBNOsc_NueSelection_Proposal_Uboone_Osc_Lite.root" scale = "1.0" maxevents="5000"> 
+     <branch
+         name="reco_energy"
+         type="double"
+         associated_subchannel="nu_SBND_nue_fullosc"
+    	 oscillate = "true"
+         true_param_name = "true_energy"
+         true_L_name = "true_baseline"
+         additional_weight="weight"
+         />
+ </MultisimFile>
+
+

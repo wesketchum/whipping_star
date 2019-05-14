@@ -14,7 +14,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     universes_used = 0;
     tolerence_positivesemi = 1e-5;
     is_small_negative_eigenvalue = false;
-    abnormally_large_weight = 1e2;
+    abnormally_large_weight = 20.0;
     bnbcorrection_str = "bnbcorrection_FluxHist";
 
     std::map<std::string, int> parameter_sims;
@@ -138,6 +138,11 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
               std::cout<<otag<<"Skipping genie_all_Genie!"<<std::endl;
               continue;
              }
+            if(it.first == "genie_NC_Genie") {
+              std::cout<<otag<<"Skipping genie_NC_Genie!"<<std::endl;
+              continue;
+             }
+
 
             std::cout <<otag
                 << it.first << " has " << it.second.size() << " montecarlos in file " << fid << std::endl;

@@ -497,7 +497,7 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 	std::vector<TH1D> temp_comp = compsec->hist;
 
 	for(int k=0; k< fullnames.size(); k++){
-		TCanvas *ctmp = new TCanvas((std::to_string(k)+"_"+fullnames.at(k)).c_str(), (std::to_string(k)+"_"+fullnames.at(k)).c_str(),1200,1200);
+		TCanvas *ctmp = new TCanvas((tag+"_"+std::to_string(k)+"_"+fullnames.at(k)).c_str(), (std::to_string(k)+"_"+fullnames.at(k)).c_str(),1200,1200);
 		ctmp->cd();
 		TH1D * h1 = (TH1D*) temp.at(map_hist[fullnames.at(k)]).Clone((std::to_string(k)+fullnames.at(k)+"_1").c_str());
 		TH1D * h2 = (TH1D*) temp_comp.at(map_hist[fullnames.at(k)]).Clone((std::to_string(k)+fullnames.at(k)+"_2").c_str());
@@ -531,7 +531,7 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 				bool this_run = false;
 				bool this_run_comp = false;
 
-				TCanvas* Cstack= new TCanvas(canvas_name.c_str(),canvas_name.c_str());
+				TCanvas* Cstack= new TCanvas((tag+"_"+canvas_name).c_str(),canvas_name.c_str());
 				Cstack->SetFixedAspectRatio();
 
 				Cstack->cd();
@@ -548,7 +548,7 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 
 				for(auto &h : temp_comp){
 					std::string test = h.GetName();
-					if(test.find(canvas_name)!=std::string::npos ){
+					if(test.find(canvas_name)!=std::string::npos){
 						double total_events = h.GetSumOfWeights();
 
 

@@ -26,5 +26,4 @@ file(COPY ${CMAKE_SOURCE_DIR}/xml/example.xml DESTINATION ${CMAKE_SOURCE_DIR}/bu
 
 
 
-add_subdirectory(MiniBooNE_suite)
 

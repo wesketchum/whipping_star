@@ -53,10 +53,13 @@ namespace sbn{
 
         SBNosc *m_core_spectrum;
         SBNosc *m_background_spectrum;
+        SBNchi* m_background_chi;
         TVectorT<double> * m_tvec_background_spectrum;
 
         bool m_bool_core_spectrum_set;
         bool m_bool_background_spectrum_set;
+    
+        bool m_bool_stat_only;
 
         std::string tag;
 
@@ -67,13 +70,14 @@ namespace sbn{
             m_num_total_gridpoints = m_grid.f_num_total_points;
             m_bool_core_spectrum_set = false;
             m_bool_background_spectrum_set = false;
+            m_bool_stat_only = false;
         }
 
 
         //Member Functions
         int FullFeldmanCousins();
         int GlobalScan();
-        
+        int RasterScan(); 
         
         int GenerateOscillatedSpectra();
         int LoadPreOscillatedSpectra();
@@ -86,6 +90,9 @@ namespace sbn{
         int SetCoreSpectrum(std::string);
         int SetFractionalCovarianceMatrix(TMatrixT<double> *);
         int SetFractionalCovarianceMatrix(std::string, std::string);
+        int SetEmptyFractionalCovarianceMatrix();
+
+        int SetStatOnly();
 
         NeutrinoModel convert3p1(std::vector<double> ingrid);
 
