@@ -141,7 +141,7 @@ int main(int argc, char* argv[])
     std::vector<double> low = {-1.0,-0.7,-0.4,-0.1,0.2,0.5,0.8};
     std::vector<double> hi = {-0.7,-0.4,-0.1,0.2,0.5,0.8,1.1};
 
-    mygrid.AddDimension("m4", low[number], hi[number], 0.1);//0.05
+    mygrid.AddDimension("m4", low[0], hi[6], 0.1);//0.05
     mygrid.AddDimension("ue4", -2.3, 0.1, 0.1);
     mygrid.AddFixedDimension("um4",0.0); //0.05
 
