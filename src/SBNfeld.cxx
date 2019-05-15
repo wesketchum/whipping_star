@@ -312,15 +312,13 @@ int SBNfeld::FullFeldmanCousins(){
         //Now lets do a simple fit to a chi^2 
         std::string f_name = "fchi_"+std::to_string(t);
         //TF1 *fchi = new TF1(f_name.c_str(),[&](double*x, double *p){ return p[0]*gsl_ran_chisq_pdf(x[0],p[1]); },0,tmax,2); // gsl does not like this lambda
-        TF1 *fchi = new TF1(f_name.c_str(),[&](double*x, double *p){ return p[0]*ROOT::Math::chisquared_pdf(x[0],p[1]); },0,tmax,2);
-        fchi->SetParameter(0,1.0);
-        fchi->SetParameter(1,2.0); 
-
-        fchi->SetParName(0,"Norm");
-        fchi->SetParName(1,"NDOF");
-
-        t_outtree.UnbinnedFit(f_name.c_str(),"delta_chi2","1","VM");
-
+        TF1 *fchi = new TF1(f_name.c_str(),[&](double*x, double *p){ return ROOT::Math::chisquared_pdf(x[0],p[0]); },0,tmax,1);
+        fchi->SetParameter(0,2.0); 
+        fchi->SetParName(0,"NDOF");
+        fchi->SetParLimits(0,0,10.0);
+        t_outtree.Fit(f_name.c_str(),"delta_chi2",("1.0/"+std::to_string((double)vec_delta_chi.size())).c_str(),"M");
+        double fitted_ndof = fchi->GetParameter(0);
+        std::cout<<"FIT NDOF: "<<fitted_ndof<<std::endl;
 
         fout->cd();
         h_delta_chi.Write();
