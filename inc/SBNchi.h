@@ -13,6 +13,7 @@
 #include "TH1.h"
 #include "TH2.h"
 #include "TMatrixT.h"
+#include "TMatrixTSym.h"
 #include "TVectorT.h"
 #include "TRandom3.h"
 #include "TFile.h"

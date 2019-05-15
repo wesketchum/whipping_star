@@ -130,19 +130,8 @@ int main(int argc, char* argv[])
  //   mygrid.AddFixedDimension("ue4", 0);
  //   mygrid.AddDimension("um4",-2.0, 0.1, 0.1); //0.05
 
-    //1 -1 -0.7
-    //2 -0.7 -0.4
-    //3 -0.4 -0.1
-    //4 -0.1 0.2
-    //5 0.2 0.5
-    //6 0.5 0.8
-    //7 0.8 1.1
-    
-    std::vector<double> low = {-1.0,-0.7,-0.4,-0.1,0.2,0.5,0.8};
-    std::vector<double> hi = {-0.7,-0.4,-0.1,0.2,0.5,0.8,1.1};
-
-    mygrid.AddDimension("m4", low[0], hi[6], 0.1);//0.05
-    mygrid.AddDimension("ue4", -2.3, 0.1, 0.1);
+    mygrid.AddDimension("m4", -1.0, 1.1, 0.2);//0.1
+    mygrid.AddDimension("ue4", -2.3, 0.1, 0.5);//0.1
     mygrid.AddFixedDimension("um4",0.0); //0.05
 
 

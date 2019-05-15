@@ -175,7 +175,7 @@ int SBNfeld::CalcSBNchis(){
 
 int SBNfeld::FullFeldmanCousins(){
 
-    int num_universes = 1000;
+    int num_universes = 2500;
     int max_number_iterations = 10;
     double chi_min_convergance_tolerance = 0.001;
 
@@ -185,6 +185,9 @@ int SBNfeld::FullFeldmanCousins(){
     TMatrixT<double> background_collapsed_covariance_matrix(m_background_spectrum->num_bins_total_compressed, m_background_spectrum->num_bins_total_compressed);
     m_sbnchi_grid[0]->CollapseModes(background_full_covariance_matrix, background_collapsed_covariance_matrix);    
     TMatrixT<double> inverse_background_collapsed_covariance_matrix = m_sbnchi_grid[0]->InvertMatrix(background_collapsed_covariance_matrix);   
+
+    TFile *fout =  new TFile(("SBNfeld_output_"+tag+".root").c_str(),"recreate");
+    fout->cd();
 
 
     for(size_t t =0; t < m_num_total_gridpoints; t++){
@@ -237,14 +240,15 @@ int SBNfeld::FullFeldmanCousins(){
 
                 if(n_iter!=0){
 
-                    //std::cout<<"On iter: "<<n_iter<<" chi^2: "<<chi_min<<" lastchi^2: "<<last_chi_min<<" diff() "<<fabs(chi_min-last_chi_min)<<" tol: "<<chi_min_convergance_tolerance<<" best_grid_point: "<<best_grid_point<<std::endl;
+                    std::cout<<"On iter: "<<n_iter<<" of uni "<<i<<"/"<<num_universes<<" w/ chi^2: "<<chi_min<<" lastchi^2: "<<last_chi_min<<" diff() "<<fabs(chi_min-last_chi_min)<<" tol: "<<chi_min_convergance_tolerance<<" best_grid_point: "<<best_grid_point<<std::endl;
+
                     //Step 3.0 Check to see if min_chi for this particular fake_data  has converged sufficiently
                     if(fabs(chi_min-last_chi_min)< chi_min_convergance_tolerance){
                         last_chi_min = chi_min;
                         break;
                     }
                 }else{
-                    //std::cout<<"On iter: "<<n_iter<<" chi^2: "<<chi_min<<std::endl; 
+                    std::cout<<"On iter: "<<n_iter<<" chi^2: "<<chi_min<<std::endl; 
                 }
 
                 last_chi_min = chi_min;
@@ -252,12 +256,12 @@ int SBNfeld::FullFeldmanCousins(){
 
             //Now use the curent_iteration_covariance matrix to also calc this_chi here for the delta.
             // QUESTION! Its either this or the next line.
-            double this_chi   = true_chi->CalcChi(&fake_data);
-            //double this_chi   = this->CalcChi(fake_data,m_cv_spec_grid[t]->collapsed_vector,inverse_current_collapsed_covariance_matrix);
+            //double this_chi   = true_chi->CalcChi(&fake_data);
+            double this_chi   = this->CalcChi(fake_data, true_spec->collapsed_vector,inverse_current_collapsed_covariance_matrix);
 
 
             //step 4 calculate the delta_chi for this universe
-            vec_delta_chi[i] = last_chi_min-this_chi;
+            vec_delta_chi[i] = this_chi-last_chi_min;
             vec_chi_min[i] = last_chi_min;
             
         }
@@ -268,7 +272,7 @@ int SBNfeld::FullFeldmanCousins(){
             tmin=std::min(tmin,v);
             tmax=std::max(tmax,v);
         }
-        TH1D h_delta_chi(("dcuni_"+std::to_string(t)).c_str(),("dcuni_"+std::to_string(t)).c_str(),100,0,tmax);  // This will store all the delta_chi's from each universe for this g_true point
+        TH1D h_delta_chi(("dcuni_"+std::to_string(t)).c_str(),("dcuni_"+std::to_string(t)).c_str(),50,0.0,tmax*1.0);  // This will store all the delta_chi's from each universe for this g_true point
         for(double&v:vec_delta_chi) h_delta_chi.Fill(v);
 
 
@@ -278,9 +282,13 @@ int SBNfeld::FullFeldmanCousins(){
             cmin=std::min(cmin,v);
             cmax=std::max(cmax,v);
         }
-        TH1D h_chi_min(("cmuni_"+std::to_string(t)).c_str(),("cmuni_"+std::to_string(t)).c_str(),100,0,tmax);  // This will store all the chi_mins from each universe for this g_true point
+        TH1D h_chi_min(("cmuni_"+std::to_string(t)).c_str(),("cmuni_"+std::to_string(t)).c_str(),50,0.0,cmax*1.0);  // This will store all the chi_mins from each universe for this g_true point
         for(double&v:vec_chi_min) h_chi_min.Fill(v);
 
+
+        fout->cd();
+        h_delta_chi.Write();
+        h_chi_min.Write();
 
         std::cout<<"This Gridpoint has a max and min Chi^2_min of ("<<cmin<<","<<cmax<<")"<<std::endl;
         std::cout<<"This Gridpoint has a max and min DeltaChi of ("<<tmin<<","<<tmax<<")"<<std::endl;
@@ -317,8 +325,10 @@ int SBNfeld::FullFeldmanCousins(){
 
         delta_chi_critical = delta_chi_quantiles[0];
 
+        break;
     }
 
+    fout->Close();
     return 0;
 };
 
