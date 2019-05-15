@@ -31,6 +31,9 @@
 #include "TMatrixDEigen.h"
 #include "TMatrixDSymEigen.h"
 
+#include "Math/ProbFunc.h"
+#include "Math/DistFunc.h"
+
 #include "prob.h"
 #include "ngrid.h"
 #include <gsl/gsl_randist.h>

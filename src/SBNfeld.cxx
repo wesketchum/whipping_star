@@ -175,7 +175,7 @@ int SBNfeld::CalcSBNchis(){
 
 int SBNfeld::FullFeldmanCousins(){
 
-    int num_universes = 2000;
+    int num_universes = 1000;
     int max_number_iterations = 5;
     double chi_min_convergance_tolerance = 0.001;
 
@@ -311,7 +311,8 @@ int SBNfeld::FullFeldmanCousins(){
 
         //Now lets do a simple fit to a chi^2 
         std::string f_name = "fchi_"+std::to_string(t);
-        TF1 *fchi = new TF1(f_name.c_str(),[&](double*x, double *p){ return p[0]*gsl_ran_chisq_pdf(x[0],p[1]); },0,tmax,2);
+        //TF1 *fchi = new TF1(f_name.c_str(),[&](double*x, double *p){ return p[0]*gsl_ran_chisq_pdf(x[0],p[1]); },0,tmax,2); // gsl does not like this lambda
+        TF1 *fchi = new TF1(f_name.c_str(),[&](double*x, double *p){ return p[0]*ROOT::Math::chisquared_pdf(x[0],p[1]); },0,tmax,2);
         fchi->SetParameter(0,1.0);
         fchi->SetParameter(1,2.0); 
 
