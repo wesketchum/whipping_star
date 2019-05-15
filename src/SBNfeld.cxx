@@ -255,7 +255,7 @@ int SBNfeld::FullFeldmanCousins(){
 
                 if(n_iter!=0){
 
-                    std::cout<<"On iter: "<<n_iter<<" of uni "<<i<<"/"<<num_universes<<" w/ chi^2: "<<chi_min<<" lastchi^2: "<<last_chi_min<<" diff() "<<fabs(chi_min-last_chi_min)<<" tol: "<<chi_min_convergance_tolerance<<" best_grid_point: "<<best_grid_point<<std::endl;
+                    //std::cout<<"On iter: "<<n_iter<<" of uni "<<i<<"/"<<num_universes<<" w/ chi^2: "<<chi_min<<" lastchi^2: "<<last_chi_min<<" diff() "<<fabs(chi_min-last_chi_min)<<" tol: "<<chi_min_convergance_tolerance<<" best_grid_point: "<<best_grid_point<<std::endl;
 
                     //Step 3.0 Check to see if min_chi for this particular fake_data  has converged sufficiently
                     if(fabs(chi_min-last_chi_min)< chi_min_convergance_tolerance){
@@ -319,6 +319,7 @@ int SBNfeld::FullFeldmanCousins(){
         t_outtree.Fit(f_name.c_str(),"delta_chi2",("1.0/"+std::to_string((double)vec_delta_chi.size())).c_str(),"M");
         double fitted_ndof = fchi->GetParameter(0);
         std::cout<<"FIT NDOF: "<<fitted_ndof<<std::endl;
+
 
         fout->cd();
         h_delta_chi.Write();
