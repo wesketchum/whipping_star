@@ -59,8 +59,8 @@ int main(int argc, char* argv[])
         {"xml", 		required_argument, 	0, 'x'},
         {"printall", 		no_argument, 		0, 'p'},
         {"stat", 		no_argument, 		0, 's'},
-         {"number", 		required_argument,	0,'n'},
-   {"tag", 		required_argument,	0, 't'},
+        {"number", 		required_argument,	0,'n'},
+        {"tag", 		required_argument,	0, 't'},
         {"mode",        required_argument, 0 ,'m'},
         {"help", 		no_argument,	0, 'h'},
         {0,			    no_argument, 		0,  0},
@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
     std::string tag = "TEST";
     std::string mode_option;
     bool bool_stat_only = false;
-    int number = 0;
+    int number = 1000;
 
     while(iarg != -1)
     {
@@ -85,9 +85,9 @@ int main(int argc, char* argv[])
             case 'x':
                 xml = optarg;
                 break;
-	case 'n':
-	  number = (int)strtod(optarg,NULL);
-	  break;
+            case 'n':
+                number = (int)strtod(optarg,NULL);
+                break;
 
             case 't':
                 tag = optarg;
@@ -106,8 +106,14 @@ int main(int argc, char* argv[])
                 std::cout<<"--- Required arguments: ---"<<std::endl;
                 std::cout<<"\t-x\t--xml\t\tInput configuration .xml file for SBNconfig"<<std::endl;
                 std::cout<<"\t-t\t--tag\t\tA unique tag to identify the outputs [Default to TEST]"<<std::endl;
+                std::cout<<"\t-m\t--mode\t\tWhat mode you want to run in. Arguments are:"<<std::endl;
+                std::cout<<"\t\t\t--\t gen : Generate the preoscillated spectra for all mass-splittings"<<std::endl;  
+                std::cout<<"\t\t\t--\t genbkg : Generate a background only spectra for all mass-splittings"<<std::endl;  
+                std::cout<<"\t\t\t--\t feldman : Perform a full feldman cousins analysis"<<std::endl;  
+                std::cout<<"\t\t\t--\t test : Just a testbed. Can be ignored"<<std::endl;
                 std::cout<<"--- Optional arguments: ---"<<std::endl;
                 std::cout<<"\t-s\t--stat\t\tStat only runs"<<std::endl;
+                std::cout<<"\t-n\t--number\t\tNumber of pseudo-experiments to simulate (default 1000)"<<std::endl; 
                 std::cout<<"\t-h\t--help\t\tThis help menu."<<std::endl;
                 std::cout<<"---------------------------------------------------"<<std::endl;
 
@@ -125,16 +131,14 @@ int main(int argc, char* argv[])
     std::cout<<"Begining FeldmanCousins for tag: "<<tag<<std::endl;
 
     NGrid mygrid;
-    
- //   mygrid.AddDimension("m4", -1, 1.05, 0.05);//0.05
- //   mygrid.AddFixedDimension("ue4", 0);
- //   mygrid.AddDimension("um4",-2.0, 0.1, 0.1); //0.05
 
-    mygrid.AddDimension("m4", -1.0, 1.1, 0.2);//0.1
-    mygrid.AddDimension("ue4", -2.3, 0.1, 0.5);//0.1
+    //   mygrid.AddDimension("m4", -1, 1.05, 0.05);//0.05
+    //   mygrid.AddFixedDimension("ue4", 0);
+    //   mygrid.AddDimension("um4",-2.0, 0.1, 0.1); //0.05
+
+    mygrid.AddDimension("m4", -1.0, 1.1, 0.1);//0.1
+    mygrid.AddDimension("ue4", -2.3, 0.1, 0.05);//0.1
     mygrid.AddFixedDimension("um4",0.0); //0.05
-
-
 
     //Print the grid interesting bits
     mygrid.Print();
@@ -149,7 +153,9 @@ int main(int argc, char* argv[])
         myfeld.SetCoreSpectrum(tag+"_CV.SBNspec.root");
         myfeld.GenerateBackgroundSpectrum();
 
-    }else if(mode_option == "fit"){
+    }else if(mode_option == "feldman"){
+
+        std::cout<<"Begininning a full Feldman-Cousins analysis for tag : "<<tag<<std::endl;
 
         myfeld.SetCoreSpectrum(tag+"_BKG_ONLY.SBNspec.root");
         myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
@@ -158,16 +164,19 @@ int main(int argc, char* argv[])
         myfeld.LoadPreOscillatedSpectra();
         myfeld.LoadBackgroundSpectrum();
 
+        myfeld.SetNumUniverses(number);
+
         std::cout<<"Calculating the necessary SBNchi objects"<<std::endl;
         myfeld.CalcSBNchis();
 
         std::cout<<"Beginning to peform FullFeldmanCousins analysis"<<std::endl;
         myfeld.FullFeldmanCousins();
 
-    }else if(mode_option == "global"){
+    }else if(mode_option == "test"){
+
 
         myfeld.SetCoreSpectrum(tag+"_BKG_ONLY.SBNspec.root");
-        
+
         if(bool_stat_only){
             myfeld.SetEmptyFractionalCovarianceMatrix();
             myfeld.SetStatOnly();
@@ -187,14 +196,8 @@ int main(int argc, char* argv[])
         std::cout<<"Beginning to peform a globalScan analysis"<<std::endl;
         myfeld.GlobalScan();
 
-    }else if(mode_option == "test"){
-
-        myfeld.SetCoreSpectrum(tag+"_BKG_ONLY.SBNspec.root");
-
-
-
-
     }
+
     std::cout << "Total wall time: " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
     return 0;
 

@@ -175,7 +175,7 @@ int SBNfeld::CalcSBNchis(){
 
 int SBNfeld::FullFeldmanCousins(){
 
-    int num_universes = 1000;
+    int num_universes = m_num_universes;
     int max_number_iterations = 5;
     double chi_min_convergance_tolerance = 0.001;
 
@@ -263,7 +263,7 @@ int SBNfeld::FullFeldmanCousins(){
                         break;
                     }
                 }else{
-                    std::cout<<"On iter: "<<n_iter<<" chi^2: "<<chi_min<<std::endl; 
+                    //std::cout<<"On iter: "<<n_iter<<" chi^2: "<<chi_min<<std::endl; 
                 }
 
                 last_chi_min = chi_min;
@@ -424,4 +424,7 @@ int SBNfeld::SetStatOnly(){
 int SBNfeld::RasterScan(){
     return 0;
 };
-
+int SBNfeld::SetNumUniverses(int n){
+    m_num_universes = n;
+    return 0;
+}   
