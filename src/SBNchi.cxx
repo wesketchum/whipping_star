@@ -1058,10 +1058,7 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
 
     //Seconndly attempt a Cholosky Decomposition
     TDecompChol * chol = new TDecompChol(U,0.1);
-
-    std::cout<<"Chol S"<<std::endl;
     bool worked = chol->Decompose();
-    std::cout<<"Chol E"<<std::endl;
 
     if(!worked){
         std::cout<<"SBNchi::SampleCovariance\t|| Cholosky Decomposition Failed."<<std::endl;

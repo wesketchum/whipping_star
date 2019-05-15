@@ -175,9 +175,12 @@ int SBNfeld::CalcSBNchis(){
 
 int SBNfeld::FullFeldmanCousins(){
 
-    int num_universes = 2500;
-    int max_number_iterations = 10;
+    int num_universes = 2000;
+    int max_number_iterations = 5;
     double chi_min_convergance_tolerance = 0.001;
+
+    //
+
 
 
     //Ok take the background only spectrum and form a background only covariance matrix. CalcCovarianceMatrix includes stats
@@ -200,6 +203,18 @@ int SBNfeld::FullFeldmanCousins(){
         std::vector<double> vec_delta_chi(num_universes,0);
         std::vector<double> vec_chi_min(num_universes,0);
         double delta_chi_critical = DBL_MIN;
+
+        //Some output informatation
+        double tree_delta_chi = 0;
+        double tree_chi_min = 0;
+        int tree_bf_grid=0;
+
+        fout->cd();
+        TTree t_outtree(("ttree_"+std::to_string(t)).c_str(),("ttree_"+std::to_string(t)).c_str());
+        t_outtree.Branch("delta_chi2",&tree_delta_chi);
+        t_outtree.Branch("chi2_min",&tree_chi_min);
+        t_outtree.Branch("bf_gridpoint",&tree_bf_grid);       
+
 
         for(size_t i=0; i< num_universes; ++i){
 
@@ -264,6 +279,12 @@ int SBNfeld::FullFeldmanCousins(){
             vec_delta_chi[i] = this_chi-last_chi_min;
             vec_chi_min[i] = last_chi_min;
             
+            tree_delta_chi = vec_delta_chi[i];
+            tree_chi_min = vec_chi_min[i];
+            tree_bf_grid = best_grid_point; 
+
+            t_outtree.Fill();
+
         }
 
         double tmin = DBL_MAX;
@@ -283,12 +304,28 @@ int SBNfeld::FullFeldmanCousins(){
             cmax=std::max(cmax,v);
         }
         TH1D h_chi_min(("cmuni_"+std::to_string(t)).c_str(),("cmuni_"+std::to_string(t)).c_str(),50,0.0,cmax*1.0);  // This will store all the chi_mins from each universe for this g_true point
-        for(double&v:vec_chi_min) h_chi_min.Fill(v);
+        for(double&v:vec_chi_min){
+            h_chi_min.Fill(v);
+        }
+
+
+        //Now lets do a simple fit to a chi^2 
+        std::string f_name = "fchi_"+std::to_string(t);
+        TF1 *fchi = new TF1(f_name.c_str(),[&](double*x, double *p){ return p[0]*gsl_ran_chisq_pdf(x[0],p[1]); },0,tmax,2);
+        fchi->SetParameter(0,1.0);
+        fchi->SetParameter(1,2.0); 
+
+        fchi->SetParName(0,"Norm");
+        fchi->SetParName(1,"NDOF");
+
+        t_outtree.UnbinnedFit(f_name.c_str(),"delta_chi2","1","VM");
 
 
         fout->cd();
         h_delta_chi.Write();
         h_chi_min.Write();
+        t_outtree.Write();
+
 
         std::cout<<"This Gridpoint has a max and min Chi^2_min of ("<<cmin<<","<<cmax<<")"<<std::endl;
         std::cout<<"This Gridpoint has a max and min DeltaChi of ("<<tmin<<","<<tmax<<")"<<std::endl;
@@ -325,7 +362,6 @@ int SBNfeld::FullFeldmanCousins(){
 
         delta_chi_critical = delta_chi_quantiles[0];
 
-        break;
     }
 
     fout->Close();
