@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
     std::string tag = "TEST";
     std::string mode_option;
     bool bool_stat_only = false;
-    int number = 1000;
+    int number = 2500;
 
     while(iarg != -1)
     {
@@ -113,7 +113,7 @@ int main(int argc, char* argv[])
                 std::cout<<"\t\t\t--\t test : Just a testbed. Can be ignored"<<std::endl;
                 std::cout<<"--- Optional arguments: ---"<<std::endl;
                 std::cout<<"\t-s\t--stat\t\tStat only runs"<<std::endl;
-                std::cout<<"\t-n\t--number\t\tNumber of pseudo-experiments to simulate (default 1000)"<<std::endl; 
+                std::cout<<"\t-n\t--number\t\tNumber of pseudo-experiments to simulate (default 2500)"<<std::endl; 
                 std::cout<<"\t-h\t--help\t\tThis help menu."<<std::endl;
                 std::cout<<"---------------------------------------------------"<<std::endl;
 
@@ -162,12 +162,14 @@ int main(int argc, char* argv[])
 
         std::cout<<"Loading precomputed spectra"<<std::endl;
         myfeld.LoadPreOscillatedSpectra();
+        std::cout <<"DONE loading precomputed spectra at : " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
         myfeld.LoadBackgroundSpectrum();
 
         myfeld.SetNumUniverses(number);
 
         std::cout<<"Calculating the necessary SBNchi objects"<<std::endl;
         myfeld.CalcSBNchis();
+        std::cout <<"DONE calculating the necessary SBNchi objects at : " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
 
         std::cout<<"Beginning to peform FullFeldmanCousins analysis"<<std::endl;
         myfeld.FullFeldmanCousins();

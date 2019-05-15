@@ -74,7 +74,7 @@ namespace sbn{
             m_bool_core_spectrum_set = false;
             m_bool_background_spectrum_set = false;
             m_bool_stat_only = false;
-            m_num_universes = 1000;
+            m_num_universes = 2500;
         }
 
 

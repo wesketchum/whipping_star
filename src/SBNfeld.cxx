@@ -99,6 +99,7 @@ int SBNfeld::LoadPreOscillatedSpectra(){
 
     m_cv_spec_grid.clear();
     std::cout<<"Beginining to Grab all oscillated spectra"<<std::endl;
+    m_cv_spec_grid.resize(m_num_total_gridpoints);
 
     for(size_t t =0; t < m_num_total_gridpoints; t++){
         std::cout<<"SBNfeld::LoadPreOcillatedSpectra()\t\t||\t\t On spectrum "<<t<<"/"<<m_num_total_gridpoints;
@@ -123,12 +124,12 @@ int SBNfeld::LoadPreOscillatedSpectra(){
             std::cout<<" "<<ans[p];
         }
         std::cout<<std::endl;
-        m_cv_spec_grid.push_back(new SBNspec(ans, m_core_spectrum->xmlname,t, false));
-        m_cv_spec_grid.back()->CollapseVector();
+        m_cv_spec_grid[t] = new SBNspec(ans, m_core_spectrum->xmlname,t, false);
+        m_cv_spec_grid[t]->CollapseVector();
 
         std::string tlog  = std::to_string(m_vec_grid[t][0])+"_"+std::to_string(m_vec_grid[t][1])+"_"+std::to_string(m_vec_grid[t][2]);
-        m_core_spectrum->CompareSBNspecs(m_cv_spec_grid.back(),tlog); 
-
+        //make a print out of this exact spectrum as compared to the "core" spectrum
+        m_core_spectrum->CompareSBNspecs(m_cv_spec_grid[t],tlog); 
     }
 
     return 0;
@@ -216,7 +217,7 @@ int SBNfeld::FullFeldmanCousins(){
         t_outtree.Branch("bf_gridpoint",&tree_bf_grid);       
 
 
-        for(size_t i=0; i< num_universes; ++i){
+        for(size_t i=0; i< num_universes; i++){
 
             //step 0. Make a fake-data-experimet for this point, drawn from covariance
             std::vector<float> fake_data= true_chi->SampleCovariance(true_spec);
@@ -312,13 +313,15 @@ int SBNfeld::FullFeldmanCousins(){
         //Now lets do a simple fit to a chi^2 
         std::string f_name = "fchi_"+std::to_string(t);
         //TF1 *fchi = new TF1(f_name.c_str(),[&](double*x, double *p){ return p[0]*gsl_ran_chisq_pdf(x[0],p[1]); },0,tmax,2); // gsl does not like this lambda
-        TF1 *fchi = new TF1(f_name.c_str(),[&](double*x, double *p){ return ROOT::Math::chisquared_pdf(x[0],p[0]); },0,tmax,1);
-        fchi->SetParameter(0,2.0); 
-        fchi->SetParName(0,"NDOF");
-        fchi->SetParLimits(0,0,10.0);
+        TF1 *fchi = new TF1(f_name.c_str(),[&](double*x, double *p){ return p[0]*ROOT::Math::chisquared_pdf(x[0],p[1]); },0,tmax,2);
+        fchi->SetParameter(0,1.0); 
+        fchi->SetParameter(1,2.0); 
+        fchi->SetParName(0,"norm");
+        fchi->SetParName(1,"NDOF");
+        fchi->SetParLimits(1,0,10.0);
         t_outtree.Fit(f_name.c_str(),"delta_chi2",("1.0/"+std::to_string((double)vec_delta_chi.size())).c_str(),"M");
-        double fitted_ndof = fchi->GetParameter(0);
-        std::cout<<"FIT NDOF: "<<fitted_ndof<<std::endl;
+        double fitted_ndof = fchi->GetParameter(1);
+        std::cout<<"FIT NDOF: "<<fitted_ndof<<" "<<fchi->GetParameter(0)<<std::endl;
 
 
         fout->cd();
@@ -361,7 +364,7 @@ int SBNfeld::FullFeldmanCousins(){
         }
 
         delta_chi_critical = delta_chi_quantiles[0];
-
+        break;
     }
 
     fout->Close();
