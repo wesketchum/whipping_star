@@ -90,6 +90,12 @@ int SBNfeld::SetEmptyFractionalCovarianceMatrix(){
     return 0;
 }
 
+int SBNfeld::SetRandomSeed(double sin){
+    m_random_seed = sin;
+    std::cout<<"SBNfeld::SetRandomSeed()\t\t||\t\tSetting random seed to: "<<sin<<std::endl;
+    return 0;
+}
+
 int SBNfeld::LoadPreOscillatedSpectra(){
     //This is where we load the precalculated spectra and assemble into a actuall oscillate spectrum
     //we have a core spectrum loaded on the start of the SBNfeld class. This is the fullosc+intrinsics...etc..
@@ -125,9 +131,11 @@ int SBNfeld::LoadPreOscillatedSpectra(){
         m_cv_spec_grid[t] = new SBNspec(ans, m_core_spectrum->xmlname,t, false);
         m_cv_spec_grid[t]->CollapseVector();
 
-        std::string tlog  = std::to_string(m_vec_grid[t][0])+"_"+std::to_string(m_vec_grid[t][1])+"_"+std::to_string(m_vec_grid[t][2]);
-        //make a print out of this exact spectrum as compared to the "core" spectrum
-        m_core_spectrum->CompareSBNspecs(m_cv_spec_grid[t],tlog); 
+        if(m_bool_print_comparasons){
+            //make a print out of this exact spectrum as compared to the "core" spectrum
+            std::string tlog  = std::to_string(m_vec_grid[t][0])+"_"+std::to_string(m_vec_grid[t][1])+"_"+std::to_string(m_vec_grid[t][2]);
+            m_core_spectrum->CompareSBNspecs(m_cv_spec_grid[t],tlog); 
+        }
     }
 
     return 0;
@@ -159,11 +167,10 @@ int SBNfeld::CalcSBNchis(){
         std::cout<<"Setting up grid point SBNchi "<<t<<std::endl;
 
         if(m_bool_stat_only){
-            m_sbnchi_grid.push_back(new SBNchi(*m_cv_spec_grid.at(t), stat_only_matrix, this->xmlname, false)) ;
+            m_sbnchi_grid.push_back(new SBNchi(*m_cv_spec_grid.at(t), stat_only_matrix, this->xmlname, false, m_random_seed)) ;
 
         }else{
-            m_sbnchi_grid.push_back(new SBNchi(*m_cv_spec_grid.at(t), *m_full_fractional_covariance_matrix, this->xmlname, false)) ;
-
+            m_sbnchi_grid.push_back(new SBNchi(*m_cv_spec_grid.at(t), *m_full_fractional_covariance_matrix, this->xmlname, false, m_random_seed)) ;
         }
 
 
@@ -446,7 +453,7 @@ int SBNfeld::PointFeldmanCousins(size_t grid_pt){
 
         //step 4 calculate the delta_chi for this universe
 
-        std::cout<<grid_pt<<" "<<last_chi_min<<" "<<this_chi-last_chi_min<<" "<<best_grid_point<<" "<<n_iter<<std::endl;
+        std::cout<<grid_pt<<" "<<i<<" "<<last_chi_min<<" "<<this_chi-last_chi_min<<" "<<best_grid_point<<" "<<n_iter<<std::endl;
     }
 
     std::cout<<"Finished Grid Point: "<<grid_pt;
@@ -470,7 +477,7 @@ int SBNfeld::PointFeldmanCousins(size_t grid_pt){
 
 
 
-double SBNfeld::CalcChi(std::vector<float>& data, std::vector<double>& prediction, TMatrixT<double> & inverse_covariance_matrix ){
+float SBNfeld::CalcChi(std::vector<float>& data, std::vector<double>& prediction, TMatrixT<double> & inverse_covariance_matrix ){
     float tchi = 0;
 
     for(int i =0; i<num_bins_total_compressed; i++){

@@ -42,7 +42,9 @@ class SBNchi : public SBNconfig{
 	SBNchi(SBNspec,TMatrixT<double>);
 	SBNchi(SBNspec,TMatrixT<double>,bool);
 	SBNchi(SBNspec,TMatrixT<double>,std::string, bool);
-	//Initialise a stat_only one;
+	SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin, std::string inxml, bool is_verbose, double random_seed);
+
+    //Initialise a stat_only one;
 	SBNchi(SBNspec, bool is_stat_only);
 	SBNchi(std::string);
 	
@@ -76,6 +78,7 @@ class SBNchi : public SBNconfig{
     std::minstd_rand * rangen_linear;
     std::ranlux24_base * rangen_carry;
     void InitRandomNumberSeeds();
+    void InitRandomNumberSeeds(double);
     TRandom3 * rangen;
 
 	/*********************************** Member Functions ********************************/	

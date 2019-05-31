@@ -62,8 +62,10 @@ namespace sbn{
         bool m_bool_core_spectrum_set;
         bool m_bool_background_spectrum_set;
         bool m_bool_stat_only;
+        bool m_bool_print_comparasons;
 
         int m_num_universes;
+        double m_random_seed;
         std::string tag;
 
         public:
@@ -75,6 +77,8 @@ namespace sbn{
             m_bool_background_spectrum_set = false;
             m_bool_stat_only = false;
             m_num_universes = 2500;
+            m_bool_print_comparasons = false;;
+            m_random_seed = -1;
         }
 
 
@@ -86,6 +90,8 @@ namespace sbn{
         
         int GenerateOscillatedSpectra();
         int LoadPreOscillatedSpectra();
+
+        int SetRandomSeed(double);
 
         int GenerateBackgroundSpectrum(); 
         int LoadBackgroundSpectrum();
@@ -103,7 +109,7 @@ namespace sbn{
 
 
         //This is a stopgap for better SBNchi integration.Hrump, need to fix that wierd float oddity. 
-        double CalcChi(std::vector<float>& data, std::vector<double>& prediction, TMatrixT<double> & inverse_covariance_matrix );
+        float CalcChi(std::vector<float>& data, std::vector<double>& prediction, TMatrixT<double> & inverse_covariance_matrix );
 
     };
 

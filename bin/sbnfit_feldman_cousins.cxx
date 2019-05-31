@@ -62,6 +62,7 @@ int main(int argc, char* argv[])
         {"number", 		required_argument,	0,'n'},
         {"tag", 		required_argument,	0, 't'},
         {"mode",        required_argument, 0 ,'m'},
+        {"randomseed",        required_argument, 0 ,'r'},
         {"help", 		no_argument,	0, 'h'},
         {0,			    no_argument, 		0,  0},
     };
@@ -76,10 +77,11 @@ int main(int argc, char* argv[])
     bool bool_stat_only = false;
     int number = 2500;
     int grid_pt = 0;
+    double random_number_seed = -1;
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "x:t:m:n:p:sh", longopts, &index);
+        iarg = getopt_long(argc,argv, "x:t:m:n:r:p:sh", longopts, &index);
 
         switch(iarg)
         {
@@ -97,6 +99,10 @@ int main(int argc, char* argv[])
                 break;
             case 'm':
                 mode_option = optarg;
+                break;
+            case 'r':
+                random_number_seed = (double)strtod(optarg,NULL);
+                std::cout<<"Reading in random seed argument: "<<random_number_seed<<std::endl;
                 break;
             case 's':
                 bool_stat_only = true;
@@ -118,6 +124,7 @@ int main(int argc, char* argv[])
                 std::cout<<"--- Optional arguments: ---"<<std::endl;
                 std::cout<<"\t-s\t--stat\t\tStat only runs"<<std::endl;
                 std::cout<<"\t-n\t--number\t\tNumber of pseudo-experiments to simulate (default 2500)"<<std::endl; 
+                std::cout<<"\t-r\t--randomseed\t\tRandomNumber Seed (default from machine)"<<std::endl; 
                 std::cout<<"\t-h\t--help\t\tThis help menu."<<std::endl;
                 std::cout<<"---------------------------------------------------"<<std::endl;
 
@@ -164,6 +171,8 @@ int main(int argc, char* argv[])
         myfeld.SetCoreSpectrum(tag+"_BKG_ONLY.SBNspec.root");
         myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
 
+        std::cout<<"Setting random seed "<<random_number_seed<<std::endl;
+        myfeld.SetRandomSeed(random_number_seed);
         std::cout<<"Loading precomputed spectra"<<std::endl;
         myfeld.LoadPreOscillatedSpectra();
         std::cout <<"DONE loading precomputed spectra at : " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
@@ -194,10 +203,11 @@ int main(int argc, char* argv[])
             myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
         }
 
+        std::cout<<"Setting random seed "<<random_number_seed<<std::endl;
+        myfeld.SetRandomSeed(random_number_seed);
         std::cout<<"Loading precomputed spectra"<<std::endl;
         myfeld.LoadPreOscillatedSpectra();
         myfeld.LoadBackgroundSpectrum();
-
 
         std::cout<<"Calculating the necessary SBNchi objects"<<std::endl;
         myfeld.CalcSBNchis();

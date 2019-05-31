@@ -16,9 +16,8 @@ using namespace sbn;
 SBNchi::SBNchi(std::string xml) : SBNconfig(xml,false){};
 SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin) : SBNchi(in,matrix_systematicsin,false){}
 SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin, bool is_verbose) : SBNchi(in,matrix_systematicsin,in.xmlname, is_verbose){}
-
-SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin, std::string inxml, bool is_verbose) : SBNconfig(inxml, is_verbose), core_spectrum(in){
-
+SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin, std::string inxml, bool is_verbose) : SBNchi(in, matrix_systematicsin, inxml,  is_verbose,-1){}
+SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin, std::string inxml, bool is_verbose, double random_seed) : SBNconfig(inxml, is_verbose), core_spectrum(in){
 
     last_calculated_chi = -9999999;
     is_stat_only= false;
@@ -37,9 +36,7 @@ SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin, std::string in
     matrix_systematics.Zero();
     max_sample_chi_val =150.0;
 
-
-
-    this->InitRandomNumberSeeds();
+    this->InitRandomNumberSeeds(random_seed);
     this->ReloadCoreSpectrum(&core_spectrum);
 }
 
@@ -108,12 +105,22 @@ SBNchi::SBNchi(SBNspec in, bool is_is_stat_only): SBNconfig(in.xmlname), core_sp
  *		Rest for now
  * ********************************************/
 void SBNchi::InitRandomNumberSeeds(){
-    rangen_twister = new std::mt19937(random_device_seed());
-    rangen_linear = new std::minstd_rand(random_device_seed());
-    rangen_carry = new std::ranlux24_base(random_device_seed());
-
-    rangen = new TRandom3(0);
-
+    this->InitRandomNumberSeeds(-1);
+}
+    
+void SBNchi::InitRandomNumberSeeds(double seed){
+    
+    if(seed<0){
+         rangen_twister = new std::mt19937(random_device_seed());
+         rangen_linear = new std::minstd_rand(random_device_seed());
+         rangen_carry = new std::ranlux24_base(random_device_seed());
+         rangen = new TRandom3(0);
+    }else{
+         rangen_twister = new std::mt19937(seed);
+         rangen_linear = new std::minstd_rand(seed);
+         rangen_carry = new std::ranlux24_base(seed);
+         rangen = new TRandom3(seed);
+    }
 
 }
 
