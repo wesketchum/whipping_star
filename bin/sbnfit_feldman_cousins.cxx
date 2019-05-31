@@ -75,10 +75,11 @@ int main(int argc, char* argv[])
     std::string mode_option;
     bool bool_stat_only = false;
     int number = 2500;
+    int grid_pt = 0;
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "x:t:m:n:psh", longopts, &index);
+        iarg = getopt_long(argc,argv, "x:t:m:n:p:sh", longopts, &index);
 
         switch(iarg)
         {
@@ -88,7 +89,9 @@ int main(int argc, char* argv[])
             case 'n':
                 number = (int)strtod(optarg,NULL);
                 break;
-
+            case 'p':
+                grid_pt = (int)strtod(optarg,NULL);
+                break;
             case 't':
                 tag = optarg;
                 break;
@@ -110,6 +113,7 @@ int main(int argc, char* argv[])
                 std::cout<<"\t\t\t--\t gen : Generate the preoscillated spectra for all mass-splittings"<<std::endl;  
                 std::cout<<"\t\t\t--\t genbkg : Generate a background only spectra for all mass-splittings"<<std::endl;  
                 std::cout<<"\t\t\t--\t feldman : Perform a full feldman cousins analysis"<<std::endl;  
+                std::cout<<"\t-p\t--point\t\tWhat Grid Point to run over. -1 for a Full run (WARNING takes forever) [Defaults to 0]"<<std::endl;
                 std::cout<<"\t\t\t--\t test : Just a testbed. Can be ignored"<<std::endl;
                 std::cout<<"--- Optional arguments: ---"<<std::endl;
                 std::cout<<"\t-s\t--stat\t\tStat only runs"<<std::endl;
@@ -171,14 +175,17 @@ int main(int argc, char* argv[])
         myfeld.CalcSBNchis();
         std::cout <<"DONE calculating the necessary SBNchi objects at : " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
 
-        std::cout<<"Beginning to peform FullFeldmanCousins analysis"<<std::endl;
-        myfeld.FullFeldmanCousins();
+        if(grid_pt ==-1){
+            std::cout<<"Beginning to peform FullFeldmanCousins analysis"<<std::endl;
+            myfeld.FullFeldmanCousins();
+        }else if(grid_pt>=0){
+             std::cout<<"Beginning to peform Single Grid PointFeldmanCousins analysis on pt: "<<grid_pt<<std::endl;
+             myfeld.PointFeldmanCousins((size_t)grid_pt);
+        }
 
     }else if(mode_option == "test"){
 
-
         myfeld.SetCoreSpectrum(tag+"_BKG_ONLY.SBNspec.root");
-
         if(bool_stat_only){
             myfeld.SetEmptyFractionalCovarianceMatrix();
             myfeld.SetStatOnly();

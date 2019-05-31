@@ -1066,14 +1066,14 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
 
     }
 
-    TMatrixT<double> upper_trian(n_t,n_t);
+    TMatrixT<float> upper_trian(n_t,n_t);
     matrix_lower_triangular.ResizeTo(n_t,n_t);
     upper_trian = chol->GetU();
     matrix_lower_triangular = upper_trian;
     matrix_lower_triangular.T();
 
 
-    vec_matrix_lower_triangular.resize(n_t, std::vector<double>(n_t));
+    vec_matrix_lower_triangular.resize(n_t, std::vector<float>(n_t));
     for(int i=0; i< num_bins_total; i++){
         for(int j=0; j< num_bins_total; j++){
             vec_matrix_lower_triangular[i][j] = matrix_lower_triangular[i][j];
@@ -1375,17 +1375,16 @@ std::vector<float> SBNchi::SampleCovariance(SBNspec *specin){
 
     int n_t = specin->full_vector.size();
 
-
-    TVectorT<double> u(n_t);
+    TVectorT<float> u(n_t);
     for(int i=0; i<n_t; i++){
-        u(i) = specin->full_vector.at(i);
+        u(i) = specin->full_vector[i];
     }
 
     std::normal_distribution<float> dist_normal(0,1);
     is_verbose = false;
 
-    TVectorT<double> gaus_sample(n_t);
-    TVectorT<double> multi_sample(n_t);
+    TVectorT<float> gaus_sample(n_t);
+    TVectorT<float> multi_sample(n_t);
     for(int a=0; a<n_t; a++){
         gaus_sample(a) = dist_normal(*rangen_twister);	
     }
@@ -1394,7 +1393,7 @@ std::vector<float> SBNchi::SampleCovariance(SBNspec *specin){
 
     std::vector<float> sampled_fullvector(n_t,0.0);
     for(int j=0; j<n_t; j++){
-        sampled_fullvector.at(j) = multi_sample(j);
+        sampled_fullvector[j] = multi_sample(j);
     }
 
     std::vector<float> collapsed(num_bins_total_compressed,0.0);

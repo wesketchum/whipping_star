@@ -80,6 +80,7 @@ namespace sbn{
 
         //Member Functions
         int FullFeldmanCousins();
+        int PointFeldmanCousins(size_t);
         int GlobalScan();
         int RasterScan(); 
         

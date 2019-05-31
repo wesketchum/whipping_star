@@ -63,8 +63,8 @@ class SBNchi : public SBNconfig{
 
 	//Used in cholosky decompositions
 	bool cholosky_performed;
-	TMatrixT<double> matrix_lower_triangular;
-	std::vector<std::vector<double>> vec_matrix_lower_triangular;
+	TMatrixT<float> matrix_lower_triangular;
+	std::vector<std::vector<float>> vec_matrix_lower_triangular;
 
 	//Some reason eventually store the reuslt in vectors, I think there was memory issues.
 	std::vector<std::vector<double >> vec_matrix_inverted;
