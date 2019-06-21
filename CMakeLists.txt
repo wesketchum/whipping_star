@@ -59,10 +59,14 @@ if(USE_GPU)
     set(CMAKE_GPU_CXX_FLAGS "-ta=tesla:nollvm -Mcudalib=curand -Minfo=accel -acc -w ${CMAKE_MAGMA_CXX_FLAGS}" )
 ENDIF()
 
+#Get the hdf5 library
+find_package(HDF5 COMPONENTS C HL REQUIRED)
+SET(HDF5_CXX_FLAGS "-I$ENV{HDF5_DIR}/lib -lhdf5")
+
 #gopt is forcing LLVM compilation
 # -noswitcherror only for pgcc
 #set (CMAKE_SO_CXX_FLAGS "-noswitcherror ${ROOT_CXX_FLAGS} ${GSL_LIBS} ${CMAKE_CXX_FLAGS} -w -Wno-deprecated-declarations")
-set (CMAKE_SO_CXX_FLAGS " ${ROOT_CXX_FLAGS} ${GSL_LIBS} ${GSL_CXX_FLAGS} ${CMAKE_CXX_FLAGS} -w -Wno-deprecated-declarations")
+set (CMAKE_SO_CXX_FLAGS " ${ROOT_CXX_FLAGS} ${GSL_LIBS} ${GSL_CXX_FLAGS} ${HDF5_CXX_FLAGS} ${CMAKE_CXX_FLAGS} -w -Wno-deprecated-declarations")
 set (CMAKE_ACC_CXX_FLAGS "${CMAKE_GPU_CXX_FLAGS} ${CMAKE_SO_CXX_FLAGS} -g")
 set (CMAKE_PCC_CXX_FLAGS "-ta=multicore -Minfo=accel -acc -w ${CMAKE_SO_CXX_FLAGS}")
 
@@ -88,5 +92,3 @@ add_subdirectory(src)
 add_subdirectory(examples)
 add_subdirectory(bin)
 add_subdirectory(unit)
-
-
