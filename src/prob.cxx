@@ -441,6 +441,8 @@ NeutrinoModel::NeutrinoModel(double * mn, double * ue, double * um, double * ph)
 	} else if(mNu[1]!=0&&mNu[2]!=0&&mNu[0]!=0){
 		numsterile = 3;
 	}
+
+
 }
 
 /******	3+1 constructor ******/

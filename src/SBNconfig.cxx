@@ -5,9 +5,10 @@ using namespace sbn;
 SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
     otag = "SBNconfig::SBNconfig\t||\t";
 
+    is_verbose = isverbose;
+
     if(is_verbose){std::cout<<otag<<"---------------------------------------------------------------"<<std::endl;}
 
-    is_verbose = isverbose;
     has_oscillation_patterns = false;
 
     //max subchannels 100?
@@ -17,12 +18,12 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
     char *end;
 
     //Setup TiXml documents
-    TiXmlDocument doc( whichxml.c_str() );
+    TiXmlDocument doc(whichxml.c_str());
     bool loadOkay = doc.LoadFile();
     if(loadOkay){
         if(is_verbose)	std::cout<<otag<<"Loaded XML configuration file: "<<whichxml<<std::endl;
     }else{
-        std::cout<<otag<<"ERROR: Failed to load XML configuration file:  "<<whichxml<<std::endl;
+        std::cout<<otag<<"ERROR: Failed to load XML configuration file: "<<whichxml<<std::endl;
         std::cout<<otag<<"ERROR: This generally means broken .xml brackets or attribute syntax."<<std::endl;
         exit(EXIT_FAILURE);
     }
@@ -30,7 +31,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
 
 
     // we have Modes, Detectors, Channels
-    TiXmlElement *pMode, *pDet, *pChan, *pCov, *pMC, *pData;
+    TiXmlElement *pMode, *pDet, *pChan, *pCov, *pMC, *pData,*pPOT;
 
 
     //Grab the first element. Note very little error checking here! make sure they exist.
@@ -40,6 +41,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
     pCov  = doc.FirstChildElement("covariance");
     pMC   = doc.FirstChildElement("MultisimFile");
     pData   = doc.FirstChildElement("data");
+    pPOT    = doc.FirstChildElement("plotpot");
 
     if(!pMode){
         std::cout<<otag<<"ERROR: Need at least 1 mode defined in xml./n";
@@ -50,6 +52,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
             const char* mode_name= pMode->Attribute("name");
             if(mode_name==NULL){
                 std::cout<<otag<<"ERROR! Modes need a name! Please define a name attribute for all modes"<<std::endl;
+            
                 exit(EXIT_FAILURE);
             }else{
                 mode_names.push_back(mode_name);
@@ -200,6 +203,16 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
         }
     }
 
+    while(pPOT){
+            const char* inplotpot = pPOT->Attribute("value");
+            if(inplotpot==NULL){
+                plot_pot = 1.0 ;
+            }else{
+                plot_pot = strtod(inplotpot,&end);
+            }
+            pPOT = pPOT->NextSiblingElement("plotpot");
+    }
+
     // if wea re creating a covariance matrix using a ntuple and weights, here is the info
     if(pMC){
         while(pMC)
@@ -225,7 +238,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
 
             const char* maxevents = pMC->Attribute("maxevents");
             if(maxevents==NULL){
-                montecarlo_maxevents.push_back(1e8);
+                montecarlo_maxevents.push_back(1e10);
             }else{
                 montecarlo_maxevents.push_back(strtod(maxevents,&end) );
             }
@@ -237,6 +250,14 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
             }else{
                 montecarlo_scale.push_back(strtod(scale,&end) );
             }
+
+            const char* inpot = pMC->Attribute("pot");
+            if(inpot==NULL){
+                montecarlo_pot.push_back(-1.0);
+            }else{
+                montecarlo_pot.push_back(strtod(inpot,&end) );
+            }
+
 
             /*
             //Currently take all parameter variations in at once. Depreciated code. 
@@ -315,7 +336,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                 //TEMP_branch_variables.push_back( new BranchVariable_i(bnam,btype, bhist ) );
                 //}else
                 if((std::string)btype == "double"){
-                    if(is_verbose)std::cout<<otag<<"Setting double variable "<<bnam<<" @ "<<bhist<<std::endl;
+                    if(is_verbose)                        std::cout<<otag<<"Setting double variable "<<bnam<<" @ "<<bhist<<std::endl;
                     TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist ) );
                     //}else if(btype == "float"){
                     //	std::cout<<otag<<"Setting float variable "<<bnam<<" @ "<<bhist<<std::endl;
@@ -338,7 +359,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                 TEMP_branch_variables.back()->SetOscillate(true);
                 TEMP_branch_variables.back()->true_param_name = pBranch->Attribute("true_param_name");
                 TEMP_branch_variables.back()->true_L_name = pBranch->Attribute("true_L_name");
-                std::cout<<otag<<"Set Oscillate! "<<pBranch->Attribute("true_param_name")<<" "<<pBranch->Attribute("true_L_name")<<std::endl;
+                if(is_verbose)std::cout<<otag<<"Set Oscillate! "<<pBranch->Attribute("true_param_name")<<" "<<pBranch->Attribute("true_L_name")<<std::endl;
             }else{
                 if(is_verbose)std::cout<<otag<<"Do Not Oscillate "<<oscillate<<std::endl;
                 TEMP_branch_variables.back()->SetOscillate(false);

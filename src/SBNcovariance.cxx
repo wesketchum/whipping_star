@@ -14,7 +14,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     universes_used = 0;
     tolerence_positivesemi = 1e-5;
     is_small_negative_eigenvalue = false;
-    abnormally_large_weight = 1e3;
+    abnormally_large_weight = 20.0;
     bnbcorrection_str = "bnbcorrection_FluxHist";
 
     std::map<std::string, int> parameter_sims;
@@ -44,13 +44,22 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         const auto& fn = montecarlo_file.at(fid);
 
 
-
         files[fid] = TFile::Open(fn.c_str());
         trees[fid] = (TTree*)(files[fid]->Get(montecarlo_name.at(fid).c_str()));
         nentries[fid]= (int)trees.at(fid)->GetEntries();
 
+        //Some POT counting
+        double pot_scale = 1.0;
+        if(montecarlo_pot[fid]!=-1){
+            pot_scale = this->plot_pot/montecarlo_pot[fid];
+        }
+
+        montecarlo_scale[fid] = montecarlo_scale[fid]*pot_scale;
+
+
         std::cout << otag<<"" << std::endl;
         std::cout << otag<<" TFile::Open() file=" << files[fid]->GetName() << " @" << files[fid] << std::endl;
+        std::cout << otag<<" Has POT " <<montecarlo_pot[fid] <<" and "<<nentries[fid] <<" entries "<<std::endl;
 
         auto montecarlo_file_friend_treename_iter = montecarlo_file_friend_treename_map.find(fn);
         if (montecarlo_file_friend_treename_iter != montecarlo_file_friend_treename_map.end()) {
@@ -76,7 +85,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
         std::cout<<otag<<" Read variations & universe size" << std::endl;
 
-        trees.at(fid)->SetBranchAddress("weights", &(f_weights[fid]) );
+        trees.at(fid)->SetBranchAddress("eventweights", &(f_weights[fid]) );
 
         for(const auto branch_variable : branch_variables[fid]) {
             //quick check that this branch associated subchannel is in the known chanels;
@@ -120,8 +129,20 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         //This bit will calculate how many "universes" the file has. if ALL default is the inputted xml value
 
         for(const auto& it : *f_weight) {
-            if(it.first == bnbcorrection_str) 
+            if(it.first == bnbcorrection_str) {
+                std::cout<<"Found a variation consistent with "<<bnbcorrection_str<<" . This will be instead applied as a general weight"<<std::endl;
                 continue;    
+            }
+
+            if(it.first == "genie_all_Genie") {
+              std::cout<<otag<<"Skipping genie_all_Genie!"<<std::endl;
+              continue;
+             }
+            if(it.first == "genie_NC_Genie") {
+              std::cout<<otag<<"Skipping genie_NC_Genie!"<<std::endl;
+              continue;
+             }
+
 
             std::cout <<otag
                 << it.first << " has " << it.second.size() << " montecarlos in file " << fid << std::endl;
@@ -144,22 +165,45 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
     for(size_t vid=0; vid<variations.size(); ++vid) {
         const auto &v =  variations[vid];
+        int max_variation_length = 0;
+        int in_n_files = 0;
 
         std::cout<<otag<<" "<<v<<std::endl;
-        trees.front()->GetEntry(good_event);
-        int thissize = (*(f_weights.front())).at(v).size(); // map lookup
+        //Lets loop over all trees
 
-        for(int p=0; p < thissize; p++){
-            map_universe_to_var[num_universes_per_variation.size()] = v;
-            vec_universe_to_var.push_back(vid);
-            num_universes_per_variation.push_back(thissize);
+        for(size_t fid=0; fid<num_files; fid++){
+            trees[fid]->GetEntry(good_event);
+
+            //is this variation in this tree?
+            int is_found = (*(f_weights[fid])).count(v);
+
+            if(is_found==0){
+                std::cout<<otag<<"  WARNING @  variation " <<v<<"  in File " << montecarlo_file.at(fid)<<". Variation does not exist in file! "<<std::endl;
+            }else{
+
+
+                int thissize = (*(f_weights[fid])).at(v).size(); // map lookup
+                in_n_files++;       
+                max_variation_length = std::max(thissize,max_variation_length);
+
+            }
+
         }
 
-        map_var_to_num_universe[v] = thissize;
+        std::cout<<otag<<" "<<v<<" is of max length: "<<max_variation_length<<" and in "<<in_n_files<<" of "<<num_files<<" total files"<<std::endl;
+
+        for(int p=0; p < max_variation_length; p++){
+            map_universe_to_var[num_universes_per_variation.size()] = v;
+            vec_universe_to_var.push_back(vid);
+            num_universes_per_variation.push_back(max_variation_length);
+        }
+
+        map_var_to_num_universe[v] = max_variation_length;
     }
 
+    std::cout << otag<<" File: 0 | " << montecarlo_file.at(0) << " has " << used_montecarlos.at(0) << " montecarlos" << std::endl;
     for(int i=1; i<num_files; i++){
-        std::cout << otag<<" File: " << i << " has " << used_montecarlos.at(i) << " montecarlos" << std::endl;
+        std::cout << otag<<" File: " << i <<" |  "<<montecarlo_file[i]<< " has " << used_montecarlos.at(i) << " montecarlos" << std::endl;
         if(used_montecarlos.at(i)!= used_montecarlos.at(i-1)){
             std::cerr << otag<<" Warning, number of universes for are different between files" << std::endl;
             std::cerr << otag<<" The missing universes are Set to weights of 1. Make sure this is what you want!" << std::endl;
@@ -169,12 +213,10 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 std::cerr <<otag<<"File " << j << " montecarlos: " << used_montecarlos.at(j) << std::endl;
             }
         }
-        std::cout << otag<<" Disregard, using the first file number of montecarlos anyways" << std::endl;
-        universes_used = used_montecarlos.at(0);
     }
 
-    if(num_files == 1) 
-        universes_used = used_montecarlos.front();
+    //But in reality we want the max universes to be the sum of all max variaitons across all files, NOT the sum over all files max variations.
+    universes_used = num_universes_per_variation.size();
 
     std::cout << otag<<" -------------------------------------------------------------" << std::endl;
     std::cout << otag<<" Initilizing " << universes_used << " universes." << std::endl;
@@ -193,10 +235,11 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     watch.Start();
 
     for(int j=0; j < num_files; j++){
-        std::cout << otag<<" @ data file=" << files[j]->GetName() << std::endl;
         int nevents = std::min(montecarlo_maxevents[j], nentries[j]);
+        std::cout << otag<<" @ data file=" << files[j]->GetName() <<" which has "<<nevents<<std::endl;
         size_t nbytes = 0;
         for(int i=0; i < nevents; i++) {
+            if(i%100==0)std::cout<<i<<" / "<<nevents<<std::endl;
             nbytes+= trees[j]->GetEntry(i);
             ProcessEvent(*(f_weights[j]),j,i);
         } //end of entry loop
@@ -219,9 +262,12 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 }
 
 
-void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double> >& thisfWeight,
+void SBNcovariance::ProcessEvent(
+        const std::map<std::string, 
+        std::vector<double> >& thisfWeight,
         size_t fileid,
         int entryid) {
+
     double global_weight = montecarlo_additional_weight[fileid];//this will be 1.0 unless specified in xml
 
     global_weight *= montecarlo_scale[fileid];
@@ -250,19 +296,36 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
     for(const auto& var : variations){
 
         //check if variation is in this file, if it isn't: then just push back 1's of appropiate number to keep universes consistent
-        auto expected_num_universe_sz = map_var_to_num_universe.at(var);
+        //this is of length of whatever the maximum length that was found in ANY file
+        auto expected_num_universe_sz = map_var_to_num_universe.at(var); 
 
+        //is  
         var_iter = thisfWeight.find(var);
+        int quick_fix = 0;
 
         if (var_iter == thisfWeight.end()) {
-            woffset += expected_num_universe_sz;
-            continue;
-        }
+            //This we need to drop this for new version (where we add 1's)
+            //std::cout<<var<<" is not in this universe, adding "<<expected_num_universe_sz<<" to woffset "<<woffset<<std::endl;
+            //woffset += expected_num_universe_sz;
+            //continue;
+        }else {
+            //first one is what we expect, second is whats directly inside the map.
+            
+            if (expected_num_universe_sz != (*var_iter).second.size()) {
+                std::stringstream ss;
+                //std::cout<< "Number of universes is not the max in this file" << std::endl;
+                //throw std::runtime_error(ss.str());
 
-        if (expected_num_universe_sz != (*var_iter).second.size()) {
-            std::stringstream ss;
-            ss << "Expected number of universes has changed during fill operation" << std::endl;
-            throw std::runtime_error(ss.str());
+                if( (*var_iter).second.size() > expected_num_universe_sz && var_iter != thisfWeight.end()){
+                    ss << ". REALLY BAD!!  iter.size() " <<(*var_iter).second.size()<<" expected "<<expected_num_universe_sz<<" on var "<<var<<std::endl;
+                    throw std::runtime_error(ss.str());
+                }
+            }
+                   //so if this file contains smaller number of variations
+                    quick_fix = (*var_iter).second.size();
+                   //std::cout<< "So setting quick fix to the true number of universes in this varaiion : "<<quick_fix<< std::endl;
+             
+
         }
 
         if (woffset >= weights.size()) {
@@ -272,7 +335,12 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
         }
 
         for(size_t wid0 = 0, wid1 = woffset; wid1 < (woffset + expected_num_universe_sz); ++wid0, ++wid1) {
-            double wei = (*var_iter).second[wid0];
+            double wei = 1.0;
+//            std::cout<<"wid0 "<<wid0<<"/ "<<expected_num_universe_sz<<"  wid1 "<<wid1<<" / "<<weights.size()<<" woffset "<<woffset<<" quick_fix "<<quick_fix<<std::endl;
+            
+            if(wid0<quick_fix){
+                wei = (*var_iter).second[wid0];
+            }
 
             bool is_inf = std::isinf(wei);
             bool is_nan = (wei != wei);
@@ -286,6 +354,7 @@ void SBNcovariance::ProcessEvent(const std::map<std::string, std::vector<double>
 
             if(wei > abnormally_large_weight){
                 std::cout<<"SBNcovariance::ProcessEvent\t||\tATTENTION!! HUGE weight: "<<wei<<" at "<<var<<" event "<<entryid<<" file "<<fileid<<std::endl;
+                wei=1.0;
             }
 
             weights[wid1] *= wei;
@@ -847,9 +916,9 @@ int SBNcovariance::PrintMatricies(std::string tag) {
     c_coll_full->Write();
 
     for(int m=0; m< variations.size();m++){
-        this->plot_one(vec_full_correlation.at(m), variations.at(m)+" Correlation", fout,false,true);
-        this->plot_one(vec_frac_covariance.at(m), variations.at(m)+" Fractional Covariance", fout,false,true);
-        this->plot_one(vec_full_covariance.at(m), variations.at(m)+" Full Covariance", fout,false,true);
+        this->plot_one(vec_full_correlation.at(m), "varplot_Correlation_"+variations.at(m), fout,true,true);
+        this->plot_one(vec_frac_covariance.at(m), "varplot_Fractional_Covariance_"+variations.at(m), fout,true,true);
+        this->plot_one(vec_full_covariance.at(m), "varplot_Full_Covariance_"+variations.at(m), fout,true,true);
     }
 
     fout->cd();
