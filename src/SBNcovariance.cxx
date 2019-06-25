@@ -267,7 +267,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
 void SBNcovariance::ProcessEvent(
         const std::map<std::string, 
-        std::vector<double> >& thisfWeight,
+        std::vector<float> >& thisfWeight,
         size_t fileid,
         int entryid) {
 
@@ -293,7 +293,7 @@ void SBNcovariance::ProcessEvent(
     std::vector<double> weights(universes_used,global_weight);
 
     //Loop over all variations
-    std::map<std::string, std::vector<double> >::const_iterator var_iter;
+    std::map<std::string, std::vector<float> >::const_iterator var_iter;
     int woffset = 0;
 
     for(const auto& var : variations){
