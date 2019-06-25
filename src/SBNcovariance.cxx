@@ -105,18 +105,19 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 std::cout<<otag<<" ERROR ERROR: This branch matched more than 1 subchannel!: " <<branch_variable->associated_hist<<std::endl;
                 exit(EXIT_FAILURE);
             }
-
+	    std::cout<<"Test inside:"<< branch_variable->name<<std::endl;
             trees.at(fid)->SetBranchAddress(branch_variable->name.c_str(),
                     branch_variable->GetValue());
         }
 
         if(montecarlo_additional_weight_bool[fid]){
-            //we have an additional weight we want to apply at run time, otherwise its just set at 1. 
+            //we have an additional weight we want to apply at run time, otherwise its just set at 1.
+            std::cout<<"Setting Additional weight of : "<< montecarlo_additional_weight_names[fid].c_str()<<std::endl; 
             trees[fid]->SetBranchAddress(montecarlo_additional_weight_names[fid].c_str(), &montecarlo_additional_weight[fid]); 
         }
 
 
-
+	std::cout<<"Total Entries: "<<trees.at(fid)->GetEntries()<<" good event "<<good_event<<std::endl;
         trees.at(fid)->GetEntry(good_event);
 
         const auto f_weight = f_weights[fid];
@@ -128,7 +129,9 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
         //This bit will calculate how many "universes" the file has. if ALL default is the inputted xml value
 
+ 	std::cout<<"starting"<<std::endl;
         for(const auto& it : *f_weight) {
+	    std::cout<<"On : "<<it.first<<std::endl;
             if(it.first == bnbcorrection_str) {
                 std::cout<<"Found a variation consistent with "<<bnbcorrection_str<<" . This will be instead applied as a general weight"<<std::endl;
                 continue;    

@@ -143,13 +143,18 @@ int main(int argc, char* argv[])
 
     NGrid mygrid;
 
-    //   mygrid.AddDimension("m4", -1, 1.05, 0.05);//0.05
-    //   mygrid.AddFixedDimension("ue4", 0);
-    //   mygrid.AddDimension("um4",-2.0, 0.1, 0.1); //0.05
+    if(tag == "NuMuDis"){	
+       //grid for numu disappearance
+       mygrid.AddDimension("m4", -1, 1.05, 0.05);//0.05
+       mygrid.AddFixedDimension("ue4", 0);
+       mygrid.AddDimension("um4",-2.0, 0.1, 0.1); //0.05
+    }else{
+      //grid for nue appearance
+      mygrid.AddDimension("m4", -1.0, 1.1, 0.1);//0.1
+      mygrid.AddDimension("ue4", -2.3, 0.1, 0.05);//0.1
+      mygrid.AddFixedDimension("um4",0.0); //0.05
+    }
 
-    mygrid.AddDimension("m4", -1.0, 1.1, 0.1);//0.1
-    mygrid.AddDimension("ue4", -2.3, 0.1, 0.05);//0.1
-    mygrid.AddFixedDimension("um4",0.0); //0.05
 
     //Print the grid interesting bits
     mygrid.Print();

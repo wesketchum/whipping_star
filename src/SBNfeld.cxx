@@ -50,7 +50,7 @@ int SBNfeld::GenerateBackgroundSpectrum(){
     m_core_spectrum->LoadModel(background_only_model);
 
     //Is this a troublesome line?!? Shouldn't be right?!
-    m_core_spectrum->SetAppMode();
+    //m_core_spectrum->SetAppMode();
 
     std::vector<double> ans = m_core_spectrum->Oscillate(this->tag, false);
     SBNspec background(ans, m_core_spectrum->xmlname,false);
@@ -118,7 +118,7 @@ int SBNfeld::LoadPreOscillatedSpectra(){
         // this_model.Printall();
         //And load thus model into our spectra. At this point its comuted all the necessary mass-splittins and which frequencies they are
         m_core_spectrum->LoadModel(this_model);
-        m_core_spectrum->SetAppMode();
+        //m_core_spectrum->SetAppMode();
 
         //And apply this oscillaion! Adding to it the bkgSpec that it was initilised with.
         //NOTE we want to return the FULL spectrum, not compressed so we can calculate the covariance matrix, hense the false in this Oscilate

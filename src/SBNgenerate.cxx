@@ -161,7 +161,7 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
                         double true_L = *(static_cast<double*>(branch_variables[j][t]->GetTrueL()));
 
                         //first subtract off a random 50m
-                        true_L = true_L - rangen->Uniform(0,50.0);
+                        //true_L = true_L - rangen->Uniform(0,50.0);
 
                         //WARNING need to change to km
                         true_L = true_L/1000.0;
