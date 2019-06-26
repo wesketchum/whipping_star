@@ -69,6 +69,15 @@ int SBNfeld::SetCoreSpectrum(std::string file){
     return 0;
 }
 
+int SBNfeld::AddFlatDetSystematic(double percent){
+        
+    for(int j=0; j< m_full_fractional_covariance_matrix->GetNrows(); j++){
+       (*m_full_fractional_covariance_matrix)(j,j)+=percent*percent;   
+    }
+
+    return 0 ;
+}
+
 int SBNfeld::SetFractionalCovarianceMatrix(std::string filename,std::string matrixname){
     TFile * fsys = new TFile(filename.c_str(),"read");
     m_full_fractional_covariance_matrix = (TMatrixD*)fsys->Get(matrixname.c_str());

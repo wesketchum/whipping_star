@@ -106,6 +106,10 @@ namespace sbn{
         int SetStatOnly();
 
         NeutrinoModel convert3p1(std::vector<double> ingrid);
+        
+        
+        int AddFlatDetSystematic(double percent);
+        
 
 
         //This is a stopgap for better SBNchi integration.Hrump, need to fix that wierd float oddity. 

@@ -70,7 +70,7 @@ class SBNgenerate : public SBNconfig{
 
 	std::vector<int> nentries;
 	std::vector< TBranch *> * branch_weight;
-    std::vector<std::map<std::string, std::vector<double> >* > f_weights;
+    std::vector<std::map<std::string, std::vector<float> >* > f_weights;
 
 
 	std::vector<std::vector<int> > vars_i;

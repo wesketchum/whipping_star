@@ -62,6 +62,7 @@ int main(int argc, char* argv[])
         {"number", 		required_argument,	0,'n'},
         {"tag", 		required_argument,	0, 't'},
         {"mode",        required_argument, 0 ,'m'},
+        {"flat",        required_argument, 0 ,'f'},
         {"randomseed",        required_argument, 0 ,'r'},
         {"help", 		no_argument,	0, 'h'},
         {0,			    no_argument, 		0,  0},
@@ -79,9 +80,12 @@ int main(int argc, char* argv[])
     int grid_pt = 0;
     double random_number_seed = -1;
 
+    bool bool_flat_det_sys = false;
+    double flat_det_sys_percent = 0.0;
+
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "x:t:m:n:r:p:sh", longopts, &index);
+        iarg = getopt_long(argc,argv, "x:t:m:n:r:p:f:sh", longopts, &index);
 
         switch(iarg)
         {
@@ -96,6 +100,10 @@ int main(int argc, char* argv[])
                 break;
             case 't':
                 tag = optarg;
+                break;
+            case 'f':
+                bool_flat_det_sys = true;
+                flat_det_sys_percent = (double)strtod(optarg,NULL);
                 break;
             case 'm':
                 mode_option = optarg;
@@ -147,7 +155,7 @@ int main(int argc, char* argv[])
        //grid for numu disappearance
        mygrid.AddDimension("m4", -1, 1.05, 0.05);//0.05
        mygrid.AddFixedDimension("ue4", 0);
-       mygrid.AddDimension("um4",-2.0, 0.1, 0.1); //0.05
+       mygrid.AddDimension("um4",-2.0, 0.025, 0.025); //0.05
     }else{
       //grid for nue appearance
       mygrid.AddDimension("m4", -1.0, 1.1, 0.1);//0.1
@@ -207,6 +215,11 @@ int main(int argc, char* argv[])
         }else{
             myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
         }
+
+        if(bool_flat_det_sys){
+            myfeld.AddFlatDetSystematic(flat_det_sys_percent);
+        }
+
 
         std::cout<<"Setting random seed "<<random_number_seed<<std::endl;
         myfeld.SetRandomSeed(random_number_seed);
