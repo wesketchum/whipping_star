@@ -14,8 +14,18 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     universes_used = 0;
     tolerence_positivesemi = 1e-5;
     is_small_negative_eigenvalue = false;
-    abnormally_large_weight = 20.0;
+    abnormally_large_weight = 1e3;//1e20;//20.0;
     bnbcorrection_str = "bnbcorrection_FluxHist";
+
+    variations_to_use = {"expskin_FluxUnisim","horncurrent_FluxUnisim","kminus_PrimaryHadronNormalization","kplus_PrimaryHadronFeynmanScaling","kzero_PrimaryHadronSanfordWang","nucleoninexsec_FluxUnisim","nucleonqexsec_FluxUnisim","nucleontotxsec_FluxUnisim","piminus_PrimaryHadronSWCentralSplineVariation","pioninexsec_FluxUnisim","pionqexsec_FluxUnisim","piontotxsec_FluxUnisim","piplus_PrimaryHadronSWCentralSplineVariation","genie_ccresAxial_Genie","genie_ncresAxial_Genie","genie_qema_Genie","genie_NC_Genie","genie_NonResRvbarp1pi_Genie","genie_NonResRvbarp2pi_Genie","genie_NonResRvp1pi_Genie","genie_NonResRvp2pi_Genie","genie_NonResRvbarp1piAlt_Genie","genie_NonResRvbarp2piAlt_Genie","genie_NonResRvp1piAlt_Genie","genie_NonResRvp2piAlt_Genie"};
+    
+    //variations_to_use =   {"expskin_FluxUnisim","horncurrent_FluxUnisim","kminus_PrimaryHadronNormalization","kplus_PrimaryHadronFeynmanScaling","kzero_PrimaryHadronSanfordWang","nucleoninexsec_FluxUnisim","nucleonqexsec_FluxUnisim","nucleontotxsec_FluxUnisim","piminus_PrimaryHadronSWCentralSplineVariation","pioninexsec_FluxUnisim","pionqexsec_FluxUnisim","piontotxsec_FluxUnisim","piplus_PrimaryHadronSWCentralSplineVariation","genie_ccresAxial_Genie","genie_ncresAxial_Genie","genie_qema_Genie","genie_NC_Genie"};
+    for(auto &s: variations_to_use){
+            m_variations_to_use[s]=true;
+    }
+  
+  
+
 
     std::map<std::string, int> parameter_sims;
 
@@ -137,15 +147,24 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 continue;    
             }
 
+
+
+            if(m_variations_to_use.count(it.first)==0){
+                std::cout<<"Skipping "<<it.first<<" as its not in the proposal map!"<<std::endl;
+                continue;
+            }
+
+            /*
             if(it.first == "genie_all_Genie") {
               std::cout<<otag<<"Skipping genie_all_Genie!"<<std::endl;
               continue;
              }
-            if(it.first == "genie_NC_Genie") {
-              std::cout<<otag<<"Skipping genie_NC_Genie!"<<std::endl;
+            if(it.first == "genie_NC_Genie" ||  it.first == "genie_FormZone_Genie" || it.first == "genie_IntraNukeNmfp_Genie"){
+              //|| it.first =="genie_IntraNukePImfp_Genie" || it.first == "genie_FormZone_Genie" || it.first == "piplus_PrimaryHadronSWCentralSplineVariation" || it.first == "") {
+              //std::cout<<otag<<"Skipping genie_NC_Genie!"<<std::endl;
               continue;
              }
-
+            */
 
             std::cout <<otag
                 << it.first << " has " << it.second.size() << " montecarlos in file " << fid << std::endl;
@@ -275,9 +294,9 @@ void SBNcovariance::ProcessEvent(
 
     global_weight *= montecarlo_scale[fileid];
 
-    const auto bnbcorr_iter = thisfWeight.find(bnbcorrection_str);
-    if (bnbcorr_iter != thisfWeight.end())
-        global_weight *= (*bnbcorr_iter).second.front();
+    //const auto bnbcorr_iter = thisfWeight.find(bnbcorrection_str);
+    //if (bnbcorr_iter != thisfWeight.end())
+    //    global_weight *= (*bnbcorr_iter).second.front();
 
     if(std::isinf(global_weight) or (global_weight != global_weight)){
         std::stringstream ss;
@@ -388,7 +407,7 @@ void SBNcovariance::ProcessEvent(
         const auto branch_var_jt = branch_variables[fileid][t];
         int ih = spec_central_value.map_hist.at(branch_var_jt->associated_hist);
         double reco_var = *(static_cast<double*>(branch_var_jt->GetValue()));
-        //reco_var = 1.238*reco_var+0.025;
+        //reco_var = 1.031*reco_var;
         int reco_bin = spec_central_value.GetGlobalBinNumber(reco_var,ih);
         spec_central_value.hist[ih].Fill(reco_var, global_weight);
 

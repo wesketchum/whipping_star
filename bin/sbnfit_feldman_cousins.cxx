@@ -155,12 +155,13 @@ int main(int argc, char* argv[])
        //grid for numu disappearance
        mygrid.AddDimension("m4", -1, 1.05, 0.05);//0.05
        mygrid.AddFixedDimension("ue4", 0);
-       mygrid.AddDimension("um4",-2.0, 0.025, 0.025); //0.05
+       mygrid.AddDimension("um4",-1.2, -0.5, 0.01); //for NuMuAllowed
+       //mygrid.AddDimension("um4",-2.0, 0.05, 0.05); //0.05
     }else{
       //grid for nue appearance
-      mygrid.AddDimension("m4", -1.0, 1.1, 0.1);//0.1
-      mygrid.AddDimension("ue4", -2.3, 0.1, 0.05);//0.1
-      mygrid.AddFixedDimension("um4",0.0); //0.05
+      mygrid.AddDimension("m4", -1.0, 1.05, 0.05);   //0.1
+      mygrid.AddDimension("ue4", -2.3, 0.05, 0.05); //0.1
+      mygrid.AddFixedDimension("um4",0.0);         //0.05
     }
 
 
@@ -213,7 +214,12 @@ int main(int argc, char* argv[])
             myfeld.SetStatOnly();
             std::cout<<"RUNNING Stat Only!"<<std::endl;
         }else{
+ 
+          if(number >= 0) {
+            myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance_"+std::to_string(number));
+          }else{
             myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
+          }
         }
 
         if(bool_flat_det_sys){
@@ -231,7 +237,16 @@ int main(int argc, char* argv[])
         myfeld.CalcSBNchis();
 
         std::cout<<"Beginning to peform a globalScan analysis"<<std::endl;
-        myfeld.GlobalScan();
+        //myfeld.GlobalScan(884);
+        myfeld.GlobalScan(1503);
+
+    }else if(mode_option == "plot"){
+
+        myfeld.SetCoreSpectrum(tag+"_BKG_ONLY.SBNspec.root");
+        myfeld.SetEmptyFractionalCovarianceMatrix();
+        myfeld.SetStatOnly();
+        myfeld.SetRandomSeed(random_number_seed);
+        myfeld.LoadPreOscillatedSpectrum(1503);
 
     }
 

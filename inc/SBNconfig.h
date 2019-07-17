@@ -110,6 +110,14 @@ class SBNconfig {
 	std::vector<std::string> channel_units; 		
 	std::vector<std::vector<std::string >> subchannel_names; 
 
+    std::vector<std::string> mode_plotnames; 			
+	std::vector<std::string> detector_plotnames; 		
+	std::vector<std::string> channel_plotnames; 		
+	std::vector<std::vector<std::string >> subchannel_plotnames; 
+
+    
+
+
 	// vector Bools for turning on and off certain modes/detectors..etc..
 	std::vector<bool> mode_bool; 
 	std::vector<bool> detector_bool; 
@@ -129,6 +137,8 @@ class SBNconfig {
 
 	//Given a string e.g "nu_ICARUS_elike_intrinisc" this map returns the index of the corresponding covariance matrix. Not really used.
 	std::map <std::string, std::vector<int> > map_tag_to_covariance_index;
+    
+    std::map<std::string, std::string> map_subchannel_plotnames;
 
 	// If you have a large covariance matrix/spectrum (say containing nu and nubar mode) but only want to run with nu-mode (so you Set use=0 in nubarmode) the vector used_bins contains all the bins that are actually in use. 
 	std::vector<int> used_bins; 

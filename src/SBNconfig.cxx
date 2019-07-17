@@ -13,6 +13,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
 
     //max subchannels 100?
     subchannel_names.resize(100);
+    subchannel_plotnames.resize(100);
     subchannel_bool.resize(100);
     subchannel_osc_patterns.resize(100);
     char *end;
@@ -58,6 +59,13 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                 mode_names.push_back(mode_name);
             }
 
+            const char* mode_plotname= pMode->Attribute("plotname");
+            if(mode_plotname==NULL){
+                 mode_plotnames.push_back(mode_names.back());
+            }else{
+                mode_plotnames.push_back(mode_plotname);
+            }
+
             const char* use_mode = pMode->Attribute("use");
             if(use_mode==NULL){
                 mode_bool.push_back(1);
@@ -88,6 +96,14 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                 detector_names.push_back(detector_name);
             }
 
+            const char* detector_plotname = pDet->Attribute("plotname");
+            if(detector_plotname==NULL){
+                 detector_plotnames.push_back(detector_names.back());
+            }else{
+                detector_plotnames.push_back(detector_plotname);
+            }
+
+
             const char* use_detector = pDet->Attribute("use");
             if(use_detector==NULL){
                 detector_bool.push_back(1);
@@ -117,6 +133,13 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                 exit(EXIT_FAILURE);
             }else{
                 channel_names.push_back(channel_name);
+            }
+
+            const char* channel_plotname= pChan->Attribute("plotname");
+            if(channel_plotname==NULL){
+                 channel_plotnames.push_back(channel_names.back());
+            }else{
+                channel_plotnames.push_back(channel_plotname);
             }
 
 
@@ -172,6 +195,15 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                 }else{
                     subchannel_names[nchan].push_back(subchannel_name);
                 }
+
+                const char* subchannel_plotname= pSubChan->Attribute("plotname");
+                if(subchannel_plotname==NULL){
+                    subchannel_plotnames[nchan].push_back(subchannel_names[nchan].back());
+                }else{
+                    subchannel_plotnames[nchan].push_back(subchannel_plotname);
+                }
+
+
 
                 const char* subchannel_bool_tmp= pSubChan->Attribute("use");
                 if(subchannel_bool_tmp==NULL){
@@ -422,6 +454,8 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
 
                     tempn = mode_names[im] +"_" +detector_names[id]+"_"+channel_names[ic]+"_"+subchannel_names[ic][sc];
                     if(is_verbose)std::cout<<otag<<""<<tempn<<" "<<im<<" "<<id<<" "<<ic<<" "<<sc<<std::endl;
+
+                    map_subchannel_plotnames[tempn] = subchannel_plotnames[ic][sc];
 
                     // This is where you choose NOT to use some fields
                     if(mode_bool[im] && detector_bool[id] && channel_bool[ic] && subchannel_bool[ic][sc]){

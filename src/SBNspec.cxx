@@ -354,7 +354,7 @@ int SBNspec::WriteOut(std::string tag){
 	}
 	f2->Close();
 
-
+    if(false){
 	TFile *f = new TFile(("SBNfit_spectrum_plots_"+tag+".root").c_str(),"RECREATE");
 	f->cd();
 
@@ -419,7 +419,7 @@ int SBNspec::WriteOut(std::string tag){
 						//hs->Add(&h);
 						n++;
 
-						this_run=true;
+						//this_run=true;
 
 						to_sort.push_back(&h);
 						l_to_sort.push_back(tmp);
@@ -435,7 +435,7 @@ int SBNspec::WriteOut(std::string tag){
 
 
 
-				if(this_run ){
+				if(this_run){
 					double plot_pot=5e19;
 
 					double title_size_ratio=0.1;
@@ -477,6 +477,7 @@ int SBNspec::WriteOut(std::string tag){
 
 	f->Close();
 
+    }
 	return 0;
 }
 
@@ -486,7 +487,7 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 	//kWhite  = 0,   kBlack  = 1,   kGray    = 920,  kRed    = 632,  kGreen  = 416,
 	//kBlue   = 600, kYellow = 400, kMagenta = 616,  kCyan   = 432,  kOrange = 800,
 	//kSpring = 820, kTeal   = 840, kAzure   =  860, kViolet = 880,  kPink   = 900
-	std::vector<int> mycol = {kRed-7, kRed+1, kYellow-7, kOrange-3, kBlue, kBlue+2,  kGreen+1,kBlue-7, kPink, kViolet, kCyan,kMagenta,kAzure};
+	std::vector<int> mycol = {kAzure -9, kRed-7, kGreen-3, kBlue-6, kMagenta-3, kYellow-7,  kOrange-3, kBlue, kBlue+2,  kGreen+1,kBlue-7, kPink, kViolet, kCyan,kMagenta,kAzure};
 
 
 	TFile *f = new TFile(("SBNfit_compare_plots_"+tag+".root").c_str(),"RECREATE");
@@ -531,8 +532,8 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 				bool this_run = false;
 				bool this_run_comp = false;
 
-				TCanvas* Cstack= new TCanvas((tag+"_"+canvas_name).c_str(),canvas_name.c_str());
-				Cstack->SetFixedAspectRatio();
+				TCanvas* Cstack= new TCanvas((tag+"_"+canvas_name).c_str(),canvas_name.c_str(),1200,1200);
+				//Cstack->SetFixedAspectRatio();
 
 				Cstack->cd();
 				THStack * hs = new THStack(canvas_name.c_str(),  canvas_name.c_str());
@@ -608,10 +609,10 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 						}
 
 						std::ostringstream out;
-						out <<std::fixed<< std::setprecision(3) << total_events;
-						std::string hmm = " \t ";
-						std::string tmp = h.GetName()+hmm+ out.str();
-						//std::string tmp = map_subchannel_plotnames.at(h.GetName()) +hmm+ out.str();
+						out <<std::fixed<< std::setprecision(0) << total_events;
+						std::string hmm = " | ";
+						//std::string tmp = h.GetName()+hmm+ out.str();
+						std::string tmp = map_subchannel_plotnames.at(h.GetName()) +hmm+ out.str();
 						//legStack.AddEntry(&h, tmp.c_str() , "f");
 						hsum->Add(&h);
 						//hs->Add(&h);
@@ -705,8 +706,8 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 					ratpre->GetYaxis()->SetTitle("Ratio");
 					ratpre->GetXaxis()->SetTitleOffset(title_offSet_ratioX);
 					ratpre->GetYaxis()->SetTitleOffset(title_offSet_ratioY);
-					ratpre->SetMinimum(ratpre->GetMinimum()*0.92);
-					ratpre->SetMaximum(ratpre->GetMaximum()*1.08);
+					ratpre->SetMinimum(ratpre->GetMinimum()*0.97);
+					ratpre->SetMaximum(ratpre->GetMaximum()*1.03);
 					ratpre->GetYaxis()->SetTitleSize(title_size_ratio);
 					ratpre->GetXaxis()->SetTitleSize(title_size_ratio);
 					ratpre->GetYaxis()->SetLabelSize(label_size_ratio);
@@ -714,6 +715,7 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 					ratpre->GetXaxis()->SetTitle("Reconstructed Energy [GeV]");
 
 					Cstack->Write(canvas_name.c_str() );
+                    Cstack->SaveAs((canvas_name+".pdf").c_str(),"pdf");
 
 				}
 

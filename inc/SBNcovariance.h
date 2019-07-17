@@ -109,6 +109,9 @@ namespace sbn{
     std::vector<std::vector<int> > vars_i;
     std::vector<std::vector<double> > vars_d;
 
+    std::vector<std::string> variations_to_use;
+    std::map<std::string,bool> m_variations_to_use;
+
     // In testing 2D fits with 4D covariance..
     SBNspec template_spec;	
     SBNspec spec_central_value2;	

@@ -134,7 +134,7 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
 
 
             if(thisfWeight->count("bnbcorrection_FluxHist")>0){
-                global_weight = global_weight*thisfWeight->at("bnbcorrection_FluxHist").front();
+                //global_weight = global_weight*thisfWeight->at("bnbcorrection_FluxHist").front();
             }
 
 
@@ -151,6 +151,9 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
                     int ih = spec_central_value.map_hist.at(branch_variables[j][t]->associated_hist);
                     double reco_var = *(static_cast<double*>(branch_variables[j][t]->GetValue()));
                     int reco_bin = spec_central_value.GetGlobalBinNumber(reco_var,ih);
+
+
+//                    reco_var = reco_var*1.031;
 
                     //std::cout<<ih<<" "<<reco_var<<" "<<reco_bin<<" JJ"<<std::endl;
 

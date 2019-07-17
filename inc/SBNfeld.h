@@ -77,7 +77,7 @@ namespace sbn{
             m_bool_background_spectrum_set = false;
             m_bool_stat_only = false;
             m_num_universes = 2500;
-            m_bool_print_comparasons = false;;
+            m_bool_print_comparasons = true;
             m_random_seed = -1;
         }
 
@@ -86,9 +86,12 @@ namespace sbn{
         int FullFeldmanCousins();
         int PointFeldmanCousins(size_t);
         int GlobalScan();
+        int GlobalScan(int);
         int RasterScan(); 
         
         int GenerateOscillatedSpectra();
+        
+        int LoadPreOscillatedSpectrum(int);
         int LoadPreOscillatedSpectra();
 
         int SetRandomSeed(double);
