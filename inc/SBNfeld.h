@@ -56,8 +56,8 @@ namespace sbn{
 
         SBNosc *m_core_spectrum;
         SBNosc *m_background_spectrum;
-        SBNchi* m_background_chi;
-        TVectorT<double> * m_tvec_background_spectrum;
+        SBNchi *m_background_chi;
+        TVectorT<double> *m_tvec_background_spectrum;
 
         bool m_bool_core_spectrum_set;
         bool m_bool_background_spectrum_set;
@@ -83,6 +83,12 @@ namespace sbn{
 
 
         //Member Functions
+        
+
+        std::vector<double> PerformIterativeFit(std::vector<float> &datavec, SBNspec* pred_spec, SBNchi * pred_chi);
+
+
+        
         int FullFeldmanCousins();
         int PointFeldmanCousins(size_t);
         int GlobalScan();
@@ -95,6 +101,7 @@ namespace sbn{
 
         int GenerateBackgroundSpectrum(); 
         int LoadBackgroundSpectrum();
+        int LoadBackgroundSpectrum(std::string);
 
         int CalcSBNchis();
 
@@ -107,6 +114,9 @@ namespace sbn{
 
         NeutrinoModel convert3p1(std::vector<double> ingrid);
 
+
+        int GenerateScaledSpectra();
+        std::string m_subchannel_to_scale;
 
         //This is a stopgap for better SBNchi integration.Hrump, need to fix that wierd float oddity. 
         float CalcChi(std::vector<float>& data, std::vector<double>& prediction, TMatrixT<double> & inverse_covariance_matrix );

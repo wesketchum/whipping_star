@@ -192,13 +192,7 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 	cp->SaveAs(("SBNfit_Cls_"+tag+".pdf").c_str(),"pdf");	
 	fp->Close();
 	
-
-
-
-
-
-
-
-
 	return 0;
 }
+
+

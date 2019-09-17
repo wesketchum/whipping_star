@@ -15,6 +15,8 @@ NeutrinoModel SBNfeld::convert3p1(std::vector<double> ingrid){
 
 int SBNfeld::GenerateOscillatedSpectra(){
 
+    //This will loop over the predefined grid for oscillation studies, and calculate it
+
     int n_mass = m_grid.f_dimensions[0].GetNPoints();
     bool cv_runone = true;
     std::cout<<"Beginining to Generate all oscillated spectra for : "<<n_mass<<" Mass splittings."<<std::endl;
@@ -22,7 +24,6 @@ int SBNfeld::GenerateOscillatedSpectra(){
     for(size_t t =0; t < n_mass; t++){
 
         std::cout<<"SBNfeld::GenerateOcillatedSpectra()\t\t||\t\t On Mass Splitting number "<<t<<" which is "<<m_grid.f_dimensions[0].GetPoint(t)<<std::endl;
-
         //need to convert from this gridpoints to a neutrinoModel (Blarg, don't like this step but needed at the moment)
         NeutrinoModel this_model(pow(10,m_grid.f_dimensions[0].GetPoint(t)),1,1); // = this->convert3p1(m_vec_grid.at(t)); 
         this_model.Printall();
@@ -37,9 +38,35 @@ int SBNfeld::GenerateOscillatedSpectra(){
             gen.spec_central_value.WriteOut(this->tag+"_CV");
             cv_runone= false;
         }
-
     }
 }
+
+
+int SBNfeld::GenerateScaledSpectra(){
+
+    //Rather than oscillations, we just want to pick 1 subchannel, and scale it up and down. The channel to scale is defined in xml, scale_signal="true"
+    // Basically, we take the core spectra, scale it by each gridpoint, and push that back
+    
+    std::cout<<"Beginining to Generate all Scaled spectra."<<std::endl;
+    m_cv_spec_grid.clear();
+    m_cv_spec_grid.resize(m_grid.f_num_total_points);
+    m_core_spectrum->CalcFullVector();
+        
+
+    for(size_t t =0; t < m_grid.f_num_total_points; t++){
+
+        std::cout<<"SBNfeld::GenerateScaledSpectra()\t\t||\t\t On scaling point "<<t<<" which is "<<m_grid.f_dimensions[0].GetPoint(t)<<std::endl;
+        
+        m_cv_spec_grid[t] = new SBNspec(m_core_spectrum->full_vector,  m_core_spectrum->xmlname, t, false);
+        m_cv_spec_grid[t]->Scale(m_subchannel_to_scale, m_grid.f_dimensions[0].GetPoint(t));
+
+        m_cv_spec_grid[t]->CalcFullVector();
+        m_cv_spec_grid[t]->CollapseVector();
+        // Write them to file, currently no need to write out, very quick.
+        //gen.spec_central_value.WriteOut(this->tag+"_CV");
+    }
+}
+
 
 int SBNfeld::GenerateBackgroundSpectrum(){
 
@@ -155,6 +182,17 @@ int SBNfeld::LoadBackgroundSpectrum(){
 }
 
 
+int SBNfeld::LoadBackgroundSpectrum(std::string filein){
+    m_background_spectrum= new SBNosc(filein,this->xmlname);
+    m_bool_background_spectrum_set = true;
+    
+    m_background_spectrum->CollapseVector();
+    m_tvec_background_spectrum = new TVectorT<double>(m_background_spectrum->full_vector.size(), &(m_background_spectrum->full_vector)[0]);
+    m_background_chi = new SBNchi(*m_background_spectrum, *m_full_fractional_covariance_matrix, this->xmlname, false);
+    return 0;
+}
+
+
 int SBNfeld::CalcSBNchis(){
     //This is where we will calculate a vector of SBNchi's
     //i.e m_sbnchi_grid;
@@ -185,8 +223,6 @@ int SBNfeld::FullFeldmanCousins(){
     int max_number_iterations = 5;
     double chi_min_convergance_tolerance = 0.001;
 
-    //
-
     //Ok take the background only spectrum and form a background only covariance matrix. CalcCovarianceMatrix includes stats
     TMatrixT<double> background_full_covariance_matrix = m_sbnchi_grid[0]->CalcCovarianceMatrix(m_full_fractional_covariance_matrix, *m_tvec_background_spectrum);
     TMatrixT<double> background_collapsed_covariance_matrix(m_background_spectrum->num_bins_total_compressed, m_background_spectrum->num_bins_total_compressed);
@@ -204,6 +240,9 @@ int SBNfeld::FullFeldmanCousins(){
         SBNspec * true_spec = m_cv_spec_grid.at(t); 
         SBNchi  * true_chi = m_sbnchi_grid.at(t); 
 
+        double sum = std::accumulate(true_spec->full_vector.begin(),true_spec->full_vector.end(),0.0);
+        std::cout<<"Sum of events "<<sum<<std::endl;
+
         std::vector<double> vec_delta_chi(num_universes,0);
         std::vector<double> vec_chi_min(num_universes,0);
         double delta_chi_critical = DBL_MIN;
@@ -218,6 +257,10 @@ int SBNfeld::FullFeldmanCousins(){
         t_outtree.Branch("delta_chi2",&tree_delta_chi);
         t_outtree.Branch("chi2_min",&tree_chi_min);
         t_outtree.Branch("bf_gridpoint",&tree_bf_grid);       
+
+        
+        //First calculate the min_chi for the CV
+
 
 
         for(size_t i=0; i< num_universes; i++){
@@ -243,7 +286,6 @@ int SBNfeld::FullFeldmanCousins(){
                     true_chi->CollapseModes(current_full_covariance_matrix, current_collapsed_covariance_matrix);    
                     inverse_current_collapsed_covariance_matrix = true_chi->InvertMatrix(current_collapsed_covariance_matrix);   
                 }
-
 
                 //Step 2.0 Find the global_minimum_for this universe. Integrate in SBNfit minimizer here, a grid scan for now.
                 double chi_min = DBL_MAX;
@@ -274,10 +316,9 @@ int SBNfeld::FullFeldmanCousins(){
             }
 
             //Now use the curent_iteration_covariance matrix to also calc this_chi here for the delta.
-            // QUESTION! Its either this or the next line.
-            //double this_chi   = true_chi->CalcChi(&fake_data);
             double this_chi   = this->CalcChi(fake_data, true_spec->collapsed_vector,inverse_current_collapsed_covariance_matrix);
-
+            std::vector<double> ans = this->PerformIterativeFit(fake_data,true_spec,true_chi);
+            
 
             //step 4 calculate the delta_chi for this universe
             vec_delta_chi[i] = this_chi-last_chi_min;
@@ -288,15 +329,16 @@ int SBNfeld::FullFeldmanCousins(){
             tree_bf_grid = best_grid_point; 
 
             t_outtree.Fill();
-
         }
-
+        
         double tmin = DBL_MAX;
         double tmax = DBL_MIN;
         for(double&v:vec_delta_chi){
             tmin=std::min(tmin,v);
             tmax=std::max(tmax,v);
         }
+        
+        std::cout<<"For this point, minimum delta chi is "<<tmin<<" max is "<<tmax<<std::endl;
         TH1D h_delta_chi(("dcuni_"+std::to_string(t)).c_str(),("dcuni_"+std::to_string(t)).c_str(),50,0.0,tmax*1.0);  // This will store all the delta_chi's from each universe for this g_true point
         for(double&v:vec_delta_chi) h_delta_chi.Fill(v);
 
@@ -307,11 +349,15 @@ int SBNfeld::FullFeldmanCousins(){
             cmin=std::min(cmin,v);
             cmax=std::max(cmax,v);
         }
+
+        std::cout<<"For this point, minimum chi is "<<cmin<<" max is "<<cmax<<std::endl;
+
         TH1D h_chi_min(("cmuni_"+std::to_string(t)).c_str(),("cmuni_"+std::to_string(t)).c_str(),50,0.0,cmax*1.0);  // This will store all the chi_mins from each universe for this g_true point
         for(double&v:vec_chi_min){
             h_chi_min.Fill(v);
         }
 
+        /*
 
         //Now lets do a simple fit to a chi^2 
         std::string f_name = "fchi_"+std::to_string(t);
@@ -325,6 +371,8 @@ int SBNfeld::FullFeldmanCousins(){
         t_outtree.Fit(f_name.c_str(),"delta_chi2",("1.0/"+std::to_string((double)vec_delta_chi.size())).c_str(),"M");
         double fitted_ndof = fchi->GetParameter(1);
         std::cout<<"FIT NDOF: "<<fitted_ndof<<" "<<fchi->GetParameter(0)<<std::endl;
+
+        */
 
 
         fout->cd();
@@ -355,7 +403,6 @@ int SBNfeld::FullFeldmanCousins(){
         h_chi_min.GetQuantiles(prob_values.size(), &chi_min_quantiles[0], &prob_values[0]);
 
 
-
         std::cout<<"Grid Point: "<<t;
         for(auto &p: m_vec_grid.at(t)){
             std::cout<<" "<<p;
@@ -366,8 +413,9 @@ int SBNfeld::FullFeldmanCousins(){
             std::cout<<"--delta_quantile "<<delta_chi_quantiles[i]<<" chimin_quantile "<<chi_min_quantiles[i]<<" @prob "<<prob_values[i]<<std::endl;
         }
 
-        delta_chi_critical = delta_chi_quantiles[0];
-        break;
+        std::cout<<"Finished This Point"<<std::endl;
+        //delta_chi_critical = delta_chi_quantiles[0];
+        //break;
     }
 
     fout->Close();
@@ -376,6 +424,59 @@ int SBNfeld::FullFeldmanCousins(){
 
 
 
+std::vector<double> SBNfeld::PerformIterativeFit(std::vector<float> &datavec, SBNspec* in_spec, SBNchi * in_chi){
+
+    double last_chi_min = DBL_MAX;
+    int best_grid_point = -99;
+    
+    for(size_t n_iter = 0; n_iter < max_number_iterations; n_iter++){
+
+                //Step 1. What covariance matrix do we use?
+                //For first iteration, use the precalculated background only inverse covariance matrix.
+
+                //For all subsequent iterations what is the full covariance matrix? Use the last best grid point.
+                if(n_iter!=0){
+
+                    //Calculate current full covariance matrix, collase it, then Invert. 
+                    TMatrixT<double> current_full_covariance_matrix = in_chi->CalcCovarianceMatrix(m_full_fractional_covariance_matrix, m_cv_spec_grid[best_grid_point]->full_vector);
+                    TMatrixT<double> current_collapsed_covariance_matrix(num_bins_total_compressed, num_bins_total_compressed);
+                    true_chi->CollapseModes(current_full_covariance_matrix, current_collapsed_covariance_matrix);    
+                    inverse_current_collapsed_covariance_matrix = true_chi->InvertMatrix(current_collapsed_covariance_matrix);   
+                }
+
+                //Step 2.0 Find the global_minimum_for this universe. Integrate in SBNfit minimizer here, a grid scan for now.
+                double chi_min = DBL_MAX;
+                for(size_t r =0; r < m_num_total_gridpoints; r++){
+
+                    double chi_tmp = this->CalcChi(datavec, m_cv_spec_grid[r]->collapsed_vector,  inverse_current_collapsed_covariance_matrix);
+
+                    if(chi_tmp < chi_min){
+                        best_grid_point = r;
+                        chi_min = chi_tmp;
+                    }
+                }
+
+                if(n_iter!=0){
+
+                    //std::cout<<"On iter: "<<n_iter<<" of uni "<<i<<"/"<<num_universes<<" w/ chi^2: "<<chi_min<<" lastchi^2: "<<last_chi_min<<" diff() "<<fabs(chi_min-last_chi_min)<<" tol: "<<chi_min_convergance_tolerance<<" best_grid_point: "<<best_grid_point<<std::endl;
+
+                    //Step 3.0 Check to see if min_chi for this particular fake_data  has converged sufficiently
+                    if(fabs(chi_min-last_chi_min)< chi_min_convergance_tolerance){
+                        last_chi_min = chi_min;
+                        break;
+                    }
+                }else{
+                    //std::cout<<"On iter: "<<n_iter<<" chi^2: "<<chi_min<<std::endl; 
+                }
+
+                last_chi_min = chi_min;
+            }
+
+            //Now use the curent_iteration_covariance matrix to also calc this_chi here for the delta.
+            double this_chi   = this->CalcChi(datavec, in_spec->collapsed_vector,inverse_current_collapsed_covariance_matrix);
+
+            return {(double)best_grid_point,this_chi,chi_min};
+}
 
 
 int SBNfeld::PointFeldmanCousins(size_t grid_pt){
@@ -471,18 +572,12 @@ int SBNfeld::PointFeldmanCousins(size_t grid_pt){
 
 
 
-
-
-
-
-
-
 float SBNfeld::CalcChi(std::vector<float>& data, std::vector<double>& prediction, TMatrixT<double> & inverse_covariance_matrix ){
     float tchi = 0;
 
     for(int i =0; i<num_bins_total_compressed; i++){
         for(int j =0; j<num_bins_total_compressed; j++){
-            tchi += (data[i]-prediction[i])*inverse_covariance_matrix[i][j]*(data[j]-prediction[j] );
+            tchi += (data[i]-prediction[i])*inverse_covariance_matrix(i,j)*(data[j]-prediction[j] );
         }
     }
 
@@ -535,4 +630,7 @@ int SBNfeld::RasterScan(){
 int SBNfeld::SetNumUniverses(int n){
     m_num_universes = n;
     return 0;
-}   
+}  
+
+
+

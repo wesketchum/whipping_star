@@ -17,8 +17,10 @@ SBNspec::SBNspec(std::string whichxml, int which_universe, bool isverbose) : SBN
 				}else{
 					thisname = fn+"_MS"+std::to_string(which_universe);
 				}
-				//TH1D thischan(thisname.c_str(),"",num_bins[c], tbins );i
-				hist.emplace_back(TH1D(thisname.c_str(), thisname.c_str(), num_bins[c], tbins ));
+				TH1D thischan(thisname.c_str(),"",num_bins[c], tbins );
+                //thischan.AddDirectory(false);
+				hist.push_back(thischan);
+				//hist.emplace_back(TH1D(thisname.c_str(), thisname.c_str(), num_bins[c], tbins ));
 				//auto it = hist.begin()+ctr;
 				//map_hist[fn] = &(*it);
 				map_hist[fn] = ctr;
@@ -346,10 +348,13 @@ int SBNspec::WriteOut(std::string tag){
 	//kSpring = 820, kTeal   = 840, kAzure   =  860, kViolet = 880,  kPink   = 900
 
 	std::vector<int> mycol = {kGreen+1, kRed-7, kBlue-4, kOrange-3, kMagenta+1, kCyan-3,kYellow, kGreen-3 };
+    std::cout<<"This file has "<<hist.size()<<" histograms and "<<fullnames.size()<<" fullnames "<<std::endl;
 	int colindex =0;
 	TFile *f2 = new TFile((tag+".SBNspec.root").c_str(),"recreate");
-
+    f2->cd();
+    std::cout<<"This file has "<<hist.size()<<" histograms and "<<fullnames.size()<<" fullnames "<<std::endl;
 	for(auto& h: hist){
+        std::cout<<"WriteOut "<<h.Integral()<<std::endl;
 		h.Write();
 	}
 	f2->Close();

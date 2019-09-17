@@ -106,8 +106,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 exit(EXIT_FAILURE);
             }
 
-            trees.at(fid)->SetBranchAddress(branch_variable->name.c_str(),
-                    branch_variable->GetValue());
+            trees.at(fid)->SetBranchAddress(branch_variable->name.c_str(),    branch_variable->GetValue());
         }
 
         if(montecarlo_additional_weight_bool[fid]){
@@ -264,7 +263,8 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
 void SBNcovariance::ProcessEvent(
         const std::map<std::string, 
-        std::vector<double> >& thisfWeight,
+        std::vector<float> >& thisfWeight,
+        //std::vector<double> >& thisfWeight,
         size_t fileid,
         int entryid) {
 
@@ -290,7 +290,8 @@ void SBNcovariance::ProcessEvent(
     std::vector<double> weights(universes_used,global_weight);
 
     //Loop over all variations
-    std::map<std::string, std::vector<double> >::const_iterator var_iter;
+    std::map<std::string, std::vector<float> >::const_iterator var_iter;
+    //std::map<std::string, std::vector<double> >::const_iterator var_iter;
     int woffset = 0;
 
     for(const auto& var : variations){

@@ -248,6 +248,7 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
     if(is_verbose) std::cout<<otag<<" About to do a SVD decomposition"<<std::endl;
     TDecompSVD svd(Mctotal);
     if (!svd.Decompose()) {
+
         std::cout <<otag<<"Decomposition failed, matrix not symettric?, has nans?" << std::endl;
         std::cout<<otag<<"ERROR: The matrix to invert failed a SVD decomp!"<<std::endl;
 
@@ -291,8 +292,10 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
         if(eigen_values(i)<0){
             is_small_negative_eigenvalue = true;
             if(fabs(eigen_values(i))> tolerence_positivesemi ){
-                std::cout<<otag<<"covariance matrix contains (at least one)  negative eigenvalue: "<<eigen_values(i)<<std::endl;
+                std::cout<<otag<<" collapsed covariance matrix contains (at least one)  negative eigenvalue: "<<eigen_values(i)<<std::endl;
                 Mctotal.Print();
+                std::cout<<otag<<" full covariance "<<std::endl;
+                Mtotal.Print();
                 exit(EXIT_FAILURE);
             }
         }
@@ -1018,7 +1021,7 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
     //Lets NOT add these in here but treat them as Poisson later. Seems better
     for(int i =0; i<U.GetNcols(); i++)
     {
-        //U(i,i) += specin->full_vector.at(i);
+        U(i,i) += specin->full_vector.at(i);
     }
 
     int n_t = U.GetNcols();
@@ -1048,6 +1051,8 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
 
             }else{
                 std::cout<<"SBNchi::SampleCovariance\t|| 0 or negative eigenvalues! error: Value "<<eigen_values(i)<<" Tolerence "<<tol<<std::endl;
+                U_explicit_sym.Print();
+                std::cout<<"Hmm"<<std::endl;
                 exit(EXIT_FAILURE);
             }
         }
@@ -1087,7 +1092,7 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
         }
     }
 
-    //cholosky_performed = true;	
+    cholosky_performed = true;	
     return 0;
 }
 

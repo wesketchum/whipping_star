@@ -288,10 +288,8 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                 }
             }
 
-
             TiXmlElement *pBranch;
             pBranch = pMC->FirstChildElement("branch");
-
 
             std::vector<BranchVariable*> TEMP_branch_variables;
             while(pBranch){
