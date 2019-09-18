@@ -64,6 +64,9 @@ namespace sbn{
         bool m_bool_stat_only;
         bool m_bool_print_comparasons;
 
+        int m_max_number_iterations;
+        double m_chi_min_convergance_tolerance;
+
         int m_num_universes;
         double m_random_seed;
         std::string tag;
@@ -79,13 +82,16 @@ namespace sbn{
             m_num_universes = 2500;
             m_bool_print_comparasons = false;;
             m_random_seed = -1;
+            m_max_number_iterations = 5;
+
+            m_chi_min_convergance_tolerance = 0.001;
         }
 
 
         //Member Functions
         
 
-        std::vector<double> PerformIterativeFit(std::vector<float> &datavec, SBNspec* pred_spec, SBNchi * pred_chi);
+        std::vector<double> PerformIterativeFit(std::vector<float> &datavec, size_t grid_pt, TMatrixT<double>& inverse_background_collapsed_covariance_matrix);
 
 
         
