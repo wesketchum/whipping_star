@@ -12,6 +12,8 @@ SBNgenerate::SBNgenerate(std::string xmlname) {
 
 SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfig(xmlname), nu_model(inModel) {
 
+    std::vector<double> FUDGE ={470.0, 470.0,600.0, 600.0, 600.0,100.0,100.0 };
+
 
     TRandom3 *rangen = new TRandom3(0);
 
@@ -166,8 +168,13 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
                         //first subtract off a random 50m
                         //true_L = true_L - rangen->Uniform(0,50.0);
 
+                        if(ih==0 || ih ==1) true_L = true_L-10.0;
+
                         //WARNING need to change to km
                         true_L = true_L/1000.0;
+                        //true_L = FUDGE[ih]/1000.0;
+                        //
+                        //std::cout<<ih<<" "<<spec_osc_sin.hist[ih].GetName()<<std::endl;
 
                         double osc_Probability_sin = nu_model.oscProbSin(true_var, true_L);
                         double osc_Probability_sinsq = nu_model.oscProbSinSq(true_var, true_L);

@@ -153,14 +153,27 @@ int main(int argc, char* argv[])
 
     if(tag == "NuMuDis"){	
        //grid for numu disappearance
-       mygrid.AddDimension("m4", -1, 1.05, 0.05);//0.05
+       mygrid.AddDimension("m4", -1, 1.05, 0.05);//0.05 FULL
+       //mygrid.AddDimension("m4", 0.75, 1.05, 0.05);//0.05 hackein in baseline
        mygrid.AddFixedDimension("ue4", 0);
        mygrid.AddDimension("um4",-1.2, -0.5, 0.01); //for NuMuAllowed
        //mygrid.AddDimension("um4",-2.0, 0.05, 0.05); //0.05
     }else{
       //grid for nue appearance
-      mygrid.AddDimension("m4", -1.0, 1.05, 0.05);   //0.1
-      mygrid.AddDimension("ue4", -2.3, 0.05, 0.05); //0.1
+
+      if(number==1){
+          mygrid.AddDimension("m4", -1.0, -0.5, 0.05);   //0.1 FULL
+      }else if(number==2){
+          mygrid.AddDimension("m4", -0.55, 0.05, 0.05);   //0.1 FULL
+      }else if(number==3){
+          mygrid.AddDimension("m4", 0.05, 0.5, 0.05);   //0.1 FULL
+      }else if(number==4){
+          mygrid.AddDimension("m4", 0.5, 1.05, 0.05);   //0.1 FULL
+      }else{
+          mygrid.AddDimension("m4", -1.0, 1.05, 0.05);   //0.1 FULL
+      }
+      mygrid.AddDimension("ue4", -2.5, 0.05, 0.05); //0.1 full exc
+      //mygrid.AddDimension("ue4", -1.5, 0.05, 0.05); //0.1 full inject
       mygrid.AddFixedDimension("um4",0.0);         //0.05
     }
 
@@ -238,15 +251,19 @@ int main(int argc, char* argv[])
 
         std::cout<<"Beginning to peform a globalScan analysis"<<std::endl;
         //myfeld.GlobalScan(884);
-        myfeld.GlobalScan(1503);
+        if(grid_pt==0){
+            myfeld.GlobalScan();//1503
+        }else{
+            myfeld.GlobalScan(grid_pt);
+        }
 
     }else if(mode_option == "plot"){
-
+        if(number<0)number =1503; 
         myfeld.SetCoreSpectrum(tag+"_BKG_ONLY.SBNspec.root");
         myfeld.SetEmptyFractionalCovarianceMatrix();
         myfeld.SetStatOnly();
         myfeld.SetRandomSeed(random_number_seed);
-        myfeld.LoadPreOscillatedSpectrum(1503);
+        myfeld.LoadPreOscillatedSpectrum(number);
 
     }
 
