@@ -115,9 +115,8 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 std::cout<<otag<<" ERROR ERROR: This branch matched more than 1 subchannel!: " <<branch_variable->associated_hist<<std::endl;
                 exit(EXIT_FAILURE);
             }
-	    std::cout<<"Test inside:"<< branch_variable->name<<std::endl;
-            trees.at(fid)->SetBranchAddress(branch_variable->name.c_str(),
-                    branch_variable->GetValue());
+
+            trees.at(fid)->SetBranchAddress(branch_variable->name.c_str(),    branch_variable->GetValue());
         }
 
         if(montecarlo_additional_weight_bool[fid]){
@@ -287,6 +286,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 void SBNcovariance::ProcessEvent(
         const std::map<std::string, 
         std::vector<float> >& thisfWeight,
+        //std::vector<double> >& thisfWeight,
         size_t fileid,
         int entryid) {
 
@@ -313,6 +313,7 @@ void SBNcovariance::ProcessEvent(
 
     //Loop over all variations
     std::map<std::string, std::vector<float> >::const_iterator var_iter;
+    //std::map<std::string, std::vector<double> >::const_iterator var_iter;
     int woffset = 0;
 
     for(const auto& var : variations){

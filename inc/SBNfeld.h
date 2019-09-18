@@ -56,13 +56,16 @@ namespace sbn{
 
         SBNosc *m_core_spectrum;
         SBNosc *m_background_spectrum;
-        SBNchi* m_background_chi;
-        TVectorT<double> * m_tvec_background_spectrum;
+        SBNchi *m_background_chi;
+        TVectorT<double> *m_tvec_background_spectrum;
 
         bool m_bool_core_spectrum_set;
         bool m_bool_background_spectrum_set;
         bool m_bool_stat_only;
         bool m_bool_print_comparasons;
+
+        int m_max_number_iterations;
+        double m_chi_min_convergance_tolerance;
 
         int m_num_universes;
         double m_random_seed;
@@ -79,10 +82,19 @@ namespace sbn{
             m_num_universes = 2500;
             m_bool_print_comparasons = true;
             m_random_seed = -1;
+            m_max_number_iterations = 5;
+
+            m_chi_min_convergance_tolerance = 0.001;
         }
 
 
         //Member Functions
+        
+
+        std::vector<double> PerformIterativeFit(std::vector<float> &datavec, size_t grid_pt, TMatrixT<double>& inverse_background_collapsed_covariance_matrix);
+
+
+        
         int FullFeldmanCousins();
         int PointFeldmanCousins(size_t);
         int GlobalScan();
@@ -98,6 +110,7 @@ namespace sbn{
 
         int GenerateBackgroundSpectrum(); 
         int LoadBackgroundSpectrum();
+        int LoadBackgroundSpectrum(std::string);
 
         int CalcSBNchis();
 
@@ -114,6 +127,9 @@ namespace sbn{
         int AddFlatDetSystematic(double percent);
         
 
+
+        int GenerateScaledSpectra();
+        std::string m_subchannel_to_scale;
 
         //This is a stopgap for better SBNchi integration.Hrump, need to fix that wierd float oddity. 
         float CalcChi(std::vector<float>& data, std::vector<double>& prediction, TMatrixT<double> & inverse_covariance_matrix );

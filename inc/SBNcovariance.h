@@ -104,6 +104,10 @@ namespace sbn{
 
     std::vector<int> nentries;
     std::vector<TBranch*>* branch_weight;
+<<<<<<< HEAD
+=======
+    //std::vector<std::map<std::string, std::vector<double> >* > f_weights;
+>>>>>>> uboonetest/feature/markross_feldmancousins
     std::vector<std::map<std::string, std::vector<float> >* > f_weights;
 
     std::vector<std::vector<int> > vars_i;
@@ -122,9 +126,15 @@ namespace sbn{
     std::vector<std::vector<double> > multi_vecspec2D;
     std::vector<double> vecspec2DCV;
     TStopwatch watch;
+<<<<<<< HEAD
     void ProcessEvent(const std::map<std::string, std::vector<float> >& thisfWeight,
 		      size_t fileid,
 		      int entryid);
+=======
+    
+    void ProcessEvent(const std::map<std::string, std::vector<float> >& thisfWeight,   size_t fileid,     int entryid);
+    //void ProcessEvent(const std::map<std::string, std::vector<double> >& thisfWeight,   size_t fileid,     int entryid);
+>>>>>>> uboonetest/feature/markross_feldmancousins
 
   };
 

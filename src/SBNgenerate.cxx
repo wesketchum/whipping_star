@@ -6,7 +6,7 @@ using namespace sbn;
 
 
 SBNgenerate::SBNgenerate(std::string xmlname) {
-    NeutrinoModel nullModel;
+    NeutrinoModel nullModel(0,0,0);
     SBNgenerate(xmlname, nullModel);
 }
 
@@ -15,7 +15,11 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
     std::vector<double> FUDGE ={470.0, 470.0,600.0, 600.0, 600.0,100.0,100.0 };
 
 
+
     TRandom3 *rangen = new TRandom3(0);
+    
+    bool m_use_eventweight = false;
+
 
     //	gROOT->ProcessLine("#include <map>");
     //	gROOT->ProcessLine("#include <vector>");
@@ -37,22 +41,24 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
     SBNspec tm(xmlname,-1,false);
     spec_central_value = tm;
     spec_osc_sin  = tm;
-    spec_osc_sinsq  = tm;
+    spec_osc_sinsq = tm;
 
     int num_files = montecarlo_file.size();
-
     montecarlo_additional_weight.resize(num_files,1.0);
-
-
-    //Some POT counting
-
+   
     for(auto &fn: montecarlo_file){
         files.push_back(new TFile(fn.c_str()));
+        if(files.back()->IsZombie() || !files.back()->IsOpen()){
+            std::cout<<"SBNgenerate || ERROR! Failed to oben the file "<<fn<<std::endl;
+            exit(EXIT_FAILURE);
+        }
     }
 
 
     for(int i=0; i<montecarlo_name.size(); i++){
+        std::cout<<"Getting TTree "<<montecarlo_name[i]<<" from file "<<montecarlo_file[i]<<std::endl;
         trees.push_back((TTree*)files.at(i)->Get(montecarlo_name.at(i).c_str()) );
+        std::cout<<"--TTree has "<<trees.back()->GetEntries()<<" entries. "<<std::endl;
     }
 
     for(int i=0; i<montecarlo_file.size(); i++){
@@ -77,8 +83,6 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
 
     f_weights.resize(num_files,nullptr);
 
-
-
     for(int i=0; i< num_files; i++){
 
         double pot_scale = 1.0;
@@ -88,11 +92,11 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
 
         montecarlo_scale[i] = montecarlo_scale[i]*pot_scale;
 
+        std::cout << " TFile::Open() file=" << files[i]->GetName() << " @" << files[i] << std::endl;
+        std::cout << " Has POT " <<montecarlo_pot[i] <<" and "<<nentries[i] <<" entries "<<std::endl;
 
 
-
-        //delete f_weights->at(i);	f_weights->at(i) = 0;
-        trees[i]->SetBranchAddress("eventweights", &(f_weights[i]) );
+        if(m_use_eventweight)  trees[i]->SetBranchAddress("eventweights", &(f_weights[i]) );
         //delete f_weights->at(i);	f_weights->at(i) = 0;
         
         for(int k=0; k<branch_variables.at(i).size(); k++){
@@ -122,12 +126,11 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
 
     for(int j=0;j<num_files;j++){
 
-        //delete f_weights->at(j);
-        //f_weights->at(j)=0;
 
         for(int i=0; i< std::min(  montecarlo_maxevents.at(j)  ,nentries.at(j)); i++){
             trees.at(j)->GetEntry(i);
-            std::map<std::string,std::vector<float>>* thisfWeight = f_weights[j];
+            std::map<std::string,std::vector<double>>* thisfWeight;
+            if(m_use_eventweight) thisfWeight = f_weights[j];
 
             if(i%100==0) std::cout<<"SBNgenerate::SBNgenerate\t|| On event: "<<i<<" of "<<nentries[j]<<" from File: "<<montecarlo_file[j]<<std::endl;
 
@@ -135,8 +138,10 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
             global_weight = global_weight*montecarlo_scale[j];
 
 
-            if(thisfWeight->count("bnbcorrection_FluxHist")>0){
-                //global_weight = global_weight*thisfWeight->at("bnbcorrection_FluxHist").front();
+            if(m_use_eventweight){
+                if(thisfWeight->count("bnbcorrection_FluxHist")>0){
+                     global_weight = global_weight*thisfWeight->at("bnbcorrection_FluxHist").front();
+                }
             }
 
 
@@ -146,6 +151,7 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
             }
 
             if( this->EventSelection(j) ){
+                
                 for(int t=0; t<branch_variables[j].size();t++){
                     //std::cout<<"Starting branch : "<<branch_variables.at(j).at(t)->name<<" "<<branch_variables.at(j).at(t)->associated_hist<<std::endl;
                     //Need the histogram index, the value, the global bin...
@@ -184,7 +190,6 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
                         spec_central_value.hist[ih].Fill(reco_var,global_weight);
                         //std::cout<<"Reco: "<<reco_var<<" True: "<<true_var<<" L: "<<true_L<<" "<<osc_Probability_sin<<" "<<osc_Probability_sinsq<<" glob: "<<global_weight<<std::endl;
                     }else{
-                        std::cout<<"Not Oscillated"<<std::endl;
                         spec_central_value.hist[ih].Fill(reco_var,global_weight);
                         spec_osc_sinsq.hist[ih].Fill(reco_var, global_weight);
                         spec_osc_sin.hist[ih].Fill(reco_var, global_weight);
@@ -200,11 +205,16 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
      *		Now some clean-up and Writing
      * ************************************************************/
 
+}
+
+SBNgenerate::~SBNgenerate(){
+    std::cout<<"~Closing SBNgenerate"<<std::endl;
     for(auto &f: files){
         f->Close();
     }
-
 }
+
+
 /***************************************************************
  *		Some virtual functions for selection and histogram filling
  * ************************************************************/
@@ -217,6 +227,15 @@ int SBNgenerate::WritePrecomputedOscSpecs(std::string tag){
 
     return 0;
 }
+
+int SBNgenerate::WriteCVSpec(std::string tag){
+
+    std::cout<<"SBNGenerate::WriteCVSpec()\t\t||\t\tWriting out "<<tag<<std::endl;
+    spec_central_value.WriteOut(tag+"_CV");
+
+    return 0;
+}
+
 
 
 bool SBNgenerate::EventSelection(int which_file){
