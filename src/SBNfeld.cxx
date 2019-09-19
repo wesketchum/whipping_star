@@ -630,6 +630,9 @@ int SBNfeld::GlobalScan(int which_pt){
         std::cout<<std::endl;
     }
 
+
+
+
     return 0;
 };
 
@@ -671,6 +674,10 @@ int SBNfeld::GlobalScan(SBNspec * observed_spectrum){
         }
         std::cout<<std::endl;
     }
+
+
+    m_cv_spec_grid[bf]->CompareSBNspecs(observed_spectrum, "Ans");
+
     return 0;
 };
 
