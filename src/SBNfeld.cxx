@@ -221,6 +221,13 @@ int SBNfeld::LoadBackgroundSpectrum(){
 
     m_background_spectrum->CollapseVector();
     m_tvec_background_spectrum = new TVectorT<double>(m_background_spectrum->full_vector.size(), &(m_background_spectrum->full_vector)[0]);
+
+    if(m_background_spectrum->full_vector.size() !=  m_full_fractional_covariance_matrix->GetNcols()){
+
+        std::cout<<"SBNfeld::LoadBackgroundSpectrum || ERROR!! background spectrum is of length : "<<m_background_spectrum->full_vector.size()<<" and frac matrix is of size "<<m_full_fractional_covariance_matrix->GetNcols()<<std::endl;
+        exit(EXIT_FAILURE);
+    }
+
     m_background_chi = new SBNchi(*m_background_spectrum, *m_full_fractional_covariance_matrix, this->xmlname, false);
     return 0;
 }
