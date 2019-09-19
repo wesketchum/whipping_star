@@ -158,6 +158,8 @@ int SBNfeld::LoadPreOscillatedSpectrum(int which_pt){
         std::cout<<" "<<ans[p];
     }
     SBNspec * thispoint = new SBNspec(ans, m_core_spectrum->xmlname,which_pt, false);
+    
+    thispoint->ScaleAll(global_scale);
     thispoint->CollapseVector();
 
     //make a print out of this exact spectrum as compared to the "core" spectrum
@@ -200,7 +202,9 @@ int SBNfeld::LoadPreOscillatedSpectra(){
         }
         std::cout<<std::endl;
         m_cv_spec_grid[t] = new SBNspec(ans, m_core_spectrum->xmlname,t, false);
+        m_cv_spec_grid[t]->ScaleAll(global_scale);
         m_cv_spec_grid[t]->CollapseVector();
+
 
         if(m_bool_print_comparasons && t ==490){// t==1668 
             //make a print out of this exact spectrum as compared to the "core" spectrum
@@ -217,6 +221,7 @@ int SBNfeld::LoadPreOscillatedSpectra(){
 
 int SBNfeld::LoadBackgroundSpectrum(){
     m_background_spectrum= new SBNosc(this->tag+"_BKG_ONLY.SBNspec.root",this->xmlname);
+    m_background_spectrum->ScaleAll(global_scale);
     m_bool_background_spectrum_set = true;
 
     m_background_spectrum->CollapseVector();
@@ -227,6 +232,7 @@ int SBNfeld::LoadBackgroundSpectrum(){
         std::cout<<"SBNfeld::LoadBackgroundSpectrum || ERROR!! background spectrum is of length : "<<m_background_spectrum->full_vector.size()<<" and frac matrix is of size "<<m_full_fractional_covariance_matrix->GetNcols()<<std::endl;
         exit(EXIT_FAILURE);
     }
+
 
     m_background_chi = new SBNchi(*m_background_spectrum, *m_full_fractional_covariance_matrix, this->xmlname, false);
     return 0;

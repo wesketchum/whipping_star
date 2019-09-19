@@ -71,6 +71,8 @@ namespace sbn{
         double m_random_seed;
         std::string tag;
 
+        double global_scale;
+
         public:
 
         SBNfeld(NGrid ingrid, std::string intag,  std::string inxmlname) : SBNconfig(inxmlname), m_grid(ingrid), tag(intag) {
@@ -83,6 +85,9 @@ namespace sbn{
             m_bool_print_comparasons = true;
             m_random_seed = -1;
             m_max_number_iterations = 5;
+
+
+            global_scale = 5.81731e19/6.6e20;
 
             m_chi_min_convergance_tolerance = 0.001;
         }
