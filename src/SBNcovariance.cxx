@@ -95,7 +95,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
         std::cout<<otag<<" Read variations & universe size" << std::endl;
 
-        trees.at(fid)->SetBranchAddress("eventweights", &(f_weights[fid]) );
+        trees.at(fid)->SetBranchAddress("eventweights", &(f_weights[fid]));
 
         for(const auto branch_variable : branch_variables[fid]) {
             //quick check that this branch associated subchannel is in the known chanels;
@@ -285,8 +285,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
 void SBNcovariance::ProcessEvent(
         const std::map<std::string, 
-        std::vector<float> >& thisfWeight,
-        //std::vector<double> >& thisfWeight,
+        std::vector<eweight_type> >& thisfWeight,
         size_t fileid,
         int entryid) {
 
@@ -312,8 +311,7 @@ void SBNcovariance::ProcessEvent(
     std::vector<double> weights(universes_used,global_weight);
 
     //Loop over all variations
-    std::map<std::string, std::vector<float> >::const_iterator var_iter;
-    //std::map<std::string, std::vector<double> >::const_iterator var_iter;
+    std::map<std::string, std::vector<eweight_type> >::const_iterator var_iter;
     int woffset = 0;
 
     for(const auto& var : variations){
@@ -824,7 +822,7 @@ int SBNcovariance::PrintMatricies(std::string tag) {
 
     for(int i=0; i<num_bins_total_compressed; i++){
         for(int j=0; j<num_bins_total_compressed; j++){
-            coll_frac_covariance(i,j) = coll_covariance(i,j)/(spec_central_value.full_vector.at(i)*spec_central_value.full_vector.at(j)) ;
+            coll_frac_covariance(i,j) = coll_covariance(i,j)/(spec_central_value.collapsed_vector.at(i)*spec_central_value.collapsed_vector.at(j)) ;
             coll_correlation(i,j)= coll_covariance(i,j)/(sqrt(coll_covariance(i,i))*sqrt(coll_covariance(j,j)));
         }
     }

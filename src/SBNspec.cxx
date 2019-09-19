@@ -284,6 +284,7 @@ int SBNspec::CalcFullVector(){
 int SBNspec::CollapseVector(){
 
 	collapsed_vector.clear();
+	f_collapsed_vector.clear();
 	CalcFullVector();
 
 	for(int im = 0; im < num_modes; im++){
@@ -305,6 +306,7 @@ int SBNspec::CollapseVector(){
 					}
 					//we can size this vector beforehand and get rid of all push_back()
 					collapsed_vector.push_back(tempval);
+					f_collapsed_vector.push_back((float)tempval);
 				}
 			}
 		}
@@ -348,7 +350,6 @@ int SBNspec::WriteOut(std::string tag){
 	//kSpring = 820, kTeal   = 840, kAzure   =  860, kViolet = 880,  kPink   = 900
 
 	std::vector<int> mycol = {kGreen+1, kRed-7, kBlue-4, kOrange-3, kMagenta+1, kCyan-3,kYellow, kGreen-3 };
-    std::cout<<"This file has "<<hist.size()<<" histograms and "<<fullnames.size()<<" fullnames "<<std::endl;
 	int colindex =0;
 	TFile *f2 = new TFile((tag+".SBNspec.root").c_str(),"recreate");
     f2->cd();
@@ -359,7 +360,6 @@ int SBNspec::WriteOut(std::string tag){
 	}
 	f2->Close();
 
-    if(false){
 	TFile *f = new TFile(("SBNfit_spectrum_plots_"+tag+".root").c_str(),"RECREATE");
 	f->cd();
 
@@ -375,7 +375,6 @@ int SBNspec::WriteOut(std::string tag){
 
 
 				bool this_run = false;
-				bool this_run_comp = false;
 
 				TCanvas* Cstack= new TCanvas(canvas_name.c_str(),canvas_name.c_str());
 				Cstack->SetFixedAspectRatio();
@@ -424,7 +423,7 @@ int SBNspec::WriteOut(std::string tag){
 						//hs->Add(&h);
 						n++;
 
-						//this_run=true;
+						this_run=true;
 
 						to_sort.push_back(&h);
 						l_to_sort.push_back(tmp);
@@ -482,7 +481,6 @@ int SBNspec::WriteOut(std::string tag){
 
 	f->Close();
 
-    }
 	return 0;
 }
 

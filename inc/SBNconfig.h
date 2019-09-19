@@ -25,7 +25,12 @@ std::string to_string_prec(const T a_value, const int n = 6)
 	return out.str();
 }
 
-
+//#define TYPE_FLOAT
+#ifdef TYPE_FLOAT  
+    typedef float eweight_type;
+#else
+    typedef double eweight_type;
+#endif
 
 namespace sbn{
 // All declarations are within the namespace scope.

@@ -156,6 +156,8 @@ int main(int argc, char* argv[])
         SBNgenerate  gen(xml,nullModel);
         gen.WriteCVSpec(tag);
 
+        return 0;
+
         TMatrixT<double> *Msys = new TMatrixT<double>(8,8);
         Msys->Zero();
 

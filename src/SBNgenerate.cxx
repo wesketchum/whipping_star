@@ -129,7 +129,7 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
 
         for(int i=0; i< std::min(  montecarlo_maxevents.at(j)  ,nentries.at(j)); i++){
             trees.at(j)->GetEntry(i);
-            std::map<std::string,std::vector<double>>* thisfWeight;
+            std::map<std::string,std::vector<eweight_type>>* thisfWeight;
             if(m_use_eventweight) thisfWeight = f_weights[j];
 
             if(i%100==0) std::cout<<"SBNgenerate::SBNgenerate\t|| On event: "<<i<<" of "<<nentries[j]<<" from File: "<<montecarlo_file[j]<<std::endl;

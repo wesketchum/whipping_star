@@ -75,6 +75,7 @@ namespace sbn{
 			std::vector<double > full_vector;
 			//This is the compessed vector, collapsing all subchannels down to a single channel
 			std::vector<double > collapsed_vector;
+			std::vector<float > f_collapsed_vector;
 
 
 

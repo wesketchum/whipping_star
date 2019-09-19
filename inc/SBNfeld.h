@@ -99,6 +99,7 @@ namespace sbn{
         int PointFeldmanCousins(size_t);
         int GlobalScan();
         int GlobalScan(int);
+        int GlobalScan(SBNspec *obs);
         int RasterScan(); 
         
         int GenerateOscillatedSpectra();
