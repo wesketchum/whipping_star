@@ -620,6 +620,9 @@ int SBNfeld::GlobalScan(int which_pt){
     return 0;
 };
 
+
+
+
 int SBNfeld::GlobalScan(SBNspec * observed_spectrum){
 
     //Ok take the background only spectrum and form a background only covariance matrix. CalcCovarianceMatrix includes stats
@@ -635,6 +638,12 @@ int SBNfeld::GlobalScan(SBNspec * observed_spectrum){
     std::vector<double> ans = this->PerformIterativeFit(observed_spectrum->f_collapsed_vector,0,inverse_background_collapsed_covariance_matrix);
     double chi_min = ans[2];
     size_t bf = ans[0];
+    
+    std::cout<<"Best fit is point "<<bf<<" chi^2 min of "<<chi_min<<"  is point ";
+    for(int k=0; k<m_vec_grid[bf].size();k++){
+            std::cout<<" "<<m_vec_grid[bf][k];
+    }
+    std::cout<<std::endl;
 
     for(size_t t =0; t < m_num_total_gridpoints; t++){
         std::cout<<"Starting on point "<<t<<"/"<<m_num_total_gridpoints<<std::endl;
@@ -649,7 +658,6 @@ int SBNfeld::GlobalScan(SBNspec * observed_spectrum){
         }
         std::cout<<std::endl;
     }
-
     return 0;
 };
 

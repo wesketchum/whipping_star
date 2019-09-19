@@ -61,6 +61,7 @@ int main(int argc, char* argv[])
         {"stat", 		no_argument, 		0, 's'},
         {"number", 		required_argument,	0,'n'},
         {"tag", 		required_argument,	0, 't'},
+        {"data", 		required_argument,	0, 'd'},
         {"mode",        required_argument, 0 ,'m'},
         {"flat",        required_argument, 0 ,'f'},
         {"randomseed",        required_argument, 0 ,'r'},
@@ -80,18 +81,26 @@ int main(int argc, char* argv[])
     int grid_pt = 0;
     double random_number_seed = -1;
 
+    bool input_data = false;
+    std::string data_filename;
+
     bool bool_flat_det_sys = false;
     double flat_det_sys_percent = 0.0;
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "x:t:m:n:r:p:f:sh", longopts, &index);
+        iarg = getopt_long(argc,argv, "d:x:t:m:n:r:p:f:sh", longopts, &index);
 
         switch(iarg)
         {
             case 'x':
                 xml = optarg;
                 break;
+            case 'd':
+                input_data = true;
+                data_filename = optarg;
+                break;
+
             case 'n':
                 number = (int)strtod(optarg,NULL);
                 break;
@@ -122,6 +131,7 @@ int main(int argc, char* argv[])
                 std::cout<<"---------------------------------------------------"<<std::endl;
                 std::cout<<"--- Required arguments: ---"<<std::endl;
                 std::cout<<"\t-x\t--xml\t\tInput configuration .xml file for SBNconfig"<<std::endl;
+                std::cout<<"\t-d\t--data\t\tInput observed data for a global scan"<<std::endl;
                 std::cout<<"\t-t\t--tag\t\tA unique tag to identify the outputs [Default to TEST]"<<std::endl;
                 std::cout<<"\t-m\t--mode\t\tWhat mode you want to run in. Arguments are:"<<std::endl;
                 std::cout<<"\t\t\t--\t gen : Generate the preoscillated spectra for all mass-splittings"<<std::endl;  
@@ -239,7 +249,6 @@ int main(int argc, char* argv[])
             myfeld.AddFlatDetSystematic(flat_det_sys_percent);
         }
 
-
         std::cout<<"Setting random seed "<<random_number_seed<<std::endl;
         myfeld.SetRandomSeed(random_number_seed);
         std::cout<<"Loading precomputed spectra"<<std::endl;
@@ -249,13 +258,28 @@ int main(int argc, char* argv[])
         std::cout<<"Calculating the necessary SBNchi objects"<<std::endl;
         myfeld.CalcSBNchis();
 
+
+        //everything up to here settng things up.
+
+
+
         std::cout<<"Beginning to peform a globalScan analysis"<<std::endl;
         //myfeld.GlobalScan(884);
-        if(grid_pt==0){
-            myfeld.GlobalScan();//1503
+        
+        if(input_data){
+            SBNspec * observed_spectrum = new SBNspec(data_filename, xml, false);
+            myfeld.GlobalScan(observed_spectrum);
         }else{
-            myfeld.GlobalScan(grid_pt);
+
+            if(grid_pt==0){
+                myfeld.GlobalScan();//1503
+            }else{
+                myfeld.GlobalScan(grid_pt);
+            }
+            
         }
+
+
 
     }else if(mode_option == "plot"){
         if(number<0)number =1503; 
