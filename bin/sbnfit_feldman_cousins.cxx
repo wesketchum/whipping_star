@@ -291,6 +291,7 @@ int main(int argc, char* argv[])
 
     }
 
+    std::cout << "Actually done with everything! " << std::endl;
     std::cout << "Total wall time: " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
     return 0;
 
