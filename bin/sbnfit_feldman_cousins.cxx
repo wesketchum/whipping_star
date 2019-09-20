@@ -167,7 +167,7 @@ int main(int argc, char* argv[])
        //mygrid.AddDimension("m4", 0.75, 1.05, 0.05);//0.05 hackein in baseline
        mygrid.AddFixedDimension("ue4", 0);
        //mygrid.AddDimension("um4",-1.2, -0.5, 0.01); //for NuMuAllowed
-       mygrid.AddDimension("um4",-2.0, 0.05, 0.025); //0.05
+       mygrid.AddDimension("um4",-2.0, -0.025, 0.025); //0.05
     }else{
       //grid for nue appearance
 
@@ -291,6 +291,7 @@ int main(int argc, char* argv[])
 
     }
 
+    std::cout << "Actually done with everything! " << std::endl;
     std::cout << "Total wall time: " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
     return 0;
 

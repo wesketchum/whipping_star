@@ -675,9 +675,9 @@ int SBNfeld::GlobalScan(SBNspec * observed_spectrum){
         std::cout<<std::endl;
     }
 
-
+    std::cout << "Check 1" << std::endl;
     m_cv_spec_grid[bf]->CompareSBNspecs(observed_spectrum, "Ans");
-
+    std::cout << "Check 2" << std::endl;
     return 0;
 };
 
