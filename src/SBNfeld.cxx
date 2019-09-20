@@ -661,12 +661,32 @@ int SBNfeld::GlobalScan(SBNspec * observed_spectrum){
     }
     std::cout<<std::endl;
 
+
+	SBNspec * bf_spec = m_cv_spec_grid[bf];
+	
+    bf_spec->CollapseVector();
+    TVectorT<double>* m_tvec_bf_spectrum = new TVectorT<double>(bf_spec->full_vector.size(), &(bf_spec->full_vector)[0]);
+
+
+	TMatrixT<double> bf_full_covariance_matrix = m_sbnchi_grid[0]->CalcCovarianceMatrix(m_full_fractional_covariance_matrix, *m_tvec_bf_spectrum);
+    	TMatrixT<double> bf_collapsed_covariance_matrix(bf_spec->num_bins_total_compressed, bf_spec->num_bins_total_compressed);
+    	m_sbnchi_grid[0]->CollapseModes(bf_full_covariance_matrix, bf_collapsed_covariance_matrix);    
+    	TMatrixT<double> inverse_bf_collapsed_covariance_matrix = m_sbnchi_grid[0]->InvertMatrix(bf_collapsed_covariance_matrix);   
+
+
+
     for(size_t t =0; t < m_num_total_gridpoints; t++){
         std::cout<<"Starting on point "<<t<<"/"<<m_num_total_gridpoints<<std::endl;
-        SBNchi *test_chi = m_sbnchi_grid.at(t); 
+        //SBNchi *test_chi = m_sbnchi_grid.at(t); 
+	SBNspec *test_spec = m_cv_spec_grid.at(t);
+	test_spec->CollapseVector();
 
-        double chiSq = test_chi->CalcChi(observed_spectrum); 
-        double deltaChi = chiSq-chi_min;
+
+        //double chiSq = test_chi->CalcChi(observed_spectrum); 
+        double chiSq   = this->CalcChi(observed_spectrum->f_collapsed_vector, test_spec->collapsed_vector, inverse_bf_collapsed_covariance_matrix);
+
+
+	double deltaChi = chiSq-chi_min;
 
         std::cout<<"ANS: "<<t<<" "<<chiSq<<" "<<deltaChi;
         for(int k=0; k<m_vec_grid[t].size();k++){
