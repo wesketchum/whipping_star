@@ -503,6 +503,10 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 	for(int k=0; k< fullnames.size(); k++){
 		TCanvas *ctmp = new TCanvas((tag+"_"+std::to_string(k)+"_"+fullnames.at(k)).c_str(), (std::to_string(k)+"_"+fullnames.at(k)).c_str(),1200,1200);
 		ctmp->cd();
+
+        if(map_hist.count(fullnames.at(k)) <=0 ){
+                std::cout<<"WARNING:  hist "<<fullnames[k]<<" is not in map_hist"<<std::endl;
+        }
 		TH1D * h1 = (TH1D*) temp.at(map_hist[fullnames.at(k)]).Clone((std::to_string(k)+fullnames.at(k)+"_1").c_str());
 		TH1D * h2 = (TH1D*) temp_comp.at(map_hist[fullnames.at(k)]).Clone((std::to_string(k)+fullnames.at(k)+"_2").c_str());
 
@@ -614,8 +618,8 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 						std::ostringstream out;
 						out <<std::fixed<< std::setprecision(0) << total_events;
 						std::string hmm = " | ";
-						//std::string tmp = h.GetName()+hmm+ out.str();
-						std::string tmp = map_subchannel_plotnames.at(h.GetName()) +hmm+ out.str();
+						std::string tmp = h.GetName()+hmm+ out.str();
+						//std::string tmp = map_subchannel_plotnames.at(h.GetName()) +hmm+ out.str(); //fix this
 						//legStack.AddEntry(&h, tmp.c_str() , "f");
 						hsum->Add(&h);
 						//hs->Add(&h);
