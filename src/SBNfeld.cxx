@@ -641,6 +641,9 @@ int SBNfeld::GlobalScan(int which_pt){
 
 int SBNfeld::GlobalScan(SBNspec * observed_spectrum){
 
+    
+    
+
     //Ok take the background only spectrum and form a background only covariance matrix. CalcCovarianceMatrix includes stats
 
     TMatrixT<double> background_full_covariance_matrix = m_sbnchi_grid[0]->CalcCovarianceMatrix(m_full_fractional_covariance_matrix, *m_tvec_background_spectrum);
