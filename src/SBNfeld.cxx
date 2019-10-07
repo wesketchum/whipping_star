@@ -283,6 +283,7 @@ int SBNfeld::FullFeldmanCousins(){
     m_sbnchi_grid[0]->CollapseModes(background_full_covariance_matrix, background_collapsed_covariance_matrix);    
     TMatrixT<double> inverse_background_collapsed_covariance_matrix = m_sbnchi_grid[0]->InvertMatrix(background_collapsed_covariance_matrix);   
 
+
     TFile *fout =  new TFile(("SBNfeld_output_"+tag+".root").c_str(),"recreate");
     fout->cd();
 
@@ -474,11 +475,11 @@ std::vector<double> SBNfeld::PerformIterativeFit(std::vector<float> &datavec, si
     }
 
     //Now use the curent_iteration_covariance matrix to also calc this_chi here for the delta.
-    double this_chi   = this->CalcChi(datavec, grid_spec->collapsed_vector,inverse_current_collapsed_covariance_matrix);
+    double this_chi   = this->CalcChi(datavec, grid_spec->collapsed_vector, inverse_current_collapsed_covariance_matrix);
 
 
     //returns the BF grid, the chi^2 and the minimum_chi at the BF. 
-    return {(double)best_grid_point,this_chi,last_chi_min};
+    return {(double)best_grid_point, this_chi, last_chi_min};
 }
 
 
@@ -680,13 +681,13 @@ int SBNfeld::GlobalScan(SBNspec * observed_spectrum){
 
     for(size_t t =0; t < m_num_total_gridpoints; t++){
         std::cout<<"Starting on point "<<t<<"/"<<m_num_total_gridpoints<<std::endl;
-        //SBNchi *test_chi = m_sbnchi_grid.at(t); 
+        SBNchi *test_chi = m_sbnchi_grid.at(t); 
 	SBNspec *test_spec = m_cv_spec_grid.at(t);
 	test_spec->CollapseVector();
 
 
-        //double chiSq = test_chi->CalcChi(observed_spectrum); 
-        double chiSq   = this->CalcChi(observed_spectrum->f_collapsed_vector, test_spec->collapsed_vector, inverse_bf_collapsed_covariance_matrix);
+        double chiSq = test_chi->CalcChi(observed_spectrum); 
+        //double chiSq   = this->CalcChi(observed_spectrum->f_collapsed_vector, test_spec->collapsed_vector, inverse_bf_collapsed_covariance_matrix);
 
 
 	double deltaChi = chiSq-chi_min;

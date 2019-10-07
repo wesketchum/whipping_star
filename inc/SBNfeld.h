@@ -87,8 +87,8 @@ namespace sbn{
             m_max_number_iterations = 5;
 
 
-            //global_scale = 5.81731e19/6.6e20;
-            global_scale = 4.51931e+19/6.6e20;
+            global_scale = 5.81731e19/6.6e20;
+            //global_scale = 4.51931e+19/6.6e20;
 
             m_chi_min_convergance_tolerance = 0.001;
         }
