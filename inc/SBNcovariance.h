@@ -127,6 +127,7 @@ namespace sbn{
     
     void ProcessEvent(const std::map<std::string, std::vector<eweight_type> >& thisfWeight,   size_t fileid,     int entryid);
 
+    int DoConstraint(int which_signal, int which_constraint);
   };
 
 

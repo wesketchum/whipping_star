@@ -126,6 +126,7 @@ int main(int argc, char* argv[])
 	//Will be outputted in the form: SBNfit_covariance_plots_TAG.root
 	example_covar.PrintMatricies(tag);
 
+    example_covar.DoConstraint(0,1);
 	if(print_mode){
 		//This takes a good bit longer, and prints every variation to file. 
 		example_covar.PrintVariations(tag);
