@@ -27,22 +27,24 @@
     <subchannel name="intrinsic" />
 </channel>
 
-
+<!--What pot do you want to plot in all histograms/CV/etc... --/>
 <plotpot value=13.2e20/>
 
 <!-- ############################# BUILDING A COVARIANCE MATRIX  #####################################################-->
 <!-- This is where we define the location and some basic info for where the TTree files are saved that we wish to build a covariance matrix outof -->
+<!-- The POT is the POT of the total file used -->
 
  <MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1e1p.root" scale = "1.0" maxevents ="10000" pot = "3.3e23" > 
      <branch
          name="ereco"
          type="double"
          associated_subchannel="nu_uBooNE_nue_intrinsic"
-         />
+         eventweight_branch_name = "weights" 
+         /><!--What is the branchname of the eventweights class branch, if missing defaults to weights-->
 </MultisimFile>
 
 <!-- We get the LEE signal from the same NUE intrinsic file above, but we add a friend tree to reweight it by the LEE signal. This can also just be a branch inside your NUE intrinsic file as well but this example uses the more complicated friend tree format -->
-<MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1e1p.root" scale = "1.0" maxevents ="10000" pot = "6.6e23" >
+<MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1e1p.root" scale = "1.0" maxevents ="10000" pot = "3.3e23" >
     <friend treename = "lee_signal_weights" filename="/uboone/data/users/markross/SBNfit_example_data/lee_signal_friend_tree.root"/>
     <branch
         name="ereco"
