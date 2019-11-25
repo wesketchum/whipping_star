@@ -155,6 +155,7 @@ class SBNconfig {
 	std::vector<std::string> montecarlo_name;	 //name means treenae here
 	std::vector<std::string> montecarlo_file;	
     std::vector<std::string> montecarlo_additional_weight_names;
+    std::vector<std::string> montecarlo_eventweight_branch_names;
     std::vector<bool> montecarlo_additional_weight_bool;
     std::vector<double> montecarlo_additional_weight;
 

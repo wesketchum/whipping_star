@@ -329,7 +329,16 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                 const char* bnam = pBranch->Attribute("name");
                 const char* btype = pBranch->Attribute("type");
                 const char* bhist = pBranch->Attribute("associated_subchannel");
+                const char* bwname = pBranch->Attribute("eventweight_branch_name");
                 const char* badditional_weight = pBranch->Attribute("additional_weight");
+
+                if(bwname== NULL){
+                    std::cout<<otag<<" No eventweight branch name passed, assuming its 'weights'"<<std::endl;
+                    montecarlo_eventweight_branch_names.push_back("weights");
+                }else{
+                    std::cout<<otag<<" Setting eventweight branch name "<<bwname<<std::endl;
+                    montecarlo_eventweight_branch_names.push_back(std::string(bwname));
+                }
 
                 if(bnam == NULL){
                     std::cout<<otag<<"ERROR!: Each branch must include the name of the branch to use."<<std::endl;

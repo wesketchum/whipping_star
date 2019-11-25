@@ -4,7 +4,6 @@
 <mode name="nu" />
 <detector name="uBooNE"  />
 
-
 <!-- We have three channels. Each "Channel" referes to a physically observable selelection. In this case nue-like, numu-like and ccpi0-like. -->
 <channel name="nue" unit="MeV"  >
     <bins
@@ -29,20 +28,21 @@
 </channel>
 
 
+<plotpot value=13.2e20/>
 
 <!-- ############################# BUILDING A COVARIANCE MATRIX  #####################################################-->
 <!-- This is where we define the location and some basic info for where the TTree files are saved that we wish to build a covariance matrix outof -->
 
- <MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1e1p.root" scale = "0.004" maxevents ="10000" > 
+ <MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1e1p.root" scale = "1.0" maxevents ="10000" pot = "3.3e23" > 
      <branch
          name="ereco"
          type="double"
          associated_subchannel="nu_uBooNE_nue_intrinsic"
          />
- </MultisimFile>
+</MultisimFile>
 
 <!-- We get the LEE signal from the same NUE intrinsic file above, but we add a friend tree to reweight it by the LEE signal. This can also just be a branch inside your NUE intrinsic file as well but this example uses the more complicated friend tree format -->
-<MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1e1p.root" scale = "0.002" maxevents ="10000" >
+<MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1e1p.root" scale = "1.0" maxevents ="10000" pot = "6.6e23" >
     <friend treename = "lee_signal_weights" filename="/uboone/data/users/markross/SBNfit_example_data/lee_signal_friend_tree.root"/>
     <branch
         name="ereco"
@@ -53,7 +53,7 @@
 </MultisimFile>
 
 
-<MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1m1p.root" scale = "0.01" maxevents ="10000" >
+<MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/1m1p.root" scale = "1" maxevents ="10000" pot = "1.32e23" >
     <branch
         name="ereco"
         type="double"
@@ -61,7 +61,7 @@
         />
 </MultisimFile>
 
-<MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/ccpi0.root" scale = "0.1" maxevents ="5000" >
+<MultisimFile treename="events" filename="/uboone/data/users/markross/SBNfit_example_data/ccpi0.root" scale = "0.1" maxevents ="5000" pot = "1.32e22">
     <branch
         name="ereco"
         type="double"

@@ -129,8 +129,6 @@ int main(int argc, char* argv[])
       std::cout<<"Error! Run `--help` or `-h`  for more details."<<std::endl;
       return 1;
   }
-  
-
 
   std::cout<<"Loading signal file : "<<signal_file<<" with xml "<<xml<<std::endl;
   SBNspec sig(signal_file,xml);

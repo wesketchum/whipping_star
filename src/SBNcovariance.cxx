@@ -16,7 +16,6 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     abnormally_large_weight = 1e3;//1e20;//20.0;
     bnbcorrection_str = "bnbcorrection_FluxHist";
 
-
     bool restrict_variations = false;
 
     variations_to_use = {"expskin_FluxUnisim","horncurrent_FluxUnisim","kminus_PrimaryHadronNormalization","kplus_PrimaryHadronFeynmanScaling","kzero_PrimaryHadronSanfordWang","nucleoninexsec_FluxUnisim","nucleonqexsec_FluxUnisim","nucleontotxsec_FluxUnisim","piminus_PrimaryHadronSWCentralSplineVariation","pioninexsec_FluxUnisim","pionqexsec_FluxUnisim","piontotxsec_FluxUnisim","piplus_PrimaryHadronSWCentralSplineVariation","genie_ccresAxial_Genie","genie_ncresAxial_Genie","genie_qema_Genie","genie_NC_Genie","genie_NonResRvbarp1pi_Genie","genie_NonResRvbarp2pi_Genie","genie_NonResRvp1pi_Genie","genie_NonResRvp2pi_Genie","genie_NonResRvbarp1piAlt_Genie","genie_NonResRvbarp2piAlt_Genie","genie_NonResRvp1piAlt_Genie","genie_NonResRvp2piAlt_Genie"};
@@ -95,8 +94,8 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
         std::cout<<otag<<" Read variations & universe size" << std::endl;
 
-        trees.at(fid)->SetBranchAddress("mcweight", &(f_weights[fid]));
-        //        trees.at(fid)->SetBranchAddress("eventweights", &(f_weights[fid]));
+        //trees.at(fid)->SetBranchAddress("mcweight", &(f_weights[fid]));
+        trees.at(fid)->SetBranchAddress(montecarlo_eventweight_branch_names[fid].c_str(), &(f_weights[fid]));
 
         for(const auto branch_variable : branch_variables[fid]) {
             //quick check that this branch associated subchannel is in the known chanels;
