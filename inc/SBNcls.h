@@ -29,6 +29,7 @@
 #include "TMatrixDEigen.h"
 #include "TMatrixDSymEigen.h"
 
+#include "ngrid.h"
 #include <gsl/gsl_randist.h>
 
 

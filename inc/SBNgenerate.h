@@ -37,13 +37,13 @@
 
 namespace sbn{
 
-
 class SBNgenerate : public SBNconfig{
 	
-
 	public:
 		
 	SBNspec spec_central_value;	
+	SBNspec* spec_cv;
+
 	NeutrinoModel nu_model;
 
 	SBNspec spec_osc_sin;
@@ -51,13 +51,13 @@ class SBNgenerate : public SBNconfig{
 	
 	SBNgenerate(std::string xmlname, NeutrinoModel inModel );
 	SBNgenerate(std::string xmlname);
-
-	int WriteOut();
+    ~SBNgenerate();
 
 	virtual bool EventSelection(int file);
 	virtual int FillHistograms(int file, int uni, double wei);
 	
 	int WritePrecomputedOscSpecs(std::string tag);
+	int WriteCVSpec(std::string tag);
 
 	//Some checks on multisims
 
@@ -70,7 +70,8 @@ class SBNgenerate : public SBNconfig{
 
 	std::vector<int> nentries;
 	std::vector< TBranch *> * branch_weight;
-	std::vector< std::map<std::string, std::vector<double> > * > * f_weights;
+    std::vector<std::map<std::string, std::vector<eweight_type> >* > f_weights;
+
 
 	std::vector<std::vector<int> > vars_i;
 	std::vector<std::vector<double> > vars_d;

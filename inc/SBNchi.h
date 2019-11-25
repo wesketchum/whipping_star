@@ -13,6 +13,7 @@
 #include "TH1.h"
 #include "TH2.h"
 #include "TMatrixT.h"
+#include "TMatrixTSym.h"
 #include "TVectorT.h"
 #include "TRandom3.h"
 #include "TFile.h"
@@ -25,6 +26,8 @@
 #include "TDecompSVD.h"
 #include "TMatrixDEigen.h"
 #include "TMatrixDSymEigen.h"
+#include <Eigen/Dense>
+#include <Eigen/SVD>
 
 namespace sbn{
 
@@ -39,7 +42,11 @@ class SBNchi : public SBNconfig{
 	SBNchi(SBNspec,std::string);
 	//Either initilize from a SBNspec  a TMatrix you have calculated elsewhere
 	SBNchi(SBNspec,TMatrixT<double>);
-	//Initialise a stat_only one;
+	SBNchi(SBNspec,TMatrixT<double>,bool);
+	SBNchi(SBNspec,TMatrixT<double>,std::string, bool);
+	SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin, std::string inxml, bool is_verbose, double random_seed);
+
+    //Initialise a stat_only one;
 	SBNchi(SBNspec, bool is_stat_only);
 	SBNchi(std::string);
 	
@@ -60,8 +67,8 @@ class SBNchi : public SBNconfig{
 
 	//Used in cholosky decompositions
 	bool cholosky_performed;
-	TMatrixT<double> matrix_lower_triangular;
-	std::vector<std::vector<double>> vec_matrix_lower_triangular;
+	TMatrixT<float> matrix_lower_triangular;
+	std::vector<std::vector<float>> vec_matrix_lower_triangular;
 
 	//Some reason eventually store the reuslt in vectors, I think there was memory issues.
 	std::vector<std::vector<double >> vec_matrix_inverted;
@@ -73,9 +80,13 @@ class SBNchi : public SBNconfig{
     std::minstd_rand * rangen_linear;
     std::ranlux24_base * rangen_carry;
     void InitRandomNumberSeeds();
+    void InitRandomNumberSeeds(double);
     TRandom3 * rangen;
+    std::normal_distribution<float>* m_dist_normal;
 
 	/*********************************** Member Functions ********************************/	
+
+
 
 
 	int ReloadCoreSpectrum(SBNspec *bkgin);
@@ -96,6 +107,11 @@ class SBNchi : public SBNconfig{
 	//layer 3 just loops layer_2 over all modes we have Setup
 	void CollapseModes(TMatrixT <double> & M, TMatrixT <double> & Mc);
 
+    TMatrixT<double> InvertMatrix(TMatrixT<double> &M);
+    TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<double>& spec);
+    TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec);
+
+
 	TMatrixT<double> * GetCollapsedMatrix();
 	int FillCollapsedCovarianceMatrix(TMatrixT<double>*);
 	int FillCollapsedCorrelationMatrix(TMatrixT<double>*);
@@ -112,6 +128,7 @@ class SBNchi : public SBNconfig{
 	double CalcChiLog(SBNspec *sigSpec);
 
 	double CalcChi(std::vector<double> * sigVec);
+	float  CalcChi(std::vector<float> * sigVec);
 	double CalcChi(double* sigVec);
 
 	double CalcChi(double ** inv, double *, double *);
@@ -123,7 +140,11 @@ class SBNchi : public SBNconfig{
 	//Cholosky related
 	int PerformCholoskyDecomposition(SBNspec *specin);
 
-	SBNspec SampleCovariance(SBNspec *specin); 
+//	SBNspec SampleCovariance(SBNspec *specin); 
+    std::vector<float> SampleCovariance(SBNspec *specin); 
+
+    //
+
 	TH1D SamplePoissonVaryCore(SBNspec *specin, int num_MC);
 	TH1D SamplePoissonVaryInput(SBNspec *specin, int num_MC, double maxchi);
 	TH1D SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<double>*);
@@ -141,9 +162,7 @@ class SBNchi : public SBNconfig{
 
     int SingleValueDecomposition(double ** matrix, double ** U, double**V, double *single_values );
 
-
-
-
+    std::vector<float> GeneratePseudoExperiment();
 
 
 		//some plotting things

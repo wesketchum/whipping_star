@@ -17,8 +17,10 @@ SBNspec::SBNspec(std::string whichxml, int which_universe, bool isverbose) : SBN
 				}else{
 					thisname = fn+"_MS"+std::to_string(which_universe);
 				}
-				//TH1D thischan(thisname.c_str(),"",num_bins[c], tbins );i
-				hist.emplace_back(TH1D(thisname.c_str(), thisname.c_str(), num_bins[c], tbins ));
+				TH1D thischan(thisname.c_str(),"",num_bins[c], tbins );
+                //thischan.AddDirectory(false);
+				hist.push_back(thischan);
+				//hist.emplace_back(TH1D(thisname.c_str(), thisname.c_str(), num_bins[c], tbins ));
 				//auto it = hist.begin()+ctr;
 				//map_hist[fn] = &(*it);
 				map_hist[fn] = ctr;
@@ -58,7 +60,8 @@ SBNspec::SBNspec(std::string rootfile, std::string whichxml, bool isverbose) : S
 }
 
 SBNspec::SBNspec(std::vector<double> input_full_vec, std::string whichxml) : SBNspec(input_full_vec, whichxml, false){ };
-SBNspec::SBNspec(std::vector<double> input_full_vec, std::string whichxml, bool isverbose) : SBNspec(whichxml,0,isverbose){
+SBNspec::SBNspec(std::vector<double> input_full_vec, std::string whichxml, bool isverbose) : SBNspec(input_full_vec,whichxml,-1,isverbose){};
+SBNspec::SBNspec(std::vector<double> input_full_vec, std::string whichxml, int universe, bool isverbose) : SBNspec(whichxml,universe,isverbose){
 
 	for(int i=0; i< input_full_vec.size(); i++){
 
@@ -216,9 +219,11 @@ int SBNspec::Scale(std::string name, double val){
 	for(auto& h: hist){
 		std::string test = h.GetName();
 
-		if(test.find(name)!=std::string::npos ){
+		if(test.find(name)!=std::string::npos){
 			//	std::cout<<name<<". found in: "<<test<<" at "<<test.find(name)<<std::endl;
 			h.Scale(val);
+
+            //std::cout<<"scaled "<<name<<" by "<<val<<std::endl;
 		}
 
 	}
@@ -279,6 +284,7 @@ int SBNspec::CalcFullVector(){
 int SBNspec::CollapseVector(){
 
 	collapsed_vector.clear();
+	f_collapsed_vector.clear();
 	CalcFullVector();
 
 	for(int im = 0; im < num_modes; im++){
@@ -300,6 +306,7 @@ int SBNspec::CollapseVector(){
 					}
 					//we can size this vector beforehand and get rid of all push_back()
 					collapsed_vector.push_back(tempval);
+					f_collapsed_vector.push_back((float)tempval);
 				}
 			}
 		}
@@ -345,12 +352,13 @@ int SBNspec::WriteOut(std::string tag){
 	std::vector<int> mycol = {kGreen+1, kRed-7, kBlue-4, kOrange-3, kMagenta+1, kCyan-3,kYellow, kGreen-3 };
 	int colindex =0;
 	TFile *f2 = new TFile((tag+".SBNspec.root").c_str(),"recreate");
-
+    f2->cd();
+    std::cout<<"This file has "<<hist.size()<<" histograms and "<<fullnames.size()<<" fullnames "<<std::endl;
 	for(auto& h: hist){
+        std::cout<<"WriteOut "<<h.Integral()<<std::endl;
 		h.Write();
 	}
 	f2->Close();
-
 
 	TFile *f = new TFile(("SBNfit_spectrum_plots_"+tag+".root").c_str(),"RECREATE");
 	f->cd();
@@ -367,7 +375,6 @@ int SBNspec::WriteOut(std::string tag){
 
 
 				bool this_run = false;
-				bool this_run_comp = false;
 
 				TCanvas* Cstack= new TCanvas(canvas_name.c_str(),canvas_name.c_str());
 				Cstack->SetFixedAspectRatio();
@@ -432,7 +439,7 @@ int SBNspec::WriteOut(std::string tag){
 
 
 
-				if(this_run ){
+				if(this_run){
 					double plot_pot=5e19;
 
 					double title_size_ratio=0.1;
@@ -483,7 +490,7 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 	//kWhite  = 0,   kBlack  = 1,   kGray    = 920,  kRed    = 632,  kGreen  = 416,
 	//kBlue   = 600, kYellow = 400, kMagenta = 616,  kCyan   = 432,  kOrange = 800,
 	//kSpring = 820, kTeal   = 840, kAzure   =  860, kViolet = 880,  kPink   = 900
-	std::vector<int> mycol = {kRed-7, kRed+1, kYellow-7, kOrange-3, kBlue, kBlue+2,  kGreen+1,kBlue-7, kPink, kViolet, kCyan,kMagenta,kAzure};
+	std::vector<int> mycol = {kAzure -9, kRed-7, kGreen-3, kBlue-6, kMagenta-3, kYellow-7,  kOrange-3, kBlue, kBlue+2,  kGreen+1,kBlue-7, kPink, kViolet, kCyan,kMagenta,kAzure};
 
 
 	TFile *f = new TFile(("SBNfit_compare_plots_"+tag+".root").c_str(),"RECREATE");
@@ -494,8 +501,12 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 	std::vector<TH1D> temp_comp = compsec->hist;
 
 	for(int k=0; k< fullnames.size(); k++){
-		TCanvas *ctmp = new TCanvas((std::to_string(k)+"_"+fullnames.at(k)).c_str(), (std::to_string(k)+"_"+fullnames.at(k)).c_str(),1200,1200);
+		TCanvas *ctmp = new TCanvas((tag+"_"+std::to_string(k)+"_"+fullnames.at(k)).c_str(), (std::to_string(k)+"_"+fullnames.at(k)).c_str(),1200,1200);
 		ctmp->cd();
+
+        if(map_hist.count(fullnames.at(k)) <=0 ){
+                std::cout<<"WARNING:  hist "<<fullnames[k]<<" is not in map_hist"<<std::endl;
+        }
 		TH1D * h1 = (TH1D*) temp.at(map_hist[fullnames.at(k)]).Clone((std::to_string(k)+fullnames.at(k)+"_1").c_str());
 		TH1D * h2 = (TH1D*) temp_comp.at(map_hist[fullnames.at(k)]).Clone((std::to_string(k)+fullnames.at(k)+"_2").c_str());
 
@@ -528,8 +539,8 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 				bool this_run = false;
 				bool this_run_comp = false;
 
-				TCanvas* Cstack= new TCanvas(canvas_name.c_str(),canvas_name.c_str());
-				Cstack->SetFixedAspectRatio();
+				TCanvas* Cstack= new TCanvas((tag+"_"+canvas_name).c_str(),canvas_name.c_str(),1200,1200);
+				//Cstack->SetFixedAspectRatio();
 
 				Cstack->cd();
 				THStack * hs = new THStack(canvas_name.c_str(),  canvas_name.c_str());
@@ -545,7 +556,7 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 
 				for(auto &h : temp_comp){
 					std::string test = h.GetName();
-					if(test.find(canvas_name)!=std::string::npos ){
+					if(test.find(canvas_name)!=std::string::npos){
 						double total_events = h.GetSumOfWeights();
 
 
@@ -605,10 +616,10 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 						}
 
 						std::ostringstream out;
-						out <<std::fixed<< std::setprecision(3) << total_events;
-						std::string hmm = " \t ";
+						out <<std::fixed<< std::setprecision(0) << total_events;
+						std::string hmm = " | ";
 						std::string tmp = h.GetName()+hmm+ out.str();
-						//std::string tmp = map_subchannel_plotnames.at(h.GetName()) +hmm+ out.str();
+						//std::string tmp = map_subchannel_plotnames.at(h.GetName()) +hmm+ out.str(); //fix this
 						//legStack.AddEntry(&h, tmp.c_str() , "f");
 						hsum->Add(&h);
 						//hs->Add(&h);
@@ -702,8 +713,8 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 					ratpre->GetYaxis()->SetTitle("Ratio");
 					ratpre->GetXaxis()->SetTitleOffset(title_offSet_ratioX);
 					ratpre->GetYaxis()->SetTitleOffset(title_offSet_ratioY);
-					ratpre->SetMinimum(ratpre->GetMinimum()*0.92);
-					ratpre->SetMaximum(ratpre->GetMaximum()*1.08);
+					ratpre->SetMinimum(ratpre->GetMinimum()*0.97);
+					ratpre->SetMaximum(ratpre->GetMaximum()*1.03);
 					ratpre->GetYaxis()->SetTitleSize(title_size_ratio);
 					ratpre->GetXaxis()->SetTitleSize(title_size_ratio);
 					ratpre->GetYaxis()->SetLabelSize(label_size_ratio);
@@ -711,6 +722,7 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 					ratpre->GetXaxis()->SetTitle("Reconstructed Energy [GeV]");
 
 					Cstack->Write(canvas_name.c_str() );
+                    Cstack->SaveAs((canvas_name+".pdf").c_str(),"pdf");
 
 				}
 

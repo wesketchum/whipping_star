@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
 
   // Stats + sys
   TFile * fsys = new TFile("EXAMPLE1.SBNcovar.root","read");
-  TMatrixD * cov = (TMatrixD*)fsys->Get("frac_covariance_EXAMPLE1");
+  TMatrixD * cov = (TMatrixD*)fsys->Get("frac_covariance");
 
   SBNchi *chi = new SBNchi(bkg,*cov);
   SBNchi *chi_statonly = new SBNchi(bkg);

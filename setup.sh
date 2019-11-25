@@ -4,7 +4,7 @@ setup gitflow v1_11_0;
 setup mrb v1_16_02;
 setup root v6_10_04d -q e14:nu:prof; 
 setup cmake v3_11_4;
-
+setup eigen v3_3_4a
 
 me="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 echo $me

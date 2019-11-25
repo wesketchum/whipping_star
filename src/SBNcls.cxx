@@ -23,8 +23,8 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 	 else if(which_sample ==1){ 
 		std::cout<<"SBNcls::CalcCLS\t|| Running in Covariance sampling mode!"<<std::endl;
 	}
-	std::vector<double> ven={0};
 	
+    std::vector<double> ven={0};
 	std::vector<double>  vec_CLs;
 
     time_t start_time = time(0);
@@ -38,7 +38,7 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 	TH1D h1_pdf;
 
     if(which_sample == 0) h1_pdf = chi.SamplePoissonVaryInput(h1, numMC, central_value_chi*50);
-	else if(which_sample ==1) h1_pdf = chi.SampleCovarianceVaryInput(h1, numMC, central_value_chi*50);
+	else if(which_sample==1) h1_pdf = chi.SampleCovarianceVaryInput(h1, numMC, central_value_chi*50);
 	
 	double sig1 = 0.5-(0.6827)/2.0;
 	double sig2 = 0.5-(0.9545)/2.0;
@@ -192,13 +192,7 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 	cp->SaveAs(("SBNfit_Cls_"+tag+".pdf").c_str(),"pdf");	
 	fp->Close();
 	
-
-
-
-
-
-
-
-
 	return 0;
 }
+
+

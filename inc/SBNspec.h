@@ -35,7 +35,7 @@ std::vector<size_t> SortIndexes(const std::vector<T> &v) {
 
 	// sort indexes based on comparing values in v 
 	sort(idx.begin(), idx.end(), 
-			[&v](size_t i1, size_t i2) {return v[i1] < v[i2];}); 
+			[&v](size_t i1, size_t i2) {return v[i1] > v[i2];}); 
 
 	return idx; 
 }
@@ -62,6 +62,7 @@ namespace sbn{
 
 			SBNspec(std::vector<double> input_full_vec, std::string whichxml);
 			SBNspec(std::vector<double> input_full_vec, std::string whichxml, bool isverbose);
+            SBNspec(std::vector<double> input_full_vec, std::string whichxml, int universe, bool isverbose);
 
 
 
@@ -74,6 +75,7 @@ namespace sbn{
 			std::vector<double > full_vector;
 			//This is the compessed vector, collapsing all subchannels down to a single channel
 			std::vector<double > collapsed_vector;
+			std::vector<float > f_collapsed_vector;
 
 
 
