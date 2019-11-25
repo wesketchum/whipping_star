@@ -21,7 +21,6 @@ struct SBNfitResult{
 
     SBNfitResult(std::vector<double> in_chi_vec, size_t in_bf_pt, double in_chi_min, TMatrixT<double> in_bf_covariance_matrix, TMatrixT<double> in_bf_inverse_covariance_matrix) : chi_vec(in_chi_vec), bf_pt(in_bf_pt), chi_min(in_chi_min),  bf_covariance_matrix(in_bf_covariance_matrix) ,  bf_inverse_covariance_matrix(in_bf_inverse_covariance_matrix) {};
 
-
 };
 
 

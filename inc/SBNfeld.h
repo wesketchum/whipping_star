@@ -87,7 +87,7 @@ namespace sbn{
             m_max_number_iterations = 5;
 
 
-            global_scale = 5.81731e19/6.6e20;
+            global_scale = 1;//5.81731e19/6.6e20;
             //global_scale = 4.51931e+19/6.6e20;
 
             m_chi_min_convergance_tolerance = 0.001;
@@ -96,16 +96,17 @@ namespace sbn{
 
         //Member Functions
         
-
-        std::vector<double> PerformIterativeFit(std::vector<float> &datavec, size_t grid_pt, TMatrixT<double>& inverse_background_collapsed_covariance_matrix);
+         int UpdateInverseCovarianceMatrix(size_t best_grid_point, TMatrixT<double>& inverse_collapsed, SBNchi * helper);
+        std::vector<double> PerformIterativeGridFit(const std::vector<float> &datavec, const size_t grid_pt, const TMatrixT<double>& inverse_background_collapsed_covariance_matrix);
 
 
         
         int FullFeldmanCousins();
         int PointFeldmanCousins(size_t);
-        int GlobalScan();
-        int GlobalScan(int);
-        int GlobalScan(SBNspec *obs);
+        std::vector<double> GlobalScan();
+        std::vector<double> GlobalScan(int);
+        std::vector<double> GlobalScan2(int);
+        std::vector<double> GlobalScan(SBNspec *obs);
         int RasterScan(); 
         
         int GenerateOscillatedSpectra();
@@ -116,6 +117,7 @@ namespace sbn{
         int SetRandomSeed(double);
 
         int GenerateBackgroundSpectrum(); 
+        int SetBackgroundSpectrum(std::string filein, std::string scale_nam, double val);
         int LoadBackgroundSpectrum();
         int LoadBackgroundSpectrum(std::string);
 
@@ -132,14 +134,17 @@ namespace sbn{
         
         
         int AddFlatDetSystematic(double percent);
+        std::vector<TGraph*> MakeFCMaps(std::string filein);
+        std::vector<TGraph*> MakeFCMaps(std::string filein,size_t);
         
+
 
 
         int GenerateScaledSpectra();
         std::string m_subchannel_to_scale;
 
         //This is a stopgap for better SBNchi integration.Hrump, need to fix that wierd float oddity. 
-        float CalcChi(std::vector<float>& data, std::vector<double>& prediction, TMatrixT<double> & inverse_covariance_matrix );
+        float CalcChi(const std::vector<float>& data, const std::vector<double>& prediction, const TMatrixT<double> & inverse_covariance_matrix );
 
     };
 

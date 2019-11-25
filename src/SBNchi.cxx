@@ -107,20 +107,25 @@ SBNchi::SBNchi(SBNspec in, bool is_is_stat_only): SBNconfig(in.xmlname), core_sp
 void SBNchi::InitRandomNumberSeeds(){
     this->InitRandomNumberSeeds(-1);
 }
-    
+
 void SBNchi::InitRandomNumberSeeds(double seed){
-    
+
     if(seed<0){
-         rangen_twister = new std::mt19937(random_device_seed());
-         rangen_linear = new std::minstd_rand(random_device_seed());
-         rangen_carry = new std::ranlux24_base(random_device_seed());
-         rangen = new TRandom3(0);
+        rangen_twister = new std::mt19937(random_device_seed());
+        rangen_linear = new std::minstd_rand(random_device_seed());
+        rangen_carry = new std::ranlux24_base(random_device_seed());
+        rangen = new TRandom3(0);
     }else{
-         rangen_twister = new std::mt19937(seed);
-         rangen_linear = new std::minstd_rand(seed);
-         rangen_carry = new std::ranlux24_base(seed);
-         rangen = new TRandom3(seed);
+        rangen_twister = new std::mt19937(seed);
+        rangen_linear = new std::minstd_rand(seed);
+        rangen_carry = new std::ranlux24_base(seed);
+        rangen = new TRandom3(seed);
     }
+
+
+    m_dist_normal=new std::normal_distribution<float>;
+    std::normal_distribution<float> dtemp(0.0,1.0);
+    m_dist_normal->param(dtemp.param());
 
 }
 
@@ -609,11 +614,10 @@ void SBNchi::CollapseModes(TMatrixT <double> & M, TMatrixT <double> & Mc){
 
 TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec){
 
-    TMatrixT<double> Mout( M->GetNcols(), M->GetNcols() );
-    // systematics per scaled event
+    TMatrixT<double> Mout(M->GetNcols(), M->GetNcols() );
+    
     for(int i =0; i<M->GetNcols(); i++)
     {
-        //std::cout<<"KRAK: "<<core_spectrum.full_vector.at(i)<<std::endl;
         for(int j =0; j<M->GetNrows(); j++)
         {
             if(  std::isnan( (*M)(i,j) )){
@@ -659,7 +663,8 @@ TMatrixT<double> SBNchi::InvertMatrix(TMatrixT<double> &M){
 
     if(is_verbose) std::cout<<otag<<" About to do a SVD decomposition"<<std::endl;
     TDecompSVD svd(M);
-    if (!svd.Decompose()) {
+
+    if (!svd.Decompose()){
         std::cout<<otag<<" (InvertMatrix) Decomposition failed, matrix not symettric?, has nans?" << std::endl;
         std::cout<<otag<<"ERROR: The matrix to invert failed a SVD decomp!"<<std::endl;
 
@@ -1018,11 +1023,7 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
         }
     }
 
-    //Lets NOT add these in here but treat them as Poisson later. Seems better
-    for(int i =0; i<U.GetNcols(); i++)
-    {
-        U(i,i) += specin->full_vector.at(i);
-    }
+    //Stats error are NOT added back in herebut treat them as Poisson later. Seems better
 
     int n_t = U.GetNcols();
 
@@ -1066,7 +1067,6 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
 
         }	
     }
-
 
     //Seconndly attempt a Cholosky Decomposition
     TDecompChol * chol = new TDecompChol(U,0.1);
@@ -1378,6 +1378,34 @@ int SBNchi::CollapseVectorStandAlone(double* full_vector, double *collapsed_vect
 
 
     return 0;
+}
+
+
+std::vector<float> SBNchi::GeneratePseudoExperiment(){
+    if(!cholosky_performed) PerformCholoskyDecomposition(&core_spectrum); 
+
+    int n_t = core_spectrum.full_vector.size();
+    std::vector<float> sampled(n_t);
+    is_verbose = false;
+
+    for(int i=0; i< n_t; ++i){
+        sampled[i] = core_spectrum.full_vector[i];    
+        for(int j=0; j<n_t; ++j){
+            float gaus = (*m_dist_normal)(*rangen_twister);
+            sampled[i] += vec_matrix_lower_triangular[i][j]*gaus;
+        }
+    }
+
+    //Now poisson fluctuate the sampled spectrum
+    for(int j=0; j<n_t; ++j){
+        std::poisson_distribution<int> dist_pois(sampled[j]);
+        sampled[j] = float(dist_pois(*rangen_twister));
+    }
+
+    std::vector<float> collapsed(num_bins_total_compressed,0.0);
+    this->CollapseVectorStandAlone(&sampled[0], &collapsed[0]);
+
+    return collapsed;
 }
 
 

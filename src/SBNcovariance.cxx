@@ -10,7 +10,6 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
     std::cout <<otag<<"Start" << std::endl;
 
-
     universes_used = 0;
     tolerence_positivesemi = 1e-5;
     is_small_negative_eigenvalue = false;
@@ -22,11 +21,9 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
     variations_to_use = {"expskin_FluxUnisim","horncurrent_FluxUnisim","kminus_PrimaryHadronNormalization","kplus_PrimaryHadronFeynmanScaling","kzero_PrimaryHadronSanfordWang","nucleoninexsec_FluxUnisim","nucleonqexsec_FluxUnisim","nucleontotxsec_FluxUnisim","piminus_PrimaryHadronSWCentralSplineVariation","pioninexsec_FluxUnisim","pionqexsec_FluxUnisim","piontotxsec_FluxUnisim","piplus_PrimaryHadronSWCentralSplineVariation","genie_ccresAxial_Genie","genie_ncresAxial_Genie","genie_qema_Genie","genie_NC_Genie","genie_NonResRvbarp1pi_Genie","genie_NonResRvbarp2pi_Genie","genie_NonResRvp1pi_Genie","genie_NonResRvp2pi_Genie","genie_NonResRvbarp1piAlt_Genie","genie_NonResRvbarp2piAlt_Genie","genie_NonResRvp1piAlt_Genie","genie_NonResRvp2piAlt_Genie"};
 
-    //variations_to_use =   {"expskin_FluxUnisim","horncurrent_FluxUnisim","kminus_PrimaryHadronNormalization","kplus_PrimaryHadronFeynmanScaling","kzero_PrimaryHadronSanfordWang","nucleoninexsec_FluxUnisim","nucleonqexsec_FluxUnisim","nucleontotxsec_FluxUnisim","piminus_PrimaryHadronSWCentralSplineVariation","pioninexsec_FluxUnisim","pionqexsec_FluxUnisim","piontotxsec_FluxUnisim","piplus_PrimaryHadronSWCentralSplineVariation","genie_ccresAxial_Genie","genie_ncresAxial_Genie","genie_qema_Genie","genie_NC_Genie"};
     for(auto &s: variations_to_use){
         m_variations_to_use[s]=true;
     }
-
 
 
 
@@ -175,7 +172,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             used_montecarlos[fid] += it.second.size();
 
             variations_tmp.push_back(it.first);
-        }
+    }
         } // end fid
 
         std::sort(variations_tmp.begin(),variations_tmp.end());
@@ -1043,7 +1040,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     }
 
     int SBNcovariance::DoConstraint(int which_signal, int which_constraint){
-         std::cout<<"----------------Starting covariance Constraint --------------------"<<std::endl;
+        std::cout<<"----------------Starting covariance Constraint --------------------"<<std::endl;
 
         SBNchi collapse_chi(xmlname);
         TMatrixT<double> coll_covariance(num_bins_total_compressed,num_bins_total_compressed);
@@ -1061,11 +1058,11 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         std::vector<double> n_con;
 
         for(int i=0; i< num_bins_sig; i++){
-                n_sig.push_back(n_events[i]);
+            n_sig.push_back(n_events[i]);
         }
 
         for(int i=num_bins_sig; i< n_events.size(); i++){
-                n_con.push_back(n_events[i]);
+            n_con.push_back(n_events[i]);
         }
 
         std::cout<<"1g1p: "<<std::accumulate(n_sig.begin(),n_sig.end(),0.0)<<std::endl;
@@ -1101,7 +1098,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         m_inv_full.Invert();
         std::cout<<"covar invert"<<std::endl;
         m_inv_full.Print();
-        
+
         TMatrixD m_inv_con(num_bins_tot,num_bins_tot);
         for(int i=0; i<num_bins_tot;i++){
             for(int j=0; j<num_bins_tot; j++){
@@ -1116,7 +1113,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             } 
         }
         m_covar_con.Invert();
-        
+
         for(int i=0; i<num_bins_tot;i++)
         {
             for(int j=0; j<num_bins_tot;j++)
@@ -1132,14 +1129,14 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         }
         std::cout<<"covar con sys"<<std::endl;
         m_covar_con_sys.Print();
-        
+
         for(int i=0;i<num_bins_tot;i++){
             double uncon=sqrt(m_covar_full_sys(i,i))/n_events[i];
             double con=sqrt(m_covar_con_sys(i,i))/n_events[i];
 
             std::cout<<"bin="<<i<<"/events="<<n_events[i]<<"/uncon="<<uncon<<"/con="<<con<<" ratio: "<<uncon/con<<std::endl;
         }
-    
+
 
         TFile *fnew = new TFile("constraint_test.root","recreate");
         TMatrixD cov_before = coll_covariance.GetSub(0,num_bins_sig-1,0,num_bins_sig-1);

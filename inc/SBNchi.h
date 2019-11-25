@@ -26,6 +26,8 @@
 #include "TDecompSVD.h"
 #include "TMatrixDEigen.h"
 #include "TMatrixDSymEigen.h"
+#include <Eigen/Dense>
+#include <Eigen/SVD>
 
 namespace sbn{
 
@@ -80,8 +82,11 @@ class SBNchi : public SBNconfig{
     void InitRandomNumberSeeds();
     void InitRandomNumberSeeds(double);
     TRandom3 * rangen;
+    std::normal_distribution<float>* m_dist_normal;
 
 	/*********************************** Member Functions ********************************/	
+
+
 
 
 	int ReloadCoreSpectrum(SBNspec *bkgin);
@@ -138,6 +143,8 @@ class SBNchi : public SBNconfig{
 //	SBNspec SampleCovariance(SBNspec *specin); 
     std::vector<float> SampleCovariance(SBNspec *specin); 
 
+    //
+
 	TH1D SamplePoissonVaryCore(SBNspec *specin, int num_MC);
 	TH1D SamplePoissonVaryInput(SBNspec *specin, int num_MC, double maxchi);
 	TH1D SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<double>*);
@@ -155,9 +162,7 @@ class SBNchi : public SBNconfig{
 
     int SingleValueDecomposition(double ** matrix, double ** U, double**V, double *single_values );
 
-
-
-
+    std::vector<float> GeneratePseudoExperiment();
 
 
 		//some plotting things

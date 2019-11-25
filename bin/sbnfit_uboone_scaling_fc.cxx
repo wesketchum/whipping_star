@@ -142,34 +142,25 @@ int main(int argc, char* argv[])
     std::cout<<"Begining FeldmanCousins for tag: "<<tag<<std::endl;
 
     NGrid mygrid;
-    mygrid.AddDimension("scale", 0.01, 20, 0.2);//0.1
+    mygrid.AddDimension("scale", 0.001, 8, 0.05);//0.1
 
     //Print the grid interesting bits
     mygrid.Print();
     SBNfeld myfeld(mygrid,tag,xml);
 
+
     if(mode_option == "feldman"){
     
         std::cout<<"Begininning a full Feldman-Cousins analysis for tag : "<<tag<<std::endl;
-      
-        NeutrinoModel nullModel(0,0,0);
-        SBNgenerate  gen(xml,nullModel);
-        gen.WriteCVSpec(tag);
 
-        return 0;
-
-        TMatrixT<double> *Msys = new TMatrixT<double>(8,8);
-        Msys->Zero();
-
-        //myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
-        myfeld.SetFractionalCovarianceMatrix(Msys);
-        myfeld.SetStatOnly();
-        myfeld.m_subchannel_to_scale = "nu_uBooNE_trk_signal";
+        myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
+        //myfeld.SetFractionalCovarianceMatrix(Msys);
+        //myfeld.SetStatOnly();
+        myfeld.m_subchannel_to_scale = "nu_uBooNE_1g1p_ncdelta";
 
         myfeld.SetCoreSpectrum(tag+"_CV.SBNspec.root");
+        myfeld.SetBackgroundSpectrum(tag+"_CV.SBNspec.root","nu_uBooNE_1g1p_ncdelta",0.0);
         myfeld.GenerateScaledSpectra();
-        myfeld.LoadBackgroundSpectrum(tag+"_CV.SBNspec.root");
-
 
         std::cout<<"Setting random seed "<<random_number_seed<<std::endl;
         myfeld.SetRandomSeed(random_number_seed);
@@ -181,9 +172,6 @@ int main(int argc, char* argv[])
 
         std::cout<<"Beginning to peform FullFeldmanCousins analysis"<<std::endl;
         myfeld.FullFeldmanCousins();
-
-
-
 
     }else if(mode_option == "test"){
 
@@ -207,6 +195,122 @@ int main(int argc, char* argv[])
 
         std::cout<<"Beginning to peform a globalScan analysis"<<std::endl;
         myfeld.GlobalScan();
+
+    }else if(mode_option == "scalescan"){
+
+
+        if(bool_stat_only){
+            myfeld.SetEmptyFractionalCovarianceMatrix();
+            myfeld.SetStatOnly();
+            std::cout<<"RUNNING Stat Only!"<<std::endl;
+        }else{
+            myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
+        }
+        myfeld.m_subchannel_to_scale = "nu_uBooNE_1g1p_ncdelta";
+
+        myfeld.SetCoreSpectrum(tag+"_CV.SBNspec.root");
+        myfeld.SetBackgroundSpectrum(tag+"_CV.SBNspec.root","nu_uBooNE_1g1p_ncdelta",0.0);
+        myfeld.GenerateScaledSpectra();
+
+        std::cout<<"Calculating the necessary SBNchi objects"<<std::endl;
+        myfeld.CalcSBNchis();
+        std::cout <<"DONE calculating the necessary SBNchi objects at : " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
+
+        TFile *f = new TFile("scan.root","recreate");
+        f->cd();
+        std::cout<<"Starting to peform a globalScan analysis"<<std::endl;
+        std::vector<std::vector<double>> vec_grid = mygrid.GetGrid();
+        TH2D * f_plot = new TH2D("f_plot","f_plot",vec_grid.size(),vec_grid.front()[0],vec_grid.back()[0],vec_grid.size(),vec_grid.front()[0],vec_grid.back()[0]);
+        TH2D * f_prob_plot = new TH2D("f_prob_plot","f_prob_plot",vec_grid.size(),vec_grid.front()[0],vec_grid.back()[0],vec_grid.size(),vec_grid.front()[0],vec_grid.back()[0]);
+        TH2D * f_prob_c_plot = new TH2D("f_prob_c_plot","f_prob_c_plot",vec_grid.size(),vec_grid.front()[0],vec_grid.back()[0],vec_grid.size(),vec_grid.front()[0],vec_grid.back()[0]);
+    
+        std::cout<<"Makeing FC Maps!"<<std::endl;
+        std::vector<TGraph*> tgr = myfeld.MakeFCMaps("SBNfeld_output_TEST.root");
+
+        std::cout<<"MPrinting stuff"<<std::endl;
+        for(int i=0; i< vec_grid.size(); i++){
+            std::cout<<"On Grid Point "<<i<<" Scale_Factor: "<<vec_grid[i][0]<<std::endl;
+            std::vector<double> vals = myfeld.GlobalScan2(i);
+            for(int j=0; j < vec_grid.size(); j++){
+                    f_plot->SetBinContent(j,i,vals[j]);
+                    f_prob_plot->SetBinContent(j,i,tgr[i]->Eval(vals[j]));
+                    f_prob_c_plot->SetBinContent(j,i,sqrt(2)*TMath::ErfInverse(1-tgr[i]->Eval(vals[j])));
+                    std::cout<<"ScaleScan True: "<<vec_grid[i][0]<<" reco "<<vec_grid[j][0]<<" val "<<vals[j]<<" prob "<<tgr[i]->Eval(vals[j])<<std::endl;
+            }
+        }
+        f->cd();
+        f_plot->Write();
+        f_prob_plot->Write();
+        f_prob_c_plot->Write();
+        TCanvas *c = new TCanvas("hope");
+        c->cd();
+
+        double contours1[1]; contours1[0]=1.0;
+        double contours2[1]; contours2[0]=4.0;
+        double contours3[1]; contours3[0]=9.0;
+        double contours4[1]; contours4[0]=16.0; 
+
+        f_plot->SetLineColor(kRed);
+        f_plot->SetContour(1,contours1);
+        f_plot->DrawCopy("cont3");
+
+        f_plot->SetLineColor(kBlue);
+        f_plot->SetContour(1,contours2);
+        f_plot->DrawCopy("cont3 same");
+
+        f_plot->SetLineColor(kGreen);
+        f_plot->SetContour(1,contours3);
+        f_plot->DrawCopy("cont3 same");
+
+        f_plot->SetLineColor(kMagenta);
+        f_plot->SetContour(1,contours4);
+        f_plot->Draw("cont3 same");
+
+        f_plot->GetXaxis()->SetTitle("Reconstructed Cross-Section (xSM)");
+        f_plot->GetYaxis()->SetTitle("True Cross-Section (xSM)");
+
+
+        c->Write();
+        c->SaveAs("scan.png","png");
+        f->Close();
+
+
+    }
+    else if(mode_option == "singlescan"){
+
+
+        if(bool_stat_only){
+            myfeld.SetEmptyFractionalCovarianceMatrix();
+            myfeld.SetStatOnly();
+            std::cout<<"RUNNING Stat Only!"<<std::endl;
+        }else{
+            myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
+        }
+        myfeld.m_subchannel_to_scale = "nu_uBooNE_1g1p_ncdelta";
+
+        myfeld.SetCoreSpectrum(tag+"_CV.SBNspec.root");
+        myfeld.SetBackgroundSpectrum(tag+"_CV.SBNspec.root","nu_uBooNE_1g1p_ncdelta",0.0);
+        myfeld.GenerateScaledSpectra();
+
+        std::cout<<"Calculating the necessary SBNchi objects"<<std::endl;
+        myfeld.CalcSBNchis();
+        std::cout <<"DONE calculating the necessary SBNchi objects at : " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
+
+        std::cout<<"Starting to peform a globalScan analysis"<<std::endl;
+        std::vector<std::vector<double>> vec_grid = mygrid.GetGrid();
+
+        {
+            int i = grid_pt;
+
+        std::cout<<"Makeing FC Maps!"<<std::endl;
+        std::vector<TGraph*> tgr = myfeld.MakeFCMaps("SBNfeld_output_TEST.root",i);
+            std::cout<<"On Grid Point "<<i<<" Scale_Factor: "<<vec_grid[i][0]<<std::endl;
+            std::vector<double> vals = myfeld.GlobalScan2(i);
+            for(int j=0; j < vec_grid.size(); j++){
+                       std::cout<<"SimpleScan True: "<<vec_grid[i][0]<<" reco "<<vec_grid[j][0]<<" val "<<vals[j]<<" prob "<<tgr[i]->Eval(vals[j])<<std::endl;
+                       //std::cout<<"SimpleScan: "<<j<<" "<<vec_grid[j][0]<<" "<<vals[j]<<std::endl;
+            }
+        }
 
     }
 
