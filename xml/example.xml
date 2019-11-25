@@ -27,7 +27,7 @@
     <subchannel name="intrinsic" />
 </channel>
 
-<!--What pot do you want to plot in all histograms/CV/etc... --/>
+<!--What pot do you want to plot in all histograms/CV/etc... -->
 <plotpot value=13.2e20/>
 
 <!-- ############################# BUILDING A COVARIANCE MATRIX  #####################################################-->
