@@ -43,6 +43,7 @@ struct NGridDimension{
         f_is_fixed = false;
     };
 
+
     NGridDimension(std::string name, double val) : f_name(name), f_fixed_value(val), f_is_fixed(true){
         f_N = 1;
         f_step = 0.0;
@@ -82,11 +83,36 @@ struct NGrid{
         return;
     }
 
+    void AddDimension(std::string name, std::string grid_scan){
+           std::vector<double> vect;
+           std::stringstream ss(grid_scan);
+
+            double number;
+            while ( ss >> number ) vect.push_back( number );
+
+ 
+        double min = vect[0];
+        double max = vect[1];
+        double step = fabs(max-min)/vect[2];
+        if(min>=max){
+            std::cout<<"ERROR! min grid value ("<<min<<")  is larger than max ("<<max<<") in grid string "<<grid_scan<<std::endl;
+            exit(EXIT_FAILURE);
+        }
+        std::cout<<"NGrid definied with a min value of "<<min<<" a max value of "<<max<<" with "<<vect[2]<<" steps of size "<<step<<std::endl;
+
+        f_dimensions.emplace_back( NGridDimension(name,min,max,step));
+        f_num_dimensions++;
+        f_num_total_points *= f_dimensions.back().GetNPoints();
+        return;
+    }
+
     void AddFixedDimension(std::string name, double val){
         f_dimensions.emplace_back(NGridDimension(name,val));
         f_num_dimensions++;
         return;
     }
+
+
 
     std::vector<std::vector<double>> GetGrid(){
         std::vector<std::vector<double>> grid;            

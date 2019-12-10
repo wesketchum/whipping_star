@@ -64,6 +64,8 @@ namespace sbn{
         bool m_bool_stat_only;
         bool m_bool_print_comparasons;
 
+        bool m_use_CNP;
+
         int m_max_number_iterations;
         double m_chi_min_convergance_tolerance;
 
@@ -85,7 +87,7 @@ namespace sbn{
             m_bool_print_comparasons = true;
             m_random_seed = -1;
             m_max_number_iterations = 5;
-
+            m_use_CNP = false;
 
             global_scale = 1;//5.81731e19/6.6e20;
             //global_scale = 4.51931e+19/6.6e20;
@@ -96,11 +98,12 @@ namespace sbn{
 
         //Member Functions
         
+         int UpdateInverseCovarianceMatrixCNP(size_t best_grid_point, const std::vector<float> &datavec, TMatrixT<double>& inverse_collapsed, SBNchi * helper);
          int UpdateInverseCovarianceMatrix(size_t best_grid_point, TMatrixT<double>& inverse_collapsed, SBNchi * helper);
-        std::vector<double> PerformIterativeGridFit(const std::vector<float> &datavec, const size_t grid_pt, const TMatrixT<double>& inverse_background_collapsed_covariance_matrix);
+         std::vector<double> PerformIterativeGridFit(const std::vector<float> &datavec, const size_t grid_pt, const TMatrixT<double>& inverse_background_collapsed_covariance_matrix);
 
 
-        
+        int UseCNP(){m_use_CNP = true;};
         int FullFeldmanCousins();
         int PointFeldmanCousins(size_t);
         std::vector<double> GlobalScan();
@@ -131,12 +134,17 @@ namespace sbn{
         int SetStatOnly();
 
         NeutrinoModel convert3p1(std::vector<double> ingrid);
-        
+       
+
+        std::vector<double> getConfidenceRegion(TGraph *gmin, TGraph *gmax,double val);
         
         int AddFlatDetSystematic(double percent);
+        std::vector<TGraph*> LoadFCMaps(std::string filein);
         std::vector<TGraph*> MakeFCMaps(std::string filein);
         std::vector<TGraph*> MakeFCMaps(std::string filein,size_t);
         
+
+        std::vector<double> MakeMedianMaps(std::string filein,size_t i);
 
 
 
@@ -149,7 +157,7 @@ namespace sbn{
     };
 
 
-
+int rootEigenWrapper(std::string const & xmlname, std::string const & tag, std::string const & signal_subchannel, double bkg_scale_value, NGrid & mygrid, int number , bool bool_stat_only);
 
 }
 #endif

@@ -145,7 +145,6 @@ int main(int argc, char* argv[])
                 std::cout<<"\t-r\t--randomseed\t\tRandomNumber Seed (default from machine)"<<std::endl; 
                 std::cout<<"\t-h\t--help\t\tThis help menu."<<std::endl;
                 std::cout<<"---------------------------------------------------"<<std::endl;
-
                 return 0;
         }
     }

@@ -747,6 +747,22 @@ int SBNspec::GetHistNumber(int f){
 }
 
 
+std::vector<int> SBNspec::GetIndiciesFromSubchannel(std::string const & subchannel){
+    std::vector<int> ans;
+    if(map_hist.count(subchannel)!=1){
+        std::cout<<"Error! You asked for a subchannel that doesnt exist in xml: "<<subchannel<<std::endl;
+        exit(EXIT_FAILURE);
+    }
+    int hist_num =this->map_hist[subchannel];
+
+    this->CalcFullVector();
+    for(int i=0; i<this->full_vector.size(); i++){
+	   if( GetHistNumber(i)==hist_num) ans.push_back(i); 
+    }
+
+    return ans;
+}
+
 int SBNspec::GetLocalBinNumber(double invar, int which_hist)
 {
 	int localbin = hist.at(which_hist).GetXaxis()->FindBin(invar);

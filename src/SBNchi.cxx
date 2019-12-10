@@ -631,7 +631,25 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<do
     }
     return Mout;
 }
+TMatrixT<double> SBNchi::CalcCovarianceMatrixCNP(TMatrixT<double>*M, std::vector<double>& spec, const std::vector<float>& datavec ){
 
+    TMatrixT<double> Mout(M->GetNcols(), M->GetNcols() );
+    
+    for(int i =0; i<M->GetNcols(); i++)
+    {
+        for(int j =0; j<M->GetNrows(); j++)
+        {
+            if(  std::isnan( (*M)(i,j) )){
+                Mout(i,j) = 0.0;
+            }else{
+
+                Mout(i,j) = (*M)(i,j)*spec[i]*spec[j];
+            }
+            if(i==j) Mout(i,i) +=   ( datavec[i] >0.001 ? 3.0/(1.0/datavec[i] +  2.0/spec[i])  : spec[i]/2.0 );
+        }
+    }
+    return Mout;
+}
 
 TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<double>& spec){
 
@@ -1093,6 +1111,7 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
     }
 
     cholosky_performed = true;	
+    delete chol;
     return 0;
 }
 
@@ -1375,27 +1394,27 @@ int SBNchi::CollapseVectorStandAlone(double* full_vector, double *collapsed_vect
             }
         }
     }
-
-
     return 0;
 }
 
 
 std::vector<float> SBNchi::GeneratePseudoExperiment(){
-    if(!cholosky_performed) PerformCholoskyDecomposition(&core_spectrum); 
+    if(!cholosky_performed || is_stat_only) PerformCholoskyDecomposition(&core_spectrum); 
 
     int n_t = core_spectrum.full_vector.size();
     std::vector<float> sampled(n_t);
     is_verbose = false;
 
-    for(int i=0; i< n_t; ++i){
-        sampled[i] = core_spectrum.full_vector[i];    
-        for(int j=0; j<n_t; ++j){
-            float gaus = (*m_dist_normal)(*rangen_twister);
-            sampled[i] += vec_matrix_lower_triangular[i][j]*gaus;
+        for(int i=0; i< n_t; ++i){
+            sampled[i] = core_spectrum.full_vector[i]; 
+            
+            if(!is_stat_only){
+                 for(int j=0; j<n_t; ++j){
+                     float gaus = (*m_dist_normal)(*rangen_twister);
+                     sampled[i] += vec_matrix_lower_triangular[i][j]*gaus;
+                }
+            }
         }
-    }
-
     //Now poisson fluctuate the sampled spectrum
     for(int j=0; j<n_t; ++j){
         std::poisson_distribution<int> dist_pois(sampled[j]);
@@ -1404,10 +1423,8 @@ std::vector<float> SBNchi::GeneratePseudoExperiment(){
 
     std::vector<float> collapsed(num_bins_total_compressed,0.0);
     this->CollapseVectorStandAlone(&sampled[0], &collapsed[0]);
-
     return collapsed;
 }
-
 
 
 std::vector<float> SBNchi::SampleCovariance(SBNspec *specin){
@@ -1452,7 +1469,6 @@ TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC, double maxchi){
 }
 //This one varies the input comparative spectrum, and as sucn has  only to calculate the matrix_systematics once
 TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<double> *chival){
-
 
     float** a_vec_matrix_inverted = new float*[num_bins_total_compressed];
 
@@ -1501,7 +1517,6 @@ TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<dou
         dist_pois.push_back(std::poisson_distribution<int>(a_specin[j])); 
         //dist_pois.push_back(std::normal_distribution<float>(a_specin[j],sqrt(a_specin[j])));
     }
-
 
     for(int i=0; i < num_MC;i++){
 

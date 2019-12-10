@@ -110,6 +110,8 @@ class SBNchi : public SBNconfig{
     TMatrixT<double> InvertMatrix(TMatrixT<double> &M);
     TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<double>& spec);
     TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec);
+    TMatrixT<double> CalcCovarianceMatrixCNP(TMatrixT<double>*M, std::vector<double>& spec, const std::vector<float>& datavec );
+    
 
 
 	TMatrixT<double> * GetCollapsedMatrix();

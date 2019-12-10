@@ -1,5 +1,5 @@
 
-add_library (SBNfitlib SBNcovariance.cxx SBNgenerate SBNconfig.cxx SBNspec.cxx SBNfit.cxx SBNchi.cxx prob.cxx SBNfit3pN.cxx SBNosc.cxx SBNprob.cxx SBNcls.cxx SBNfeld.cxx )
+add_library (SBNfitlib SBNcovariance.cxx SBNgenerate SBNconfig.cxx SBNspec.cxx SBNfit.cxx SBNchi.cxx prob.cxx SBNfit3pN.cxx SBNosc.cxx SBNprob.cxx SBNcls.cxx SBNfeld.cxx SBNfeld_Eigen.cxx )
 
 include_directories ( ${CMAKE_SOURCE_DIR}/inc/)
 include_directories ( ${CMAKE_SOURCE_DIR}/src/)

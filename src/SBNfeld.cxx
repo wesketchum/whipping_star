@@ -282,11 +282,10 @@ int SBNfeld::CalcSBNchis(){
 
     for(size_t t =0; t < m_num_total_gridpoints; t++){
         //Setup a SBNchi for this true point
-        std::cout<<"Setting up grid point SBNchi "<<t<<std::endl;
-
+        //std::cout<<"Setting up grid point SBNchi "<<t<<std::endl;
         if(m_bool_stat_only){
             m_sbnchi_grid.push_back(new SBNchi(*m_cv_spec_grid.at(t), stat_only_matrix, this->xmlname, false, m_random_seed)) ;
-
+            m_sbnchi_grid.back()->is_stat_only = true;
         }else{
             m_sbnchi_grid.push_back(new SBNchi(*m_cv_spec_grid.at(t), *m_full_fractional_covariance_matrix, this->xmlname, false, m_random_seed)) ;
         }
@@ -307,15 +306,17 @@ int SBNfeld::FullFeldmanCousins(){
     m_sbnchi_grid[0]->CollapseModes(background_full_covariance_matrix, background_collapsed_covariance_matrix);    
     TMatrixT<double> inverse_background_collapsed_covariance_matrix = m_sbnchi_grid[0]->InvertMatrix(background_collapsed_covariance_matrix);   
 
-
     TFile *fout =  new TFile(("SBNfeld_output_"+tag+".root").c_str(),"recreate");
     fout->cd();
 
-
     for(size_t t =0; t < m_num_total_gridpoints; t++){
+        
+        time_t start_time = time(0);
 
         SBNspec * true_spec = m_cv_spec_grid.at(t);
         SBNchi  * true_chi = m_sbnchi_grid.at(t);          
+        
+        double t_val = m_grid.f_dimensions[0].GetPoint(t);
 
         std::cout<<"Starting on point "<<t<<"/"<<m_num_total_gridpoints<<std::endl;
 
@@ -324,109 +325,116 @@ int SBNfeld::FullFeldmanCousins(){
 
         std::vector<double> vec_delta_chi(num_universes,0);
         std::vector<double> vec_chi_min(num_universes,0);
+        std::vector<double> vec_bf_val(num_universes,0);
+        std::vector<int> vec_bf_pt(num_universes,0);
 
         double delta_chi_critical = DBL_MIN;
         //Some output informatation
         double tree_delta_chi = 0;
         double tree_chi_min = 0;
-        int tree_bf_grid=0;
+        double tree_bf_value=0;
+        int tree_bf_pt=0;
 
         fout->cd();
         TTree t_outtree(("ttree_"+std::to_string(t)).c_str(),("ttree_"+std::to_string(t)).c_str());
         t_outtree.Branch("delta_chi2",&tree_delta_chi);
         t_outtree.Branch("chi2_min",&tree_chi_min);
-        t_outtree.Branch("bf_gridpoint",&tree_bf_grid);       
+        t_outtree.Branch("bf_gridvalue",&tree_bf_value);       
+        t_outtree.Branch("bf_gridpoint",&tree_bf_pt);       
 
         for(size_t i=0; i< num_universes; i++){
 
-            //step 0. Make a fake-data-experimet for this point, drawn from covariance
-            const std::vector<float>  fake_data= true_chi->GeneratePseudoExperiment();
 
-            //Whats the Best Fit Point? why am I passing in t here eh, well just to make life easier it returns the chi 
+            const std::vector<float>  fake_data = true_chi->GeneratePseudoExperiment();
+
             std::vector<double> ans = this->PerformIterativeGridFit(fake_data,t,inverse_background_collapsed_covariance_matrix);
 
-            //step 4 calculate the delta_chi for this universe
             vec_delta_chi[i] = ans[1]-ans[2];
             vec_chi_min[i] = ans[2];
-
+            vec_bf_val[i] = m_grid.f_dimensions[0].GetPoint((int)ans[0]);
+            vec_bf_pt[i] = (int)ans[0];
+            
+            //some root output
             tree_delta_chi = vec_delta_chi[i];
             tree_chi_min = vec_chi_min[i];
-            tree_bf_grid = (int)ans[0]; 
+            tree_bf_value= vec_bf_val[i]; 
+            tree_bf_pt = (int)ans[0];
 
             t_outtree.Fill();
         }
 
+        std::cout <<"Finished universe loop for grid pt "<<t<<" at  walltime time : " << difftime(time(0), start_time) << " Seconds.\n";
 
+        double delta_chi_min =t_outtree.GetMinimum("delta_chi2");
+        double delta_chi_max =t_outtree.GetMaximum("delta_chi2");
 
-        double tmin = DBL_MAX;
-        double tmax = DBL_MIN;
-        for(double&v:vec_delta_chi){
-            tmin=std::min(tmin,v);
-            tmax=std::max(tmax,v);
-        }
+        double bf_chi2_min =t_outtree.GetMinimum("chi2_min");
+        double bf_chi2_max =t_outtree.GetMaximum("chi2_min");
 
-        std::cout<<"For this point, minimum delta chi is "<<tmin<<" max is "<<tmax<<std::endl;
-        TH1D h_delta_chi(("dcuni_"+std::to_string(t)).c_str(),("dcuni_"+std::to_string(t)).c_str(),50,0.0,tmax*1.0);  // This will store all the delta_chi's from each universe for this g_true point
+        double bf_value_min = t_outtree.GetMinimum("bf_gridvalue");
+        double bf_value_max = t_outtree.GetMaximum("bf_gridvalue");
+
+        double bf_pt_min = t_outtree.GetMinimum("bf_gridpoint");
+        double bf_pt_max = t_outtree.GetMaximum("bf_gridpoint");
+
+        std::cout<<"For this point, minimum delta chi value is "<<delta_chi_min<<" max is "<<delta_chi_max<<std::endl;
+        std::cout<<"For this point, minimum  chi^2 value at bf is "<<bf_chi2_min<<" max is "<<bf_chi2_max<<std::endl;
+        std::cout<<"For this point, minimum  bf scale value is "<<bf_value_min<<" max is "<<bf_value_max<<std::endl;
+        std::cout<<"For this point, minimum  bf grid pt is "<<bf_pt_min<<" max is "<<bf_pt_max<<std::endl;
+
+        int nbins_plot = num_universes/2;
+        std::string identifier = "_"+std::to_string(t);
+
+        TH1D h_delta_chi(("delta_chi2"+identifier).c_str(),("delta_chi2"+identifier).c_str(),nbins_plot,0.0,delta_chi_max*1.01);  // This will store all the delta_chi's from each universe for this g_true point
         for(double&v:vec_delta_chi) h_delta_chi.Fill(v);
+        
+        //Lets grab a cumulative probabilty function
+        TH1D* h_cumulative_delta_chi = (TH1D*)h_delta_chi.GetCumulative();
+        h_cumulative_delta_chi->Scale(1.0/h_cumulative_delta_chi->GetBinContent(h_cumulative_delta_chi->GetNbinsX()));
 
+        TH1D h_chi_min(("bf_chi2"+identifier).c_str(),("bf_chi2"+identifier).c_str(),nbins_plot,0.0,bf_chi2_max*1.01);  // This will store all the chi_mins from each universe for this g_true point
+        for(double&v:vec_chi_min) h_chi_min.Fill(v);
 
-        double cmin = DBL_MAX;
-        double cmax = DBL_MIN;
-        for(double&v:vec_chi_min){
-            cmin=std::min(cmin,v);
-            cmax=std::max(cmax,v);
-        }
-
-        std::cout<<"For this point, minimum chi is "<<cmin<<" max is "<<cmax<<std::endl;
-
-        TH1D h_chi_min(("cmuni_"+std::to_string(t)).c_str(),("cmuni_"+std::to_string(t)).c_str(),50,0.0,cmax*1.0);  // This will store all the chi_mins from each universe for this g_true point
-        for(double&v:vec_chi_min){
-            h_chi_min.Fill(v);
-        }
-
-        /*
-        //Now lets do a simple fit to a chi^2 
-        std::string f_name = "fchi_"+std::to_string(t);
-        //TF1 *fchi = new TF1(f_name.c_str(),[&](double*x, double *p){ return p[0]*gsl_ran_chisq_pdf(x[0],p[1]); },0,tmax,2); // gsl does not like this lambda
-        TF1 *fchi = new TF1(f_name.c_str(),[&](double*x, double *p){ return p[0]*ROOT::Math::chisquared_pdf(x[0],p[1]); },0,tmax,2);
-        fchi->SetParameter(0,1.0); 
-        fchi->SetParameter(1,2.0); 
-        fchi->SetParName(0,"norm");
-        fchi->SetParName(1,"NDOF");
-        fchi->SetParLimits(1,0,10.0);
-        t_outtree.Fit(f_name.c_str(),"delta_chi2",("1.0/"+std::to_string((double)vec_delta_chi.size())).c_str(),"M");
-        double fitted_ndof = fchi->GetParameter(1);
-        std::cout<<"FIT NDOF: "<<fitted_ndof<<" "<<fchi->GetParameter(0)<<std::endl;
-        */
-
-
+        TH1D h_bf_val(("bf_value"+identifier).c_str(),("bf_value"+identifier).c_str(),nbins_plot,bf_value_min*0.8,bf_value_max*1.2);  // This will store all the bf pts from each universe for this g_true point
+        for(double&v:vec_bf_val)  h_bf_val.Fill(v);
+ 
+        TH1D h_bf_pt(("bf_point"+identifier).c_str(),("bf_point"+identifier).c_str(),nbins_plot, bf_pt_min*0.9, bf_pt_max*1.1);  // This will store all the bf pts from each universe for this g_true point
+        for(int&v:vec_bf_pt)  h_bf_pt.Fill((double)v);
+       
         fout->cd();
         h_delta_chi.Write();
+        h_cumulative_delta_chi->Write();
+        h_bf_val.Write();
         h_chi_min.Write();
         t_outtree.Write();
-
-
-        std::cout<<"This Gridpoint has a max and min Chi^2_min of ("<<cmin<<","<<cmax<<")"<<std::endl;
-        std::cout<<"This Gridpoint has a max and min DeltaChi of ("<<tmin<<","<<tmax<<")"<<std::endl;
 
         //Step 3: We now have a distrubution of Delta_chi's based on many pseudo-fake data experiments. This should approximate a 
         //chi^2 distrubution with 2 DOF but there can be quite large variations. 
 
         double sig1 = 0.5-(0.6827)/2.0;
         double sig2 = 0.5-(0.9545)/2.0;
-        std::vector<double> prob_values = {0.01,sig2,0.05,0.1,sig1,0.5,0.6,1-sig1,0.9,0.95,1-sig2,0.99};
+        std::vector<double> prob_values = {0.01,sig2,0.05,0.1,sig1,0.5,1-sig1,0.9,0.95,1-sig2,0.99};
         std::vector<double> delta_chi_quantiles(prob_values.size());	
         std::vector<double> chi_min_quantiles(prob_values.size());	
+        std::vector<double> bf_val_quantiles(prob_values.size());	
+        std::vector<double> bf_pt_quantiles(prob_values.size());	
 
         h_delta_chi.ComputeIntegral(); 
-        std::cout<<"DeltaChi Histogram has "<<h_delta_chi.GetEntries()<<" entries, with an integral of "<<h_delta_chi.Integral()<<std::endl;
         h_delta_chi.GetQuantiles(prob_values.size(), &delta_chi_quantiles[0], &prob_values[0]);
 
-
         h_chi_min.ComputeIntegral(); 
-        std::cout<<"ChiMin Histogram has "<<h_chi_min.GetEntries()<<" entries, with an integral of "<<h_chi_min.Integral()<<std::endl;
         h_chi_min.GetQuantiles(prob_values.size(), &chi_min_quantiles[0], &prob_values[0]);
 
+        h_bf_val.ComputeIntegral(); 
+        h_bf_val.GetQuantiles(prob_values.size(), &bf_val_quantiles[0], &prob_values[0]);
+
+        h_bf_pt.ComputeIntegral(); 
+        h_bf_pt.GetQuantiles(prob_values.size(), &bf_pt_quantiles[0], &prob_values[0]);
+
+        //Silly way to save the 3 useful values.
+        //Need to transform to actual integer gridpoints, alas.
+        TVectorD bfsave(3); bfsave[0]=(int)std::round(bf_pt_quantiles[4]); bfsave[1]=(int)std::round(bf_pt_quantiles[5]);bfsave[2]=(int)std::round(bf_pt_quantiles[6]);
+        bfsave.Write(("median_values"+identifier).c_str()); 
 
         std::cout<<"Grid Point: "<<t;
         for(auto &p: m_vec_grid.at(t)){
@@ -435,20 +443,27 @@ int SBNfeld::FullFeldmanCousins(){
         std::cout<<std::endl;
 
         for(int i=0; i< prob_values.size(); i++){
-            std::cout<<"--delta_quantile "<<delta_chi_quantiles[i]<<" chimin_quantile "<<chi_min_quantiles[i]<<" @prob "<<prob_values[i]<<std::endl;
+            std::cout<<"--delta_quantile "<<delta_chi_quantiles[i]<<" chimin_quantile "<<chi_min_quantiles[i]<<" bf_val_quantil "<<bf_val_quantiles[i]<<" @prob "<<prob_values[i]<<std::endl;
         }
 
+        delete h_cumulative_delta_chi;
         std::cout<<"Finished This Point"<<std::endl;
-        //delta_chi_critical = delta_chi_quantiles[0];
-        //break;
     }
 
     fout->Close();
     return 0;
 };
 
-int SBNfeld::UpdateInverseCovarianceMatrix(size_t best_grid_point, TMatrixT<double>& inverse_collapsed, SBNchi * helper){
 
+int SBNfeld::UpdateInverseCovarianceMatrixCNP(size_t best_grid_point, const std::vector<float> &datavec, TMatrixT<double>& inverse_collapsed, SBNchi * helper){
+    TMatrixT<double> full = helper->CalcCovarianceMatrixCNP(m_full_fractional_covariance_matrix, m_cv_spec_grid[best_grid_point]->full_vector, datavec);
+    helper->CollapseModes(full, inverse_collapsed);    
+    inverse_collapsed = helper->InvertMatrix(inverse_collapsed);   
+    return 0;
+}
+
+
+int SBNfeld::UpdateInverseCovarianceMatrix(size_t best_grid_point, TMatrixT<double>& inverse_collapsed, SBNchi * helper){
     TMatrixT<double> full = helper->CalcCovarianceMatrix(m_full_fractional_covariance_matrix, m_cv_spec_grid[best_grid_point]->full_vector);
     helper->CollapseModes(full, inverse_collapsed);    
     inverse_collapsed = helper->InvertMatrix(inverse_collapsed);   
@@ -462,6 +477,7 @@ std::vector<double> SBNfeld::PerformIterativeGridFit(const std::vector<float> &d
     int best_grid_point = -99;
 
     TMatrixT<double> inverse_current_collapsed_covariance_matrix = inverse_background_collapsed_covariance_matrix;  
+
     SBNchi  * grid_chi = m_sbnchi_grid.at(grid_pt); 
 
     for(size_t n_iter = 0; n_iter < m_max_number_iterations; n_iter++){
@@ -471,7 +487,12 @@ std::vector<double> SBNfeld::PerformIterativeGridFit(const std::vector<float> &d
         //For all subsequent iterations what is the full covariance matrix? Use the last best grid point.
         if(n_iter!=0){
             //Calculate current full covariance matrix, collase it, then Invert. 
-            UpdateInverseCovarianceMatrix(best_grid_point, inverse_current_collapsed_covariance_matrix ,grid_chi);
+            if(m_use_CNP){
+                UpdateInverseCovarianceMatrixCNP(best_grid_point, datavec, inverse_current_collapsed_covariance_matrix ,grid_chi);
+
+            }else{
+                UpdateInverseCovarianceMatrix(best_grid_point, inverse_current_collapsed_covariance_matrix ,grid_chi);
+            }
         }
 
         //Step 2.0 Find the global_minimum_for this universe. Integrate in SBNfit minimizer here, a grid scan for now.
@@ -487,10 +508,10 @@ std::vector<double> SBNfeld::PerformIterativeGridFit(const std::vector<float> &d
         }
 
         if(n_iter!=0){
-
-            //std::cout<<"On iter: "<<n_iter<<" of uni "<<i<<"/"<<num_universes<<" w/ chi^2: "<<chi_min<<" lastchi^2: "<<last_chi_min<<" diff() "<<fabs(chi_min-last_chi_min)<<" tol: "<<chi_min_convergance_tolerance<<" best_grid_point: "<<best_grid_point<<std::endl;
-
+            //std::cout<<"On iter: "<<n_iter<<" w/ chi^2: "<<chi_min<<" lastchi^2: "<<last_chi_min<<" diff() "<<fabs(chi_min-last_chi_min)<<" tol: "<<m_chi_min_convergance_tolerance<<" best_grid_point: "<<best_grid_point<<std::endl;
+            
             //Step 3.0 Check to see if mgrid_chi for this particular fake_data  has converged sufficiently
+            
             if(fabs(chi_min-last_chi_min)< m_chi_min_convergance_tolerance){
                 last_chi_min = chi_min;
                 break;
@@ -498,7 +519,7 @@ std::vector<double> SBNfeld::PerformIterativeGridFit(const std::vector<float> &d
         }
         last_chi_min = chi_min;
     }
-
+    
     //Now use the curent_iteration_covariance matrix to also calc this_chi here for the delta.
     double this_chi   = this->CalcChi(datavec, m_cv_spec_grid[grid_pt]->collapsed_vector, inverse_current_collapsed_covariance_matrix);
 
@@ -578,7 +599,7 @@ int SBNfeld::PointFeldmanCousins(size_t grid_pt){
 
         //Now use the curent_iteration_covariance matrix to also calc this_chi here for the delta.
         float this_chi = this->CalcChi(fake_data, true_spec->collapsed_vector,inverse_current_collapsed_covariance_matrix);
-
+        
         //step 4 calculate the delta_chi for this universe
 
         std::cout<<grid_pt<<" "<<i<<" "<<last_chi_min<<" "<<this_chi-last_chi_min<<" "<<best_grid_point<<" "<<n_iter<<std::endl;
@@ -667,7 +688,6 @@ std::vector<double> SBNfeld::GlobalScan2(int which){
 
     return this->GlobalScan(m_cv_spec_grid[which]);
 }
-
 
 std::vector<double> SBNfeld::GlobalScan(SBNspec * observed_spectrum){
 
@@ -805,4 +825,44 @@ std::vector<TGraph*> SBNfeld::MakeFCMaps(std::string filein){
     f->Close();
     return ans;
 }
+
+
+std::vector<TGraph*> SBNfeld::LoadFCMaps(std::string filein){
+ 
+    std::vector<TGraph*> ans;
+    TFile* f= new TFile(filein.c_str(),"read");
+    f->cd();
+
+
+    for(size_t t =0; t < m_num_total_gridpoints; t++){
+        std::cout<<"On Map "<<t<<" out of "<<m_num_total_gridpoints<<std::endl;
+        TH1D *cumul = (TH1D*)f->Get( ("delta_chi2_"+std::to_string(t)+"_cumulative").c_str() ); 
+        std::vector<double>x,y;
+        for(double i=1; i<=cumul->GetNbinsX(); ++i ){
+            y.push_back(1.0-cumul->GetBinContent(i));
+            x.push_back(cumul->GetBinCenter(i));
+        }
+        ans.push_back(new TGraph(x.size(),&x[0],&y[0]));
+        delete cumul;
+    }
+
+    f->Close();
+    return ans;
+  
+
+
+}
+ 
+std::vector<double> SBNfeld::getConfidenceRegion(TGraph *gmin, TGraph *gmax, double val){
+
+    std::vector<double> ans =  {gmin->Eval(val), gmax->Eval(val)};
+
+    for(auto &a:ans){
+        if(a< m_grid.f_dimensions[0].f_min) a = m_grid.f_dimensions[0].f_min;
+        if(a> m_grid.f_dimensions[0].f_max) a = m_grid.f_dimensions[0].f_max;
+    }
+
+    return {std::min(ans[0],ans[1]), std::max(ans[0],ans[1])};
+}
+
 

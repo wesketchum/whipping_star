@@ -13,6 +13,7 @@
 #include "TH1F.h"
 #include "TString.h"
 #include "TNtuple.h"
+#include "TLine.h"
 #include "TChain.h"
 #include "TMath.h"
 #include "TSystem.h"
@@ -22,6 +23,7 @@
 #include "TCanvas.h"
 #include "TH2F.h"
 #include "TGraph.h"
+#include "TMultiGraph.h"
 
 #include "params.h"
 #include "SBNconfig.h"
@@ -44,6 +46,28 @@ using namespace sbn;
  *		BEGIN sbnfit_make_covariance.cxx
  ************************************************************
  ************************************************************/
+void runHelp(){
+                std::cout<<"---------------------------------------------------"<<std::endl;
+                std::cout<<"Modified single subchannel scaling feldman_cousins confidence belt constructor"<<std::endl;
+                std::cout<<"---------------------------------------------------"<<std::endl;
+                std::cout<<"--- Required arguments: ---"<<std::endl;
+                std::cout<<"\t-x\t--xml\t\tInput configuration .xml file for SBNconfig"<<std::endl;
+                std::cout<<"\t-t\t--tag\t\tA unique tag to identify the inputs/outputs [Default to TEST]"<<std::endl;
+                std::cout<<"\t-i\t--input\t\tInput subchannel to scale (no default, required argument)"<<std::endl;
+                std::cout<<"\t-g\t--grid\t\tGrid to scan, in the form 'min max num_steps' (default '1e-4 10.0 20')"<<std::endl;
+                std::cout<<"\t-m\t--mode\t\tWhat mode you want to run in. Arguments are:"<<std::endl;
+                std::cout<<"\t\t\t--\t feldman : Perform the pseudo universe grid scan (run first)"<<std::endl;  
+                std::cout<<"\t\t\t--\t belt: Constructs the confidence belts, must be run after'feldman'"<<std::endl;
+                std::cout<<"--- Optional arguments: ---"<<std::endl;
+                std::cout<<"\t-s\t--stat\t\tStatistical error only mode, will ignore any covariance matrix passed in"<<std::endl;
+                std::cout<<"\t-n\t--number\t\tNumber of pseudo-experiments to simulate (default 2500)"<<std::endl; 
+                std::cout<<"\t-r\t--randomseed\t\tRandomNumber Seed (default from machine)"<<std::endl; 
+                std::cout<<"\t-c\t--cnp\t\tuse a Combined Newman Pearson chi2 (default false)"<<std::endl;
+                std::cout<<"\t-h\t--help\t\tThis help menu."<<std::endl;
+                std::cout<<"---------------------------------------------------"<<std::endl;
+    return;
+}
+
 int main(int argc, char* argv[])
 {
 
@@ -57,11 +81,13 @@ int main(int argc, char* argv[])
     const struct option longopts[] =
     {
         {"xml", 		required_argument, 	0, 'x'},
-        {"printall", 		no_argument, 		0, 'p'},
         {"stat", 		no_argument, 		0, 's'},
         {"number", 		required_argument,	0,'n'},
+        {"cnp", 		no_argument,	0,'c'},
+        {"grid", 		required_argument,	0,'g'},
         {"tag", 		required_argument,	0, 't'},
         {"mode",        required_argument, 0 ,'m'},
+        {"input",       required_argument, 0 ,'i'},
         {"randomseed",        required_argument, 0 ,'r'},
         {"help", 		no_argument,	0, 'h'},
         {0,			    no_argument, 		0,  0},
@@ -76,12 +102,15 @@ int main(int argc, char* argv[])
     std::string mode_option;
     bool bool_stat_only = false;
     int number = 2500;
-    int grid_pt = 0;
     double random_number_seed = -1;
+    bool use_cnp = false;
+        
+    std::string grid_string = "1e-4 8.0 33";
+    std::string input_scale_subchannel = "unset";
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "x:t:m:n:r:p:sh", longopts, &index);
+        iarg = getopt_long(argc,argv, "x:t:m:n:r:p:i:g:sch", longopts, &index);
 
         switch(iarg)
         {
@@ -91,14 +120,20 @@ int main(int argc, char* argv[])
             case 'n':
                 number = (int)strtod(optarg,NULL);
                 break;
-            case 'p':
-                grid_pt = (int)strtod(optarg,NULL);
-                break;
             case 't':
                 tag = optarg;
                 break;
+            case 'g':
+                grid_string = optarg; 
+                break;
+            case 'i':
+                input_scale_subchannel = optarg;
+                break;
             case 'm':
                 mode_option = optarg;
+                break;
+            case 'c':
+                use_cnp = true;
                 break;
             case 'r':
                 random_number_seed = (double)strtod(optarg,NULL);
@@ -109,28 +144,12 @@ int main(int argc, char* argv[])
                 break;
             case '?':
             case 'h':
-                std::cout<<"---------------------------------------------------"<<std::endl;
-                std::cout<<"sbnfit_feldman_cousins is a work in progress."<<std::endl;
-                std::cout<<"---------------------------------------------------"<<std::endl;
-                std::cout<<"--- Required arguments: ---"<<std::endl;
-                std::cout<<"\t-x\t--xml\t\tInput configuration .xml file for SBNconfig"<<std::endl;
-                std::cout<<"\t-t\t--tag\t\tA unique tag to identify the outputs [Default to TEST]"<<std::endl;
-                std::cout<<"\t-m\t--mode\t\tWhat mode you want to run in. Arguments are:"<<std::endl;
-                std::cout<<"\t\t\t--\t gen : Generate the preoscillated spectra for all mass-splittings"<<std::endl;  
-                std::cout<<"\t\t\t--\t genbkg : Generate a background only spectra for all mass-splittings"<<std::endl;  
-                std::cout<<"\t\t\t--\t feldman : Perform a full feldman cousins analysis"<<std::endl;  
-                std::cout<<"\t-p\t--point\t\tWhat Grid Point to run over. -1 for a Full run (WARNING takes forever) [Defaults to 0]"<<std::endl;
-                std::cout<<"\t\t\t--\t test : Just a testbed. Can be ignored"<<std::endl;
-                std::cout<<"--- Optional arguments: ---"<<std::endl;
-                std::cout<<"\t-s\t--stat\t\tStat only runs"<<std::endl;
-                std::cout<<"\t-n\t--number\t\tNumber of pseudo-experiments to simulate (default 2500)"<<std::endl; 
-                std::cout<<"\t-r\t--randomseed\t\tRandomNumber Seed (default from machine)"<<std::endl; 
-                std::cout<<"\t-h\t--help\t\tThis help menu."<<std::endl;
-                std::cout<<"---------------------------------------------------"<<std::endl;
-
+                runHelp(); 
                 return 0;
         }
     }
+
+
 
     /*************************************************************
      *************************************************************
@@ -139,27 +158,33 @@ int main(int argc, char* argv[])
      ************************************************************/
     time_t start_time = time(0);
 
-    std::cout<<"Begining FeldmanCousins for tag: "<<tag<<std::endl;
+    std::cout<<"Begining SBNfit uboone subchannel scaling Feldman Cousins confidence belt constructor for tag: "<<tag<<std::endl;
+
+    if(input_scale_subchannel=="unset"){
+        std::cout<<"Error! you must set a value for which input subchannel to scale, e.g using --input/ -i 'nu_uBooNE_1g1p_ncdelta'"<<std::endl;
+        std::cout<<"Please see...."<<std::endl;
+        runHelp();
+        return 0;
+    }
+    
 
     NGrid mygrid;
-    mygrid.AddDimension("scale", 0.001, 8, 0.05);//0.1
-
-    //Print the grid interesting bits
+    mygrid.AddDimension("scale",grid_string);
+    
     mygrid.Print();
     SBNfeld myfeld(mygrid,tag,xml);
 
-
     if(mode_option == "feldman"){
-    
+
         std::cout<<"Begininning a full Feldman-Cousins analysis for tag : "<<tag<<std::endl;
 
         myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
         //myfeld.SetFractionalCovarianceMatrix(Msys);
         //myfeld.SetStatOnly();
-        myfeld.m_subchannel_to_scale = "nu_uBooNE_1g1p_ncdelta";
+        myfeld.m_subchannel_to_scale = input_scale_subchannel;
 
         myfeld.SetCoreSpectrum(tag+"_CV.SBNspec.root");
-        myfeld.SetBackgroundSpectrum(tag+"_CV.SBNspec.root","nu_uBooNE_1g1p_ncdelta",0.0);
+        myfeld.SetBackgroundSpectrum(tag+"_CV.SBNspec.root",input_scale_subchannel,0.0);
         myfeld.GenerateScaledSpectra();
 
         std::cout<<"Setting random seed "<<random_number_seed<<std::endl;
@@ -173,43 +198,21 @@ int main(int argc, char* argv[])
         std::cout<<"Beginning to peform FullFeldmanCousins analysis"<<std::endl;
         myfeld.FullFeldmanCousins();
 
-    }else if(mode_option == "test"){
-
-        myfeld.SetCoreSpectrum(tag+"_BKG_ONLY.SBNspec.root");
-        if(bool_stat_only){
-            myfeld.SetEmptyFractionalCovarianceMatrix();
-            myfeld.SetStatOnly();
-            std::cout<<"RUNNING Stat Only!"<<std::endl;
-        }else{
-            myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
-        }
-
-        std::cout<<"Setting random seed "<<random_number_seed<<std::endl;
-        myfeld.SetRandomSeed(random_number_seed);
-        std::cout<<"Loading precomputed spectra"<<std::endl;
-        myfeld.LoadPreOscillatedSpectra();
-        myfeld.LoadBackgroundSpectrum();
-
-        std::cout<<"Calculating the necessary SBNchi objects"<<std::endl;
-        myfeld.CalcSBNchis();
-
-        std::cout<<"Beginning to peform a globalScan analysis"<<std::endl;
-        myfeld.GlobalScan();
-
-    }else if(mode_option == "scalescan"){
-
+    }else if(mode_option == "belt"){
 
         if(bool_stat_only){
             myfeld.SetEmptyFractionalCovarianceMatrix();
             myfeld.SetStatOnly();
-            std::cout<<"RUNNING Stat Only!"<<std::endl;
+            std::cout<<"RUNNING Statistics uncertainty only!"<<std::endl;
         }else{
             myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
         }
-        myfeld.m_subchannel_to_scale = "nu_uBooNE_1g1p_ncdelta";
+        myfeld.m_subchannel_to_scale = input_scale_subchannel;
+
+        if(use_cnp) myfeld.UseCNP();
 
         myfeld.SetCoreSpectrum(tag+"_CV.SBNspec.root");
-        myfeld.SetBackgroundSpectrum(tag+"_CV.SBNspec.root","nu_uBooNE_1g1p_ncdelta",0.0);
+        myfeld.SetBackgroundSpectrum(tag+"_CV.SBNspec.root",input_scale_subchannel,0.0);
         myfeld.GenerateScaledSpectra();
 
         std::cout<<"Calculating the necessary SBNchi objects"<<std::endl;
@@ -220,102 +223,145 @@ int main(int argc, char* argv[])
         f->cd();
         std::cout<<"Starting to peform a globalScan analysis"<<std::endl;
         std::vector<std::vector<double>> vec_grid = mygrid.GetGrid();
-        TH2D * f_plot = new TH2D("f_plot","f_plot",vec_grid.size(),vec_grid.front()[0],vec_grid.back()[0],vec_grid.size(),vec_grid.front()[0],vec_grid.back()[0]);
-        TH2D * f_prob_plot = new TH2D("f_prob_plot","f_prob_plot",vec_grid.size(),vec_grid.front()[0],vec_grid.back()[0],vec_grid.size(),vec_grid.front()[0],vec_grid.back()[0]);
-        TH2D * f_prob_c_plot = new TH2D("f_prob_c_plot","f_prob_c_plot",vec_grid.size(),vec_grid.front()[0],vec_grid.back()[0],vec_grid.size(),vec_grid.front()[0],vec_grid.back()[0]);
-    
-        std::cout<<"Makeing FC Maps!"<<std::endl;
-        std::vector<TGraph*> tgr = myfeld.MakeFCMaps("SBNfeld_output_TEST.root");
+
+        TFile *fin = new TFile("SBNfeld_output_TEST.root","read");
+
+        int plotting_true_gridpoint = 5;
+        std::vector<double> plotting_pvals = {0.6827, 0.90, 0.9545, 0.9973};
+        std::vector<std::string> plotting_strs = {"1#sigma","90%","2#sigma","3#sigma"};
+
+        std::vector<double> v_median;
+        std::vector<double> v_true;
+        std::vector<double> v_1sigma_p;
+        std::vector<double> v_1sigma_m;
+        std::vector<std::vector<double>> v_min;v_min.resize(plotting_pvals.size());
+        std::vector<std::vector<double>> v_max;v_max.resize(plotting_pvals.size());
 
         std::cout<<"MPrinting stuff"<<std::endl;
+        TH2D * f_FC = new TH2D("f_FC","f_FC",vec_grid.size(),vec_grid.front()[0],vec_grid.back()[0],vec_grid.size(),vec_grid.front()[0],vec_grid.back()[0]);
+
         for(int i=0; i< vec_grid.size(); i++){
-            std::cout<<"On Grid Point "<<i<<" Scale_Factor: "<<vec_grid[i][0]<<std::endl;
-            std::vector<double> vals = myfeld.GlobalScan2(i);
-            for(int j=0; j < vec_grid.size(); j++){
-                    f_plot->SetBinContent(j,i,vals[j]);
-                    f_prob_plot->SetBinContent(j,i,tgr[i]->Eval(vals[j]));
-                    f_prob_c_plot->SetBinContent(j,i,sqrt(2)*TMath::ErfInverse(1-tgr[i]->Eval(vals[j])));
-                    std::cout<<"ScaleScan True: "<<vec_grid[i][0]<<" reco "<<vec_grid[j][0]<<" val "<<vals[j]<<" prob "<<tgr[i]->Eval(vals[j])<<std::endl;
+
+            v_true.push_back(vec_grid[i][0]);
+
+            //Whats the critical value?
+            TTree *t =  (TTree*)fin->Get(("ttree_"+std::to_string(i)).c_str());
+            TH1D * cumul = (TH1D*)fin->Get(("delta_chi2_"+std::to_string(i)+"_cumulative").c_str());
+
+            for(int p =0; p< plotting_pvals.size(); ++p){
+                double plotting_pval = plotting_pvals[p];
+
+                //First lets find a critical chi^2 for this confidence level
+                double critical_delta_chi2 = 0;
+                for(int c = cumul->GetNbinsX()-1;  c>0 ; --c){
+                    if(cumul->GetBinContent(c+1) >= plotting_pval && cumul->GetBinContent(c)< plotting_pval){
+                        critical_delta_chi2 = cumul->GetBinCenter(c);
+                        break;
+                    }
+                }
+
+                std::cout<<"Grid point "<<i<<" has a critical delta chi of "<<critical_delta_chi2<<" for a pval of "<<plotting_pval<<std::endl; 
+
+                std::string nam = std::to_string(i)+"bfhist";
+                int Nentries = t->GetEntries(); 
+
+                const unsigned nentries = t->Draw("bf_gridvalue", ("delta_chi2<="+std::to_string(critical_delta_chi2)).c_str());
+                if (nentries) {
+                    double* x = t->GetV1();
+                    //std::cout << "min :" << *(std::min_element(x, x+nentries)) << std::endl;
+                    //std::cout << "max :" << *(std::max_element(x, x+nentries)) << std::endl;
+                    v_min[p].push_back( *(std::min_element(x, x+nentries)) );
+                    v_max[p].push_back( *(std::max_element(x, x+nentries)) );
+                }
+            }//end pval loop
+            delete cumul;
+        }
+
+
+        TCanvas *c3 = new TCanvas("hope3");
+        c3->SetFillStyle(0);
+
+        TPad *pad = new TPad("pad", "pad", 0, 0, 0.8, 1.0);
+        pad->SetRightMargin(0); // Upper and lower plot are joined
+        pad->Draw();             // Draw the upper pad: pad
+        pad->cd();               // pad becomes the current pad
+
+        std::vector<TGraph*> gmaxs;
+        std::vector<TGraph*> gmins;
+        std::vector<TGraph*> grshades;
+
+        std::vector<int> gcols = {kGreen+3,kGreen+2,kGreen-3,kGreen-6};
+        TLegend * l_probs = new TLegend(0.11,0.11,0.89,0.89);
+
+        TMultiGraph *mg = new TMultiGraph();
+        mg->SetTitle("Feldman Cousins Corrected Confidence Belts");
+
+        for(int p=plotting_pvals.size()-1; p>=0;--p){
+            pad->cd();
+            
+            gmins.push_back(new TGraph(v_true.size(),&(v_min[p])[0], &v_true[0]));
+            gmaxs.push_back(new TGraph(v_true.size(),&(v_max[p])[0], &v_true[0]));
+            grshades.push_back( new TGraph(2*v_true.size()));
+            for (int i=0;i<v_true.size();i++) {
+                int n = v_true.size();
+                grshades.back()->SetPoint(i,v_min[p][i],v_true[i]);
+                grshades.back()->SetPoint(n+i,v_max[p][n-i-1],v_true[n-i-1]);
+            }
+            grshades.back()->SetFillColor(gcols[p]);
+            gmins.back()->SetLineWidth(2);
+            gmins.back()->SetLineColor(kBlack);
+            gmaxs.back()->SetLineWidth(2);
+            gmaxs.back()->SetLineColor(kBlack);
+
+            l_probs->AddEntry(grshades.back(), plotting_strs[p].c_str() ,"f");
+        }
+
+        for(auto &g:grshades)mg->Add(g);
+        pad->cd();
+        mg->Draw("ALF");
+        
+        mg->GetXaxis()->SetTitle("Measured signal strength (#hat{#mu})");
+        mg->GetYaxis()->SetTitle("True signal strength (#mu)");
+        mg->SetMinimum(v_true.front());
+        mg->SetMinimum(v_true.front());
+
+        mg->GetXaxis()->SetLimits(v_true.front(),v_true.back());      
+        mg->GetHistogram()->SetMaximum(v_true.back());          
+        mg->GetHistogram()->SetMinimum(v_true.front());     
+ 
+        for(auto &g:gmins)g->Draw("l same");
+        for(auto &g:gmaxs)g->Draw("l same");
+
+        c3->cd();
+        TPad *padl = new TPad("padl", "padl", 0.8, 0, 1, 1);
+        padl->SetBottomMargin(0.2);
+        padl->Draw();
+        padl->cd();       // padl becomes the current pad
+        l_probs->SetTextSize(0.0775);
+        l_probs->Draw();
+        l_probs->SetLineColor(kWhite);
+        l_probs->SetLineWidth(0);
+        
+        c3->SaveAs(("FC_confidence_belt_"+tag+".pdf").c_str(),"pdf");
+
+        std::cout<<"**************** Feldman Cousins 1D Confidence Intervals  **********************"<<std::endl;
+        for(int i=0; i<v_true.size(); i++){
+            std::cout<<"Grid Pt: "<<i<<", ScaleFactor: "<<vec_grid[i][0]<<std::endl;
+            for(int p=0; p< plotting_pvals.size();++p){
+                double measured_val = vec_grid[i][0];
+                std::vector<double> reg = myfeld.getConfidenceRegion(gmins[plotting_pvals.size()-p-1],gmaxs[plotting_pvals.size()-p-1],measured_val);
+                std::cout<<"-- CL: "<<plotting_pvals[p]<<"  Sigma: "<<sqrt(2)*TMath::ErfInverse(plotting_pvals[p])<<"  ConfidenceInterval: ["<<reg[0]<<" -> "<<reg[1]<<"]"<<std::endl;
             }
         }
-        f->cd();
-        f_plot->Write();
-        f_prob_plot->Write();
-        f_prob_c_plot->Write();
-        TCanvas *c = new TCanvas("hope");
-        c->cd();
-
-        double contours1[1]; contours1[0]=1.0;
-        double contours2[1]; contours2[0]=4.0;
-        double contours3[1]; contours3[0]=9.0;
-        double contours4[1]; contours4[0]=16.0; 
-
-        f_plot->SetLineColor(kRed);
-        f_plot->SetContour(1,contours1);
-        f_plot->DrawCopy("cont3");
-
-        f_plot->SetLineColor(kBlue);
-        f_plot->SetContour(1,contours2);
-        f_plot->DrawCopy("cont3 same");
-
-        f_plot->SetLineColor(kGreen);
-        f_plot->SetContour(1,contours3);
-        f_plot->DrawCopy("cont3 same");
-
-        f_plot->SetLineColor(kMagenta);
-        f_plot->SetContour(1,contours4);
-        f_plot->Draw("cont3 same");
-
-        f_plot->GetXaxis()->SetTitle("Reconstructed Cross-Section (xSM)");
-        f_plot->GetYaxis()->SetTitle("True Cross-Section (xSM)");
-
-
-        c->Write();
-        c->SaveAs("scan.png","png");
-        f->Close();
-
+    }else{
+        std::cout<<"The mode you asked for ("<<mode_option<<") is not available, the available options are.."<<std::endl;
+        runHelp();
 
     }
-    else if(mode_option == "singlescan"){
+    std::cout << "Fin. Total wall time: " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
 
-
-        if(bool_stat_only){
-            myfeld.SetEmptyFractionalCovarianceMatrix();
-            myfeld.SetStatOnly();
-            std::cout<<"RUNNING Stat Only!"<<std::endl;
-        }else{
-            myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
-        }
-        myfeld.m_subchannel_to_scale = "nu_uBooNE_1g1p_ncdelta";
-
-        myfeld.SetCoreSpectrum(tag+"_CV.SBNspec.root");
-        myfeld.SetBackgroundSpectrum(tag+"_CV.SBNspec.root","nu_uBooNE_1g1p_ncdelta",0.0);
-        myfeld.GenerateScaledSpectra();
-
-        std::cout<<"Calculating the necessary SBNchi objects"<<std::endl;
-        myfeld.CalcSBNchis();
-        std::cout <<"DONE calculating the necessary SBNchi objects at : " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
-
-        std::cout<<"Starting to peform a globalScan analysis"<<std::endl;
-        std::vector<std::vector<double>> vec_grid = mygrid.GetGrid();
-
-        {
-            int i = grid_pt;
-
-        std::cout<<"Makeing FC Maps!"<<std::endl;
-        std::vector<TGraph*> tgr = myfeld.MakeFCMaps("SBNfeld_output_TEST.root",i);
-            std::cout<<"On Grid Point "<<i<<" Scale_Factor: "<<vec_grid[i][0]<<std::endl;
-            std::vector<double> vals = myfeld.GlobalScan2(i);
-            for(int j=0; j < vec_grid.size(); j++){
-                       std::cout<<"SimpleScan True: "<<vec_grid[i][0]<<" reco "<<vec_grid[j][0]<<" val "<<vals[j]<<" prob "<<tgr[i]->Eval(vals[j])<<std::endl;
-                       //std::cout<<"SimpleScan: "<<j<<" "<<vec_grid[j][0]<<" "<<vals[j]<<std::endl;
-            }
-        }
-
-    }
-
-    std::cout << "Total wall time: " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
     return 0;
 
 }
+
 

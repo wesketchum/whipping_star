@@ -58,8 +58,7 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 
 	if(which_sample == 0){
 	 	h0_pdf = chi.SamplePoissonVaryInput(h0, numMC, &pval);
-	}
-	 else if(which_sample ==1){ 
+    }else if(which_sample ==1){ 
 		h0_pdf = chi.SampleCovarianceVaryInput(h0, numMC, &pval);
 	}
 
@@ -73,11 +72,9 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 
    std::cout << "Total wall time: " << difftime(time(0), start_time)/1.0 << " Secs.\n";
 
-
 	TFile * fp = new TFile(("SBNfit_CLs_"+tag+".root").c_str(),"recreate");
 	fp->cd();
 	TCanvas *cp=new TCanvas();
-
 
 	h0_pdf.SetStats(false);
 	h1_pdf.SetStats(false);

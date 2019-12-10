@@ -219,6 +219,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                     has_oscillation_patterns = true;
                     subchannel_osc_patterns.at(nchan).push_back(strtod(pSubChan->Attribute("osc"), &end));
                 }else{
+                    has_oscillation_patterns = false;
                     subchannel_osc_patterns.at(nchan).push_back(0);
                 }
 
@@ -270,7 +271,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
 
             const char* maxevents = pMC->Attribute("maxevents");
             if(maxevents==NULL){
-                montecarlo_maxevents.push_back(1e10);
+                montecarlo_maxevents.push_back(1e16);
             }else{
                 montecarlo_maxevents.push_back(strtod(maxevents,&end) );
             }
@@ -333,10 +334,10 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                 const char* badditional_weight = pBranch->Attribute("additional_weight");
 
                 if(bwname== NULL){
-                    std::cout<<otag<<" No eventweight branch name passed, assuming its 'weights'"<<std::endl;
+                    if(is_verbose)std::cout<<otag<<" No eventweight branch name passed, assuming its 'weights'"<<std::endl;
                     montecarlo_eventweight_branch_names.push_back("weights");
                 }else{
-                    std::cout<<otag<<" Setting eventweight branch name "<<bwname<<std::endl;
+                    if(is_verbose)std::cout<<otag<<" Setting eventweight branch name "<<bwname<<std::endl;
                     montecarlo_eventweight_branch_names.push_back(std::string(bwname));
                 }
 
@@ -712,7 +713,6 @@ SBNconfig::SBNconfig(std::vector<std::string> modein, std::vector<std::string> d
 
 
 int SBNconfig::CalcTotalBins(){
-
     // These variables are important
     // They show how big each mode block and decector block are, for any given number of channels/subchannels
     // both before and after compression!

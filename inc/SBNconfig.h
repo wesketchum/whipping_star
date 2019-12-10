@@ -24,7 +24,6 @@ std::string to_string_prec(const T a_value, const int n = 6)
 	out <<std::fixed<< std::setprecision(n) << a_value;
 	return out.str();
 }
-
 //#define TYPE_FLOAT
 #ifdef TYPE_FLOAT  
     typedef float eweight_type;

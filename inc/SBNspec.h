@@ -51,7 +51,6 @@ namespace sbn{
 		public:
 
 
-
 			SBNspec() {};
 			SBNspec(std::string); //Load in config file EMPTY hists
 			SBNspec(std::string, int); //Load in config file, create EMPTY hists, with optional numbering (e.g for multisims!) 
@@ -63,7 +62,6 @@ namespace sbn{
 			SBNspec(std::vector<double> input_full_vec, std::string whichxml);
 			SBNspec(std::vector<double> input_full_vec, std::string whichxml, bool isverbose);
             SBNspec(std::vector<double> input_full_vec, std::string whichxml, int universe, bool isverbose);
-
 
 
 			// this vector of hists contains all spectra used.
@@ -134,6 +132,7 @@ namespace sbn{
 			//WriteOut saves all to an externam rootfile, each individual subchannel and a stacked channel plot.
 			int WriteOut(std::string);
 			
+            std::vector<int> GetIndiciesFromSubchannel(std::string const & subchannel);
 			int CompareSBNspecs(SBNspec * compsec, std::string tag);
 			};
 
