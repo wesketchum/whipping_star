@@ -54,7 +54,8 @@ namespace sbn{
 			SBNspec() {};
 			SBNspec(std::string); //Load in config file EMPTY hists
 			SBNspec(std::string, int); //Load in config file, create EMPTY hists, with optional numbering (e.g for multisims!) 
-			SBNspec(std::string, int, bool); //Load in config file, create EMPTY hists, with optional numbering (e.g for multisims!) 
+			SBNspec(std::string, int, bool); //Load in config file, create EMPTY hists, with optional numbering (e.g for multisims!)
+			SBNspec(std::string, int, bool, bool); //Load in config file, plus the choice of using root files with systematic variations already applied (the second 'bool'). 
 
 			SBNspec(std::string, std::string);
 			SBNspec(std::string, std::string, bool);

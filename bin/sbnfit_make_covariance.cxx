@@ -57,6 +57,7 @@ int main(int argc, char* argv[])
 	const struct option longopts[] =
 	{
 		{"xml", 		required_argument, 	0, 'x'},
+		{"singlephoton",        no_argument,            0, 's'},
 		{"printall", 		no_argument, 		0, 'p'},
 		{"tag", 		required_argument,	0, 't'},
 		{"help", 		no_argument,	0, 'h'},
@@ -66,13 +67,14 @@ int main(int argc, char* argv[])
 	int iarg = 0;
 	opterr=1;
 	int index;
+	bool bool_use_universe = true;
 
-    //a tag to identify outputs and this specific run. defaults to EXAMPLE1
-    std::string tag = "TEST";
+        //a tag to identify outputs and this specific run. defaults to EXAMPLE1
+        std::string tag = "TEST";
 
 	while(iarg != -1)
 	{
-		iarg = getopt_long(argc,argv, "x:t:ph", longopts, &index);
+		iarg = getopt_long(argc,argv, "x:t:sph", longopts, &index);
 
 		switch(iarg)
 		{
@@ -82,10 +84,13 @@ int main(int argc, char* argv[])
 			case 'p':
 				print_mode=true;
 				break;
-            case 't':
-                tag = optarg;
-                break;
-            case '?':
+			case 's':
+				bool_use_universe=false;
+				break;
+			case 't':
+				tag = optarg;
+				break;
+			case '?':
 			case 'h':
 				std::cout<<"---------------------------------------------------"<<std::endl;
 				std::cout<<"sbnfit_make_covariance allows for the building of covariance matricies from input root files containing reconstructed variables and the EventWeight class std::map<std::string, std::vector<double>>."<<std::endl;
@@ -94,8 +99,9 @@ int main(int argc, char* argv[])
 				std::cout<<"\t-x\t--xml\t\tInput configuration .xml file for SBNconfig"<<std::endl;
 				std::cout<<"\t-t\t--tag\t\tA unique tag to identify the outputs [Default to TEST]"<<std::endl;
 				std::cout<<"--- Optional arguments: ---"<<std::endl;
+				std::cout<<"\t-s\t--singlephoton\t use root files with systematically varied histograms to build the covariance matrix" << std::endl;
 				std::cout<<"\t-p\t--printall\tRuns in BONUS print mode, making individual spectra plots for ALLVariations. (warning can take a while!) "<<std::endl;
-                std::cout<<"\t-h\t--help\t\tThis help menu."<<std::endl;
+                		std::cout<<"\t-h\t--help\t\tThis help menu."<<std::endl;
 				std::cout<<"---------------------------------------------------"<<std::endl;
 	
 				return 0;
@@ -117,22 +123,42 @@ int main(int argc, char* argv[])
 
 	//Create a SBNcovariance object initilizing with the inputted xml
 	//This will load all the files and weights as laid out
-	SBNcovariance example_covar(xml);
+	if(bool_use_universe){
+	  SBNcovariance example_covar(xml);
 
-	//Form the covariance matrix from loaded weights and MC events
-	example_covar.FormCovarianceMatrix(tag);
+	  //Form the covariance matrix from loaded weights and MC events
+	  example_covar.FormCovarianceMatrix(tag);
 
-    //and make some plots of the resulting things
-	//Will be outputted in the form: SBNfit_covariance_plots_TAG.root
-	example_covar.PrintMatricies(tag);
+          //and make some plots of the resulting things
+	  //Will be outputted in the form: SBNfit_covariance_plots_TAG.root
+	  example_covar.PrintMatricies(tag);
 
-    //Constraint will be patched in shortly: mark
-    //example_covar.DoConstraint(0,1);
+          //Constraint will be patched in shortly: mark
+          //example_covar.DoConstraint(0,1);
 
-	if(print_mode){
+	  if(print_mode){
 		//This takes a good bit longer, and prints every variation to file. 
 		example_covar.PrintVariations(tag);
+	  }
+
+	}else{
+          SBNcovariance example_covar(xml, bool_use_universe);
+	  //Form the covariance matrix from loaded weights and MC events
+	  example_covar.FormCovarianceMatrix(tag);
+
+    	  //and make some plots of the resulting things
+	  //Will be outputted in the form: SBNfit_covariance_plots_TAG.root
+	  example_covar.PrintMatricies(tag);
+
+    	  //Constraint will be patched in shortly: mark
+    	  //example_covar.DoConstraint(0,1);
+
+	  if(print_mode){
+		//This takes a good bit longer, and prints every variation to file. 
+		example_covar.PrintVariations(tag);
+	  }
 	}
+
 
 	std::cout << "Total wall time: " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
 	return 0;

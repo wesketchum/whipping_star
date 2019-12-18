@@ -53,6 +53,8 @@ namespace sbn{
     std::vector<TH2D> h_spec2d_sig;
 	
     SBNcovariance(std::string xmlname);
+    SBNcovariance(std::string xmlname, bool);
+
 
     int FormCovarianceMatrix(std::string tag);
     int WriteOut();

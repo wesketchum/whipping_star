@@ -57,6 +57,7 @@ class SBNconfig {
 	public:
 	
 	//Constructors
+	SBNconfig(std::string, bool, bool); //read xml and do configuration. first 'bool': verbose or not, second 'bool': is the eventweights of different universes used to build the covariance matrix, or do we feed into root file with histograms from different systematic variations to build the covariance matrix.
 	SBNconfig(std::string,bool);
 	SBNconfig(std::string);
 	SBNconfig(){};
@@ -74,6 +75,7 @@ class SBNconfig {
 	//Bools to contain what is and is not in the xml
 	bool has_oscillation_patterns;
 	bool is_verbose;
+	bool use_universe;
 
 	int num_detectors;
 	int num_detectors_xml;
@@ -174,7 +176,9 @@ class SBNconfig {
 	std::vector<std::vector<std::string>> parameter_names;	//obsolete code
 	std::vector<std::vector<BranchVariable*>> branch_variables;
 
-
+ 	/**********************created for single photon****************************/
+        //systematics root files provided correspond to
+        std::vector<std::string> systematic_name;
 	/*********************************** Member Functions ********************************/	
 
 	int CalcTotalBins();
