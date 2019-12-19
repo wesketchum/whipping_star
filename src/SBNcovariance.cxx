@@ -14,17 +14,18 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     tolerence_positivesemi = 1e-5;
     is_small_negative_eigenvalue = false;
     abnormally_large_weight = 1e3;//1e20;//20.0;
-    bnbcorrection_str = "bnbcorrection_FluxHist";
+    bnbcorrection_str = "TunedCentralValue_Genie";//"bnbcorrection_FluxHist";
 
     bool restrict_variations = false;
 
     variations_to_use = {"expskin_FluxUnisim","horncurrent_FluxUnisim","kminus_PrimaryHadronNormalization","kplus_PrimaryHadronFeynmanScaling","kzero_PrimaryHadronSanfordWang","nucleoninexsec_FluxUnisim","nucleonqexsec_FluxUnisim","nucleontotxsec_FluxUnisim","piminus_PrimaryHadronSWCentralSplineVariation","pioninexsec_FluxUnisim","pionqexsec_FluxUnisim","piontotxsec_FluxUnisim","piplus_PrimaryHadronSWCentralSplineVariation","genie_ccresAxial_Genie","genie_ncresAxial_Genie","genie_qema_Genie","genie_NC_Genie","genie_NonResRvbarp1pi_Genie","genie_NonResRvbarp2pi_Genie","genie_NonResRvp1pi_Genie","genie_NonResRvp2pi_Genie","genie_NonResRvbarp1piAlt_Genie","genie_NonResRvbarp2piAlt_Genie","genie_NonResRvp1piAlt_Genie","genie_NonResRvp2piAlt_Genie"};
 
+    variations_to_use = {"AGKYpT1pi_Genie"," AGKYxF1pi_Genie"," AhtBY_Genie"," AxFFCCQEshape_Genie"," BhtBY_Genie"," CV1uBY_Genie"," CV2uBY_Genie"," DecayAngMEC_Genie"," EtaNCEL_Genie"," FrAbs_N_Genie"," FrAbs_pi_Genie"," FrCEx_N_Genie"," FrCEx_pi_Genie"," FrInel_N_Genie"," FrInel_pi_Genie"," FrPiProd_N_Genie"," FrPiProd_pi_Genie"," FracDelta_CCMEC_Genie"," FracPN_CCMEC_Genie"," MFP_N_Genie"," MFP_pi_Genie"," MaCCQE_Genie"    ," MaCCRES_Genie"," MaCOHpi_Genie"," MaNCEL_Genie"," MvCCRES_Genie"," NonRESBGvbarnCC1pi_Genie"," NonRESBGvbarnCC2pi_Genie"," NonRESBGvbarnNC1pi_Genie"," NonRESBGvbarnNC2pi_Genie"," NonRESBGvbarpCC1pi_Genie"," NonRESBGvbarpCC2pi_Genie"," NonRESBGvbarpNC1pi_Genie"," NonRESBGvbarpNC2pi_Genie"," NonRESBGvnCC1pi_Genie"," NonRESBGvnCC2pi_Genie"," NonRESBGvnNC1pi_Genie"," NonRESBGvnNC2pi_Genie"," NonRESBGvpCC1pi_Genie"," NonRESBGvpCC2pi_Genie"," NonRESBGvpNC1pi_Genie"," NonRESBGvpNC2pi_Genie"," NormCCMEC_Genie"," NormNCMEC_Genie"," R0COHpi_Genie"," RDecBR1eta_Genie"," RDecBR1gamma_Genie"," RPA_CCQE_Genie"," Theta_Delta2Npi_Genie"," VecFFCCQEshape_Genie"," XSecShape_CCMEC_Genie"};
+
+    
     for(auto &s: variations_to_use){
         m_variations_to_use[s]=true;
     }
-
-
 
     std::map<std::string, int> parameter_sims;
 
@@ -51,7 +52,6 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
     for(int fid=0; fid < num_files; ++fid) {
         const auto& fn = montecarlo_file.at(fid);
-
 
         files[fid] = TFile::Open(fn.c_str());
         trees[fid] = (TTree*)(files[fid]->Get(montecarlo_name.at(fid).c_str()));
@@ -290,11 +290,13 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
         double global_weight = montecarlo_additional_weight[fileid];//this will be 1.0 unless specified in xml
 
+
         global_weight *= montecarlo_scale[fileid];
 
-        //const auto bnbcorr_iter = thisfWeight.find(bnbcorrection_str);
-        //if (bnbcorr_iter != thisfWeight.end())
-        //    global_weight *= (*bnbcorr_iter).second.front();
+        double additional_CV_weight = 1.0;
+
+        const auto bnbcorr_iter = thisfWeight.find(bnbcorrection_str);
+        if (bnbcorr_iter != thisfWeight.end())    additional_CV_weight *= (*bnbcorr_iter).second.front();
 
         if(std::isinf(global_weight) or (global_weight != global_weight)){
             std::stringstream ss;
@@ -408,7 +410,8 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             double reco_var = *(static_cast<double*>(branch_var_jt->GetValue()));
             //reco_var = 1.031*reco_var;
             int reco_bin = spec_central_value.GetGlobalBinNumber(reco_var,ih);
-            spec_central_value.hist[ih].Fill(reco_var, global_weight);
+            spec_central_value.hist[ih].Fill(reco_var, global_weight*additional_CV_weight);
+            std::cout<<reco_var<<" "<<reco_bin<<" "<<ih<<std::endl;
 
             for(int m=0; m<weights.size(); m++){
                 if(reco_bin<0) continue;
