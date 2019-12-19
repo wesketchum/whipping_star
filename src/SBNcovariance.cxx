@@ -5,6 +5,244 @@
 
 using namespace sbn;
 
+// for single photon: when we use root files with systematics already applied.
+// usually 'useuniverse' is set to 'false' in this case.
+SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(xmlname, true, useuniverse) {
+    otag = "SBN covariance::SBNcovariance\t||\t";
+
+    std::cout <<otag<<"Start" << std::endl;
+
+    universes_used = 0;
+    tolerence_positivesemi = 1e-5;
+    is_small_negative_eigenvalue = false;
+    abnormally_large_weight = 1e3;//1e20;//20.0;
+
+    bool restrict_variations = false;
+
+
+
+
+    //Initialise the central value SBNspec.
+    spec_central_value = SBNspec(xmlname,-1,false, useuniverse);
+
+    int num_files = montecarlo_file.size();
+
+
+    //unique variations used in the files
+    variations.clear();
+    std::vector<std::string> variations_tmp(systematic_name.begin(), systematic_name.end());
+    std::sort(variations_tmp.begin(),variations_tmp.end());
+    auto unique_iter = std::unique(variations_tmp.begin(), variations_tmp.end());
+    variations.insert(variations.begin(),variations_tmp.begin(),unique_iter);
+
+    std::cout<<otag<<" Construct for num_files=" << num_files << std::endl;
+
+    std::vector<int> nentries(num_files,0);
+    std::vector<int> used_montecarlos(num_files,0);
+
+    files.resize(num_files,nullptr);
+    trees.resize(num_files,nullptr);
+    f_weights.resize(num_files,nullptr);
+
+    montecarlo_additional_weight.resize(num_files,1.0);
+
+    int good_event = 0;
+
+    for(int fid=0; fid < num_files; ++fid) {
+        const auto& fn = montecarlo_file.at(fid);
+
+
+        files[fid] = TFile::Open(fn.c_str());
+        trees[fid] = (TTree*)(files[fid]->Get(montecarlo_name.at(fid).c_str()));
+        nentries[fid]= (int)trees.at(fid)->GetEntries();
+
+        //Some POT counting
+        double pot_scale = 1.0;
+        if(montecarlo_pot[fid]!=-1){
+            pot_scale = this->plot_pot/montecarlo_pot[fid];
+        }
+
+        montecarlo_scale[fid] = montecarlo_scale[fid]*pot_scale;
+
+
+        std::cout << otag<<"" << std::endl;
+        std::cout << otag<<" TFile::Open() file=" << files[fid]->GetName() << " @" << files[fid] << std::endl;
+        std::cout << otag<<" Has POT " <<montecarlo_pot[fid] <<" and "<<nentries[fid] <<" entries "<<std::endl;
+
+        auto montecarlo_file_friend_treename_iter = montecarlo_file_friend_treename_map.find(fn);
+        if (montecarlo_file_friend_treename_iter != montecarlo_file_friend_treename_map.end()) {
+            std::cout<<otag<<" Detected friend trees" << std::endl;
+
+            auto montecarlo_file_friend_iter = montecarlo_file_friend_map.find(fn);
+            if (montecarlo_file_friend_iter == montecarlo_file_friend_map.end()) {
+                std::stringstream ss;
+                ss << "Looked for filename=" << fn << " in fnmontecarlo_file_friend_iter, but could not be found... bad config?" << std::endl;
+                throw std::runtime_error(ss.str());
+            }
+
+            for(int k=0; k < (*montecarlo_file_friend_iter).second.size(); k++){
+
+                std::string treefriendname = (*montecarlo_file_friend_treename_iter).second.at(k);
+                std::string treefriendfile = (*montecarlo_file_friend_iter).second.at(k);
+
+                std::cout << otag<<" Adding a friend tree:  " <<treefriendname<<" from file: "<< treefriendfile <<std::endl;
+
+                trees[fid]->AddFriend(treefriendname.c_str(),treefriendfile.c_str());
+            }
+        }
+
+
+        for(const auto branch_variable : branch_variables[fid]) {
+            //quick check that this branch associated subchannel is in the known chanels;
+            int is_valid_subchannel = 0;
+            for(const auto &name: fullnames){
+                if(branch_variable->associated_hist==name){
+                    std::cout<<otag<<" Found a valid subchannel for this branch: " <<name<<std::endl;
+                    is_valid_subchannel++;
+                }
+            }
+            if(is_valid_subchannel==0){
+                std::cout<<otag<<" ERROR ERROR: This branch did not match one defined in the .xml : " <<branch_variable->associated_hist<<std::endl;
+                std::cout<<otag<<" ERROR ERROR: There is probably a typo somehwhere in xml! "<<std::endl;
+                exit(EXIT_FAILURE);
+
+            }else if(is_valid_subchannel>1){
+                std::cout<<otag<<" ERROR ERROR: This branch matched more than 1 subchannel!: " <<branch_variable->associated_hist<<std::endl;
+                exit(EXIT_FAILURE);
+            }
+	    //set the address of branch 
+	    trees.at(fid)->SetBranchAddress(branch_variable->name.c_str(),    branch_variable->GetValue());
+        }
+
+
+	// set the address of 'reco_weight'.
+        if(montecarlo_additional_weight_bool[fid]){
+            //we have an additional weight we want to apply at run time, otherwise its just set at 1.
+            std::cout<<"Setting Additional weight of : "<< montecarlo_additional_weight_names[fid].c_str()<<std::endl; 
+            trees[fid]->SetBranchAddress(montecarlo_additional_weight_names[fid].c_str(), &montecarlo_additional_weight[fid]); 
+        }
+
+
+        std::cout<<"Total Entries: "<<trees.at(fid)->GetEntries()<<" good event "<<good_event<<std::endl;
+        trees.at(fid)->GetEntry(good_event);
+        
+	} // end fid
+
+
+        // make a map and start filling, before filling find if already in map, if it is check size.
+        std::cout << otag<<" Found " << variations.size() << " unique variations: " << std::endl;
+
+        map_universe_to_var.clear();
+	vec_universe_to_var.clear();
+        num_universes_per_variation.clear();
+
+        for(size_t vid=0; vid<variations.size(); ++vid) {
+            const auto &v =  variations[vid];
+            int in_n_files = 0;
+	    int variation_length = std::count(systematic_name.begin(), systematic_name.end(), v) - 1;
+
+            std::cout<<otag<<" "<<v<<std::endl;
+
+	    if(variation_length == -1){
+		std::cout << otag << "Can't find this variation in the systematic variation vector!" << std::endl;
+		exit(EXIT_FAILURE);
+	    }else if(variation_length == 0){
+		std::cout << otag << "Can only find 1 central value file, can't build covarice matrix!" << std::endl;
+	    }
+
+
+
+            for(int p=0; p < variation_length; p++){
+                map_universe_to_var[num_universes_per_variation.size()] = v;
+                vec_universe_to_var.push_back(vid);
+                num_universes_per_variation.push_back(variation_length);
+            }
+
+            map_var_to_num_universe[v] = variation_length;
+        }  //end looping over variations 
+
+
+        universes_used = num_universes_per_variation.size();
+
+        std::cout << otag<<" -------------------------------------------------------------" << std::endl;
+        std::cout << otag<<" Initilizing " << universes_used << " universes." << std::endl;
+        std::cout << otag<<" -------------------------------------------------------------" << std::endl;
+
+        std::vector<double> base_vec (spec_central_value.num_bins_total,0.0);
+
+        std::cout << otag<<" Full concatanated vector has : " << spec_central_value.num_bins_total << std::endl;
+
+        multi_vecspec.clear();
+        multi_vecspec.resize(universes_used,base_vec);
+
+        std::cout << otag<<" multi_vecspec now initilized of size :" << multi_vecspec.size() << std::endl;
+        std::cout << otag<<" Reading the data files" << std::endl;
+        watch.Reset();
+        watch.Start();
+
+
+	int n_universe = 0;
+	double reco_weight;
+	for( size_t vid =0; vid < variations.size() ; vid++){
+	   const auto &v =  variations[vid];
+	    std::cout << "variation " << v << " total # of files" << num_files << std::endl;
+	   for(int fid=0; fid< num_files; fid++){
+
+		int nevents = std::min(montecarlo_maxevents[fid], nentries[fid]);
+		for(int t=0; t< branch_variables[fid].size(); t++){
+			const auto branch_var_jt = branch_variables[fid][t];
+			if(branch_var_jt->associated_systematic == v){  // if we find the branch with right systematic variation
+			    int ih = spec_central_value.map_hist.at(branch_var_jt->associated_hist);
+			    double reco_var;
+			    int reco_bin;
+		
+			    if(branch_var_jt->central_value == true ){
+				 for(int i=0; i< nevents; i++){
+					trees[fid]->GetEntry(i);
+					reco_var = *(static_cast<double*>(branch_var_jt->GetValue()));
+					// calculate the reconstructed weight
+					reco_weight = montecarlo_additional_weight[fid];
+					reco_weight *= montecarlo_scale[fid]; 				
+				 	spec_central_value.hist[ih].Fill(reco_var, reco_weight);
+				}
+			    }else{
+				 for(int i=0; i< nevents ; i++){
+					trees[fid]->GetEntry(i);
+					reco_var = *(static_cast<double*>(branch_var_jt->GetValue()));
+			    		// use CV spec to get the global bin number, even for systematically varied histograms
+					reco_bin = spec_central_value.GetGlobalBinNumber(reco_var,ih);
+					// calculate the reconstructed weight
+					reco_weight = montecarlo_additional_weight[fid];          
+                                        reco_weight *= montecarlo_scale[fid]; 
+				     	multi_vecspec[n_universe][reco_bin] += reco_weight;
+				 }
+				 n_universe++;
+			    }		
+			} else continue;
+				
+		}// end of branch loop
+	    } // end of file loop
+	} //end of variation loop
+
+
+
+        watch.Stop();
+        std::cout << otag<<" done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
+
+        /***************************************************************
+         *		Now some clean-up and Writing
+         * ************************************************************/
+
+        for(auto f: files){
+            std::cout << otag<<" TFile::Close() file=" << f->GetName() << " @" << f << std::endl;
+            f->Close();
+        }
+        std::cout << otag<<" End" << std::endl;
+
+}  //end constructor.
+
+
+
 SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     otag = "SBN covariance::SBNcovariance\t||\t";
 
@@ -181,6 +419,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         std::cout << otag<<" Found " << variations.size() << " unique variations: " << std::endl;
 
         map_universe_to_var.clear();
+	vec_universe_to_var.clear();
         num_universes_per_variation.clear();
 
         for(size_t vid=0; vid<variations.size(); ++vid) {
@@ -282,7 +521,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     }
 
 
-    void SBNcovariance::ProcessEvent(
+	void SBNcovariance::ProcessEvent(
             const std::map<std::string, 
             std::vector<eweight_type> >& thisfWeight,
             size_t fileid,

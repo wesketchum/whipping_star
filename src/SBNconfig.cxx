@@ -2,10 +2,11 @@
 using namespace sbn;
 
 //standard constructor given an .xml
-SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
+SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xmlname(whichxml) {
     otag = "SBNconfig::SBNconfig\t||\t";
 
     is_verbose = isverbose;
+    use_universe = useuniverse;  //is eventweights with "weights" for different universes being used to construct the covariance matrix, or are root files which already has branch of reco weight after systematic variation applied used to build  the covariance matrix 
 
     if(is_verbose){std::cout<<otag<<"---------------------------------------------------------------"<<std::endl;}
 
@@ -330,6 +331,8 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                 const char* bnam = pBranch->Attribute("name");
                 const char* btype = pBranch->Attribute("type");
                 const char* bhist = pBranch->Attribute("associated_subchannel");
+		const char* bsyst = pBranch->Attribute("associated_systematic");
+		const char* bcentral = pBranch->Attribute("central_value");
                 const char* bwname = pBranch->Attribute("eventweight_branch_name");
                 const char* badditional_weight = pBranch->Attribute("additional_weight");
 
@@ -358,6 +361,19 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                     exit(EXIT_FAILURE);
                 }
 
+		
+		if(bsyst == NULL){
+			std::cout << otag << "No root file with unique systematic variation is provided" << std::endl;
+			if(use_universe == false){
+				std::cout << otag << "ERROR!: please provide what systematic variation this file correpsonds to!" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+			systematic_name.push_back("");
+		}else{
+			systematic_name.push_back(bsyst);	
+		}
+	
+	
                 if(badditional_weight == NULL){
                    montecarlo_additional_weight_bool.push_back(0);
                    montecarlo_additional_weight_names.push_back("");
@@ -377,7 +393,10 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                 //}else
                 if((std::string)btype == "double"){
                     if(is_verbose)                        std::cout<<otag<<"Setting double variable "<<bnam<<" @ "<<bhist<<std::endl;
-                    TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist ) );
+                    if(use_universe) TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist ) );
+		    else if((std::string)bcentral == "true") TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist,bsyst, true) );
+			else TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist,bsyst, false) );
+
                     //}else if(btype == "float"){
                     //	std::cout<<otag<<"Setting float variable "<<bnam<<" @ "<<bhist<<std::endl;
                     //	TEMP_branch_variables.push_back( new BranchVariable_f(bnam, btype, bhist ) );
@@ -627,7 +646,11 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
 
 }//end constructor
 
-SBNconfig::SBNconfig(std::string whichxml): SBNconfig(whichxml, true) {}
+
+
+
+SBNconfig::SBNconfig(std::string whichxml, bool isverbose): SBNconfig(whichxml, isverbose, true){} 
+SBNconfig::SBNconfig(std::string whichxml): SBNconfig(whichxml, true, true) {}
 
 //Constructor to build a SBNspec from scratch, not reccomended often
 SBNconfig::SBNconfig(std::vector<std::string> modein, std::vector<std::string> detin, std::vector<std::string> chanin, std::vector<std::vector<std::string>> subchanin, std::vector<std::vector<double>> binin){

@@ -2,7 +2,7 @@
 #include <cassert>
 using namespace sbn;
 
-SBNspec::SBNspec(std::string whichxml, int which_universe, bool isverbose) : SBNconfig(whichxml,isverbose){
+SBNspec::SBNspec(std::string whichxml, int which_universe, bool isverbose, bool useuniverse) : SBNconfig(whichxml,isverbose, useuniverse){
 
 	//Initialise all the things
 	//for every multisim, create a vector of histograms, one for every subchannel we want
@@ -35,11 +35,12 @@ SBNspec::SBNspec(std::string whichxml, int which_universe, bool isverbose) : SBN
 
 }
 
-SBNspec::SBNspec(std::string whichxml): SBNspec(whichxml,-1,true){}
-SBNspec::SBNspec(std::string whichxml, int which_universe): SBNspec(whichxml,which_universe, true){}
+SBNspec::SBNspec(std::string whichxml): SBNspec(whichxml,-1,true, true){}
+SBNspec::SBNspec(std::string whichxml, int which_universe): SBNspec(whichxml,which_universe, true, true){}
+SBNspec::SBNspec(std::string whichxml, int which_universe, bool isverbose): SBNspec(whichxml, which_universe, isverbose, true){}
 
 SBNspec::SBNspec(std::string rootfile, std::string whichxml) : SBNspec(rootfile, whichxml, true){}
-SBNspec::SBNspec(std::string rootfile, std::string whichxml, bool isverbose) : SBNconfig(whichxml, isverbose) {
+SBNspec::SBNspec(std::string rootfile, std::string whichxml, bool isverbose) : SBNconfig(whichxml, isverbose, true) {
 	//Contruct from a prexisting histograms that exist in a rootfile
 	TFile *f = new TFile(rootfile.c_str(),"read");
 
