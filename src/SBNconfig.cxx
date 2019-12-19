@@ -54,7 +54,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
             const char* mode_name= pMode->Attribute("name");
             if(mode_name==NULL){
                 std::cout<<otag<<"ERROR! Modes need a name! Please define a name attribute for all modes"<<std::endl;
-            
+
                 exit(EXIT_FAILURE);
             }else{
                 mode_names.push_back(mode_name);
@@ -62,7 +62,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
 
             const char* mode_plotname= pMode->Attribute("plotname");
             if(mode_plotname==NULL){
-                 mode_plotnames.push_back(mode_names.back());
+                mode_plotnames.push_back(mode_names.back());
             }else{
                 mode_plotnames.push_back(mode_plotname);
             }
@@ -99,7 +99,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
 
             const char* detector_plotname = pDet->Attribute("plotname");
             if(detector_plotname==NULL){
-                 detector_plotnames.push_back(detector_names.back());
+                detector_plotnames.push_back(detector_names.back());
             }else{
                 detector_plotnames.push_back(detector_plotname);
             }
@@ -138,7 +138,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
 
             const char* channel_plotname= pChan->Attribute("plotname");
             if(channel_plotname==NULL){
-                 channel_plotnames.push_back(channel_names.back());
+                channel_plotnames.push_back(channel_names.back());
             }else{
                 channel_plotnames.push_back(channel_plotname);
             }
@@ -238,13 +238,13 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
     }
 
     while(pPOT){
-            const char* inplotpot = pPOT->Attribute("value");
-            if(inplotpot==NULL){
-                plot_pot = 1.0 ;
-            }else{
-                plot_pot = strtod(inplotpot,&end);
-            }
-            pPOT = pPOT->NextSiblingElement("plotpot");
+        const char* inplotpot = pPOT->Attribute("value");
+        if(inplotpot==NULL){
+            plot_pot = 1.0 ;
+        }else{
+            plot_pot = strtod(inplotpot,&end);
+        }
+        pPOT = pPOT->NextSiblingElement("plotpot");
     }
 
     // if wea re creating a covariance matrix using a ntuple and weights, here is the info
@@ -331,8 +331,8 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
                 const char* bnam = pBranch->Attribute("name");
                 const char* btype = pBranch->Attribute("type");
                 const char* bhist = pBranch->Attribute("associated_subchannel");
-		const char* bsyst = pBranch->Attribute("associated_systematic");
-		const char* bcentral = pBranch->Attribute("central_value");
+                const char* bsyst = pBranch->Attribute("associated_systematic");
+                const char* bcentral = pBranch->Attribute("central_value");
                 const char* bwname = pBranch->Attribute("eventweight_branch_name");
                 const char* badditional_weight = pBranch->Attribute("additional_weight");
 
@@ -349,7 +349,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
                     std::cout<<otag<<"ERROR!: e.g name=`ereco`."<<std::endl;
                     exit(EXIT_FAILURE);
                 }
-    
+
                 if(btype == NULL){
                     if(is_verbose)std::cout<<otag<<"WARNING: No branch type has been specified, assuming double."<<std::endl;
                     btype= "double";
@@ -361,26 +361,28 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
                     exit(EXIT_FAILURE);
                 }
 
-		
-		if(bsyst == NULL){
-			std::cout << otag << "No root file with unique systematic variation is provided" << std::endl;
-			if(use_universe == false){
-				std::cout << otag << "ERROR!: please provide what systematic variation this file correpsonds to!" << std::endl;
-				exit(EXIT_FAILURE);
-			}
-			systematic_name.push_back("");
-		}else{
-			systematic_name.push_back(bsyst);	
-		}
-	
-	
-                if(badditional_weight == NULL){
-                   montecarlo_additional_weight_bool.push_back(0);
-                   montecarlo_additional_weight_names.push_back("");
+
+                if(bsyst == NULL){
+                    std::cout << otag << "No root file with unique systematic variation is provided" << std::endl;
+                    if(use_universe == false){
+                        std::cout << otag << "ERROR!: please provide what systematic variation this file correpsonds to!" << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+                    systematic_name.push_back("");
                 }else{
-                   montecarlo_additional_weight_names.push_back(badditional_weight);
-                   montecarlo_additional_weight_bool.push_back(1);
-                   if(is_verbose)std::cout<<otag<<"Setting an additional weight for branch "<<bnam<<" using the branch "<<badditional_weight<<" as a reweighting."<<std::endl;
+                    systematic_name.push_back(bsyst);	
+                    std::cout<<otag<<"Setting systematic name: "<<bsyst<<std::endl;
+
+                }
+
+
+                if(badditional_weight == NULL){
+                    montecarlo_additional_weight_bool.push_back(0);
+                    montecarlo_additional_weight_names.push_back("");
+                }else{
+                    montecarlo_additional_weight_names.push_back(badditional_weight);
+                    montecarlo_additional_weight_bool.push_back(1);
+                    if(is_verbose)std::cout<<otag<<"Setting an additional weight for branch "<<bnam<<" using the branch "<<badditional_weight<<" as a reweighting."<<std::endl;
                 }
 
 
@@ -393,9 +395,16 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
                 //}else
                 if((std::string)btype == "double"){
                     if(is_verbose)                        std::cout<<otag<<"Setting double variable "<<bnam<<" @ "<<bhist<<std::endl;
-                    if(use_universe) TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist ) );
-		    else if((std::string)bcentral == "true") TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist,bsyst, true) );
-			else TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist,bsyst, false) );
+                    if(use_universe){
+                          TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist ) );
+                          std::cout<<otag<<"Setting Standard eventweight for this."<<std::endl;
+                    } else  if((std::string)bcentral == "true"){
+                        TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist,bsyst, true) );
+                          std::cout<<otag<<"Setting as  CV for det sys."<<std::endl;
+                    } else {
+                        TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist,bsyst, false) );
+                          std::cout<<otag<<"Setting as a individual det sys (not cv)"<<std::endl;
+                    }
 
                     //}else if(btype == "float"){
                     //	std::cout<<otag<<"Setting float variable "<<bnam<<" @ "<<bhist<<std::endl;

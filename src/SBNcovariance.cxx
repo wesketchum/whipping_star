@@ -110,134 +110,152 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
                 std::cout<<otag<<" ERROR ERROR: This branch matched more than 1 subchannel!: " <<branch_variable->associated_hist<<std::endl;
                 exit(EXIT_FAILURE);
             }
-	    //set the address of branch 
-	    trees.at(fid)->SetBranchAddress(branch_variable->name.c_str(),    branch_variable->GetValue());
+            //set the address of branch 
+            trees.at(fid)->SetBranchAddress(branch_variable->name.c_str(),    branch_variable->GetValue());
         }
 
 
-	// set the address of 'reco_weight'.
+        // set the address of 'reco_weight'.
         if(montecarlo_additional_weight_bool[fid]){
             //we have an additional weight we want to apply at run time, otherwise its just set at 1.
             std::cout<<"Setting Additional weight of : "<< montecarlo_additional_weight_names[fid].c_str()<<std::endl; 
             trees[fid]->SetBranchAddress(montecarlo_additional_weight_names[fid].c_str(), &montecarlo_additional_weight[fid]); 
         }
 
-
         std::cout<<"Total Entries: "<<trees.at(fid)->GetEntries()<<" good event "<<good_event<<std::endl;
         trees.at(fid)->GetEntry(good_event);
-        
-	} // end fid
+
+    } // end fid
 
 
-        // make a map and start filling, before filling find if already in map, if it is check size.
-        std::cout << otag<<" Found " << variations.size() << " unique variations: " << std::endl;
+    // make a map and start filling, before filling find if already in map, if it is check size.
+    std::cout << otag<<" Found " << variations.size() << " unique variations: " << std::endl;
 
-        map_universe_to_var.clear();
-	vec_universe_to_var.clear();
-        num_universes_per_variation.clear();
+    map_universe_to_var.clear();
+    vec_universe_to_var.clear();
+    num_universes_per_variation.clear();
 
-        for(size_t vid=0; vid<variations.size(); ++vid) {
-            const auto &v =  variations[vid];
-            int in_n_files = 0;
-	    int variation_length = std::count(systematic_name.begin(), systematic_name.end(), v) - 1;
-
-            std::cout<<otag<<" "<<v<<std::endl;
-
-	    if(variation_length == -1){
-		std::cout << otag << "Can't find this variation in the systematic variation vector!" << std::endl;
-		exit(EXIT_FAILURE);
-	    }else if(variation_length == 0){
-		std::cout << otag << "Can only find 1 central value file, can't build covarice matrix!" << std::endl;
-	    }
+    for(size_t vid=0; vid<variations.size(); ++vid) {
+        const auto &v =  variations[vid];
+        int in_n_files = 0;
 
 
+        int n_cv_files = 0;
 
-            for(int p=0; p < variation_length; p++){
-                map_universe_to_var[num_universes_per_variation.size()] = v;
-                vec_universe_to_var.push_back(vid);
-                num_universes_per_variation.push_back(variation_length);
+        for(int fid=0; fid < num_files; ++fid) {
+
+            for(const auto branch_variable : branch_variables[fid]) {
+                if(branch_variable->associated_systematic == v && branch_variable->central_value){
+                    n_cv_files++;
+                }
             }
-
-            map_var_to_num_universe[v] = variation_length;
-        }  //end looping over variations 
-
-
-        universes_used = num_universes_per_variation.size();
-
-        std::cout << otag<<" -------------------------------------------------------------" << std::endl;
-        std::cout << otag<<" Initilizing " << universes_used << " universes." << std::endl;
-        std::cout << otag<<" -------------------------------------------------------------" << std::endl;
-
-        std::vector<double> base_vec (spec_central_value.num_bins_total,0.0);
-
-        std::cout << otag<<" Full concatanated vector has : " << spec_central_value.num_bins_total << std::endl;
-
-        multi_vecspec.clear();
-        multi_vecspec.resize(universes_used,base_vec);
-
-        std::cout << otag<<" multi_vecspec now initilized of size :" << multi_vecspec.size() << std::endl;
-        std::cout << otag<<" Reading the data files" << std::endl;
-        watch.Reset();
-        watch.Start();
-
-
-	int n_universe = 0;
-	double reco_weight;
-	for( size_t vid =0; vid < variations.size() ; vid++){
-	   const auto &v =  variations[vid];
-	    std::cout << "variation " << v << " total # of files" << num_files << std::endl;
-	   for(int fid=0; fid< num_files; fid++){
-
-		int nevents = std::min(montecarlo_maxevents[fid], nentries[fid]);
-		for(int t=0; t< branch_variables[fid].size(); t++){
-			const auto branch_var_jt = branch_variables[fid][t];
-			if(branch_var_jt->associated_systematic == v){  // if we find the branch with right systematic variation
-			    int ih = spec_central_value.map_hist.at(branch_var_jt->associated_hist);
-			    double reco_var;
-			    int reco_bin;
-		
-			    if(branch_var_jt->central_value == true ){
-				 for(int i=0; i< nevents; i++){
-					trees[fid]->GetEntry(i);
-					reco_var = *(static_cast<double*>(branch_var_jt->GetValue()));
-					// calculate the reconstructed weight
-					reco_weight = montecarlo_additional_weight[fid];
-					reco_weight *= montecarlo_scale[fid]; 				
-				 	spec_central_value.hist[ih].Fill(reco_var, reco_weight);
-				}
-			    }else{
-				 for(int i=0; i< nevents ; i++){
-					trees[fid]->GetEntry(i);
-					reco_var = *(static_cast<double*>(branch_var_jt->GetValue()));
-			    		// use CV spec to get the global bin number, even for systematically varied histograms
-					reco_bin = spec_central_value.GetGlobalBinNumber(reco_var,ih);
-					// calculate the reconstructed weight
-					reco_weight = montecarlo_additional_weight[fid];          
-                                        reco_weight *= montecarlo_scale[fid]; 
-				     	multi_vecspec[n_universe][reco_bin] += reco_weight;
-				 }
-				 n_universe++;
-			    }		
-			} else continue;
-				
-		}// end of branch loop
-	    } // end of file loop
-	} //end of variation loop
-
-
-
-        watch.Stop();
-        std::cout << otag<<" done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
-
-        /***************************************************************
-         *		Now some clean-up and Writing
-         * ************************************************************/
-
-        for(auto f: files){
-            std::cout << otag<<" TFile::Close() file=" << f->GetName() << " @" << f << std::endl;
-            f->Close();
         }
-        std::cout << otag<<" End" << std::endl;
+
+        int variation_length = std::count(systematic_name.begin(), systematic_name.end(), v)-n_cv_files;
+
+        std::cout<<otag<<" "<<v<<" with length "<<variation_length<<" and an additional "<<n_cv_files <<" which are CV"<<std::endl;
+
+        if(variation_length == -1){
+            std::cout << otag << "Can't find this variation in the systematic variation vector!" << std::endl;
+            exit(EXIT_FAILURE);
+        }else if(variation_length == 0){
+            std::cout << otag << "Can only find 1 central value file, can't build covarice matrix!" << std::endl;
+        }
+
+
+        //Variation length is 1. I.e we have a CV and 1 detsys shift
+        variation_length = 1;
+
+        for(int p=0; p < variation_length; p++){
+            map_universe_to_var[num_universes_per_variation.size()] = v;
+            vec_universe_to_var.push_back(vid);
+            num_universes_per_variation.push_back(variation_length);// universe stuff
+        }
+        
+        map_var_to_num_universe[v] = variation_length;
+    }  //end looping over variations 
+
+
+    universes_used = num_universes_per_variation.size();
+
+    std::cout << otag<<" -------------------------------------------------------------" << std::endl;
+    std::cout << otag<<" Initilizing " << universes_used << " universes." << std::endl;
+    std::cout << otag<<" -------------------------------------------------------------" << std::endl;
+
+    std::vector<double> base_vec (spec_central_value.num_bins_total,0.0);
+
+    std::cout << otag<<" Full concatanated vector has : " << spec_central_value.num_bins_total << std::endl;
+
+    multi_vecspec.clear();
+    multi_vecspec.resize(universes_used,base_vec);
+
+    std::cout << otag<<" multi_vecspec now initilized of size :" << multi_vecspec.size() << std::endl;
+    std::cout << otag<<" Reading the data files" << std::endl;
+    watch.Reset();
+    watch.Start();
+
+
+    double reco_weight;
+    for( size_t vid =0; vid < variations.size() ; vid++){
+        const auto &v =  variations[vid];
+        std::cout << "variation " << v << " total # of files" << num_files << std::endl;
+        for(int fid=0; fid< num_files; fid++){
+            
+            int nevents = std::min(montecarlo_maxevents[fid], nentries[fid]);
+            for(int t=0; t< branch_variables[fid].size(); t++){
+                const auto branch_var_jt = branch_variables[fid][t];
+
+                std::cout<<fid<<" "<<t<<" "<<branch_var_jt->associated_systematic<<" "<<branch_var_jt->associated_hist<<" on "<<v<<std::endl;
+                if(branch_var_jt->associated_systematic == v){  // if we find the branch with right systematic variation
+                    int ih = spec_central_value.map_hist.at(branch_var_jt->associated_hist);
+                    double reco_var;
+                    int reco_bin;
+
+                    if(branch_var_jt->central_value == true ){
+                        for(int i=0; i< nevents; i++){
+                            trees[fid]->GetEntry(i);
+                            reco_var = *(static_cast<double*>(branch_var_jt->GetValue()));
+                            // calculate the reconstructed weight
+                            reco_weight = montecarlo_additional_weight[fid];
+                            reco_weight *= montecarlo_scale[fid]; 				
+                            std::cout<<"SYS "<<reco_var<<" "<<reco_weight<<" "<<ih<<std::endl;
+                            spec_central_value.hist[ih].Fill(reco_var, reco_weight);
+                        }
+                    }else{
+                        for(int i=0; i< nevents ; i++){
+                            trees[fid]->GetEntry(i);
+                            reco_var = *(static_cast<double*>(branch_var_jt->GetValue()));
+                            // use CV spec to get the global bin number, even for systematically varied histograms
+                            reco_bin = spec_central_value.GetGlobalBinNumber(reco_var,ih);
+                            // calculate the reconstructed weight
+                            reco_weight = montecarlo_additional_weight[fid];          
+                            reco_weight *= montecarlo_scale[fid]; 
+                            std::cout<<"CV "<<reco_var<<" "<<reco_bin<<" "<<ih<<" "<<reco_weight<<" "<<vid<<"/"<<universes_used<<" "<<multi_vecspec.size()<<" "<<multi_vecspec[vid].size()<<std::endl;
+                            multi_vecspec[vid][reco_bin] += reco_weight;
+                        }
+                    }		
+                } else continue;
+             std::cout<<"ebranch"<<std::endl;
+            }// end of branch loop
+             std::cout<<"efile"<<std::endl;
+        } // end of file loop
+             std::cout<<"evar"<<std::endl;
+    } //end of variation loop
+
+
+
+    watch.Stop();
+    std::cout << otag<<" done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
+
+    /***************************************************************
+     *		Now some clean-up and Writing
+     * ************************************************************/
+
+    for(auto f: files){
+        std::cout << otag<<" TFile::Close() file=" << f->GetName() << " @" << f << std::endl;
+//        f->Close();
+    }
+    std::cout << otag<<" End" << std::endl;
 
 }  //end constructor.
 
@@ -260,7 +278,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
     variations_to_use = {"AGKYpT1pi_Genie"," AGKYxF1pi_Genie"," AhtBY_Genie"," AxFFCCQEshape_Genie"," BhtBY_Genie"," CV1uBY_Genie"," CV2uBY_Genie"," DecayAngMEC_Genie"," EtaNCEL_Genie"," FrAbs_N_Genie"," FrAbs_pi_Genie"," FrCEx_N_Genie"," FrCEx_pi_Genie"," FrInel_N_Genie"," FrInel_pi_Genie"," FrPiProd_N_Genie"," FrPiProd_pi_Genie"," FracDelta_CCMEC_Genie"," FracPN_CCMEC_Genie"," MFP_N_Genie"," MFP_pi_Genie"," MaCCQE_Genie"    ," MaCCRES_Genie"," MaCOHpi_Genie"," MaNCEL_Genie"," MvCCRES_Genie"," NonRESBGvbarnCC1pi_Genie"," NonRESBGvbarnCC2pi_Genie"," NonRESBGvbarnNC1pi_Genie"," NonRESBGvbarnNC2pi_Genie"," NonRESBGvbarpCC1pi_Genie"," NonRESBGvbarpCC2pi_Genie"," NonRESBGvbarpNC1pi_Genie"," NonRESBGvbarpNC2pi_Genie"," NonRESBGvnCC1pi_Genie"," NonRESBGvnCC2pi_Genie"," NonRESBGvnNC1pi_Genie"," NonRESBGvnNC2pi_Genie"," NonRESBGvpCC1pi_Genie"," NonRESBGvpCC2pi_Genie"," NonRESBGvpNC1pi_Genie"," NonRESBGvpNC2pi_Genie"," NormCCMEC_Genie"," NormNCMEC_Genie"," R0COHpi_Genie"," RDecBR1eta_Genie"," RDecBR1gamma_Genie"," RPA_CCQE_Genie"," Theta_Delta2Npi_Genie"," VecFFCCQEshape_Genie"," XSecShape_CCMEC_Genie"};
 
-    
+
     for(auto &s: variations_to_use){
         m_variations_to_use[s]=true;
     }
@@ -419,7 +437,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         std::cout << otag<<" Found " << variations.size() << " unique variations: " << std::endl;
 
         map_universe_to_var.clear();
-	vec_universe_to_var.clear();
+        vec_universe_to_var.clear();
         num_universes_per_variation.clear();
 
         for(size_t vid=0; vid<variations.size(); ++vid) {
@@ -521,7 +539,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     }
 
 
-	void SBNcovariance::ProcessEvent(
+    void SBNcovariance::ProcessEvent(
             const std::map<std::string, 
             std::vector<eweight_type> >& thisfWeight,
             size_t fileid,
@@ -748,7 +766,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 a_num_universes_per_variation[:universes_used])
         for(int k=0; k<universes_used; k++) {
             int varid = a_vec_universe_to_var[k];
-            double vec_bot = ((double)a_num_universes_per_variation[k]);
+            double vec_bot = 1.0;//((double)a_num_universes_per_variation[k]);
 #pragma acc loop seq
             for(int i=0; i<num_bins_total; i++) {
 #pragma acc loop vector
@@ -1013,9 +1031,9 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
         std::cout << "SBNcovariance::PrintVariations\t||\tFinished. Just tidying up and writing TCanvas. " << std::endl;
 
-    if (access("variations",F_OK) == -1){
-	    	    mkdir("variations",0777);//Create a folder for pdf.
-   	}
+        if (access("variations",F_OK) == -1){
+            mkdir("variations",0777);//Create a folder for pdf.
+        }
 
         for(int v =0; v< variations.size(); v++){
             fout->cd();
