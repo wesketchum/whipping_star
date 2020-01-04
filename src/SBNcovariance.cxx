@@ -10,7 +10,7 @@ using namespace sbn;
 SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(xmlname, true, useuniverse) {
     otag = "SBN covariance::SBNcovariance\t||\t";
 
-    std::cout <<otag<<"Start" << std::endl;
+    std::cout <<otag<<"Start in DetSys mode. " << std::endl;
 
     universes_used = 0;
     tolerence_positivesemi = 1e-5;
@@ -18,9 +18,6 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
     abnormally_large_weight = 1e3;//1e20;//20.0;
 
     bool restrict_variations = false;
-
-
-
 
     //Initialise the central value SBNspec.
     spec_central_value = SBNspec(xmlname,-1,false, useuniverse);
@@ -264,13 +261,14 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
 SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     otag = "SBN covariance::SBNcovariance\t||\t";
 
-    std::cout <<otag<<"Start" << std::endl;
+    std::cout <<otag<<"Start in EventWeight Mode." << std::endl;
 
     universes_used = 0;
     tolerence_positivesemi = 1e-5;
     is_small_negative_eigenvalue = false;
     abnormally_large_weight = 1e3;//1e20;//20.0;
-    bnbcorrection_str = "TunedCentralValue_Genie";//"bnbcorrection_FluxHist";
+    //Is there a Global weight to be applied to ALL weights, CV and otherwise, inside the eventweight class? 
+    bnbcorrection_str = "NAN";//"TunedCentralValue_Genie";//"bnbcorrection_FluxHist";
 
     bool restrict_variations = false;
 
@@ -668,7 +666,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             //reco_var = 1.031*reco_var;
             int reco_bin = spec_central_value.GetGlobalBinNumber(reco_var,ih);
             spec_central_value.hist[ih].Fill(reco_var, global_weight*additional_CV_weight);
-            std::cout<<reco_var<<" "<<reco_bin<<" "<<ih<<std::endl;
+            //std::cout<<reco_var<<" "<<reco_bin<<" "<<ih<<std::endl;
 
             for(int m=0; m<weights.size(); m++){
                 if(reco_bin<0) continue;
@@ -766,7 +764,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 a_num_universes_per_variation[:universes_used])
         for(int k=0; k<universes_used; k++) {
             int varid = a_vec_universe_to_var[k];
-            double vec_bot = 1.0;//((double)a_num_universes_per_variation[k]);
+            double vec_bot = ((double)a_num_universes_per_variation[k]);
 #pragma acc loop seq
             for(int i=0; i<num_bins_total; i++) {
 #pragma acc loop vector
