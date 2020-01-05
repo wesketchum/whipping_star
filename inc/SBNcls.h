@@ -79,6 +79,9 @@ class SBNcls{
     double pval2sig1sided(double p);
     double pval2sig2sided(double p);
     int DrawSampleCovariance(std::string);
+
+    int makePlots(TH1D& h0, TH1D& h1, std::string s, std::vector<double> & pval, int which_mode =0);
+
 };
 
 
