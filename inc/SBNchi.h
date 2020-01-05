@@ -153,6 +153,14 @@ class SBNchi : public SBNconfig{
 	TH1D SampleCovarianceVaryInput(SBNspec *specin, int num_MC, double maxchi);
 	TH1D SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<double>*);
 
+
+
+    TH1D SamplePoisson_NP(SBNspec *specin, SBNchi &chi_h0, SBNchi & chi_h1, int num_MC, std::vector<double> *chival);
+    TH1D SamplePoisson_NP(SBNspec *specin, SBNchi &chi_h0, SBNchi & chi_h1, int num_MC, double);
+
+
+
+
     double max_sample_chi_val;
 
 	int CollapseVectorStandAlone(std::vector<double> * full_vector, std::vector<double> *collapsed_vector);

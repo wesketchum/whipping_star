@@ -363,7 +363,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
 
 
                 if(bsyst == NULL){
-                    std::cout << otag << "No root file with unique systematic variation is provided" << std::endl;
+                    if(is_verbose)std::cout << otag << "No root file with unique systematic variation is provided" << std::endl;
                     if(use_universe == false){
                         std::cout << otag << "ERROR!: please provide what systematic variation this file correpsonds to!" << std::endl;
                         exit(EXIT_FAILURE);
@@ -397,7 +397,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
                     if(is_verbose)                        std::cout<<otag<<"Setting double variable "<<bnam<<" @ "<<bhist<<std::endl;
                     if(use_universe){
                           TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist ) );
-                          std::cout<<otag<<"Setting Standard eventweight for this."<<std::endl;
+                          if(is_verbose)std::cout<<otag<<"Setting Standard eventweight for this."<<std::endl;
                     } else  if((std::string)bcentral == "true"){
                         TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist,bsyst, true) );
                           std::cout<<otag<<"Setting as  CV for det sys."<<std::endl;

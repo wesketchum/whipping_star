@@ -40,13 +40,17 @@ class SBNcls{
 
 	public:
 
-	SBNcls(SBNspec *inh0, SBNspec * inh1, TMatrixD matin) : h0(inh0), h1(inh1), covariance_matrix(matin), chi(*inh0, matin){
+	SBNcls(SBNspec *inh0, SBNspec * inh1, TMatrixD matin) : h0(inh0), h1(inh1), covariance_matrix(matin), chi_h0(*inh0, matin),chi_h1(*inh1,matin){
 		which_sample = 0; //default Poisson
+        which_mode = 0;
+        use_CNP=false;
         maxchival = 210;
 		rangen= new TRandom3(0);
 	}
-	SBNcls(SBNspec *inh0, SBNspec * inh1) : h0(inh0), h1(inh1), chi(*inh0){
+	SBNcls(SBNspec *inh0, SBNspec * inh1) : h0(inh0), h1(inh1), chi_h0(*inh0),chi_h1(*inh1){
 		which_sample = 0; //default Poisson
+        which_mode = 0;
+        use_CNP = false;
         maxchival = 210;
 		rangen= new TRandom3(0);
 	}
@@ -56,11 +60,15 @@ class SBNcls{
 	SBNspec * h0;
 	SBNspec * h1;
 	
-	SBNchi chi;
+	SBNchi chi_h0;//previously just chi
+	SBNchi chi_h1;
+
 	TMatrixD covariance_matrix;
 
 	TRandom3 * rangen;
 
+    bool use_CNP;
+    int which_mode;
 	int which_sample;
     double maxchival;
 	/****************** Member Functions *************/
@@ -68,6 +76,8 @@ class SBNcls{
 	int SetSampleCovariance();
 	int SetSamplePoisson();
     double pval2sig(double p);
+    double pval2sig1sided(double p);
+    double pval2sig2sided(double p);
     int DrawSampleCovariance(std::string);
 };
 

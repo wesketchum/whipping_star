@@ -48,6 +48,8 @@ int main(int argc, char* argv[])
   int index;
   bool sample_from_covariance = true;
   int num_MC_events = 100000;
+  bool use_cnp = false;
+
   std::string tag = "TEST";
 
   std::string signal_file = "EMPTY";
@@ -62,6 +64,7 @@ int main(int argc, char* argv[])
       {"signal", 		required_argument,	0,'s'},
       {"background", 	required_argument,	0,'b'},
       {"tag", 	    required_argument,	0,'t'},
+      {"cnp",no_argument,0,'a'},
       {"poisson", no_argument,0,'p'},
       {"help",no_argument,0,'h'},
       {0,			no_argument, 		0,  0},
@@ -69,7 +72,7 @@ int main(int argc, char* argv[])
 
   while(iarg != -1)
     {
-      iarg = getopt_long(argc,argv, "x:n:s:b:c:t:ph", longopts, &index);
+      iarg = getopt_long(argc,argv, "a:x:n:s:b:c:t:ph", longopts, &index);
 
       switch(iarg)
 	{
@@ -85,7 +88,10 @@ int main(int argc, char* argv[])
 	case 't':
 	  tag = optarg;
 	  break;
-	case 'c':
+    case 'a':
+      use_cnp = true;
+      break;
+    case 'c':
       covariance_file = optarg;
 	  break;
 	case 'n':
@@ -108,7 +114,7 @@ int main(int argc, char* argv[])
 				std::cout<<"--- Optional arguments: ---"<<std::endl;
 	            std::cout<<"\t-n\t--number\t\tNumber of MC events for frequentist studies (default 100k)"<<std::endl;
                 std::cout<<"\t-p\t--poisson\t\tUse Stats-only covariance matrix with Poissonian statistics rather than use covariance matrix"<<std::endl;
-				std::cout<<"\t-p\t--printall\t\tRuns in BONUS print mode, making individual spectra plots for ALLVariations. (warning can take a while!) "<<std::endl;
+                //std::cout<<"\t-a\t--cnp\t\tuse an Alternate chi^2 Combined Newman Pearson chi2 (default false)"<<std::endl;
                 std::cout<<"\t-h\t--help\t\t\tThis help menu."<<std::endl;
 				std::cout<<"---------------------------------------------------"<<std::endl;
         return 0;	
