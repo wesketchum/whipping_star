@@ -42,14 +42,14 @@ class SBNcls{
 
 	SBNcls(SBNspec *inh0, SBNspec * inh1, TMatrixD matin) : h0(inh0), h1(inh1), covariance_matrix(matin), chi_h0(*inh0, matin),chi_h1(*inh1,matin){
 		which_sample = 0; //default Poisson
-        which_mode = 0;
+        which_mode = 1; //default delta chi
         use_CNP=false;
         maxchival = 210;
 		rangen= new TRandom3(0);
 	}
 	SBNcls(SBNspec *inh0, SBNspec * inh1) : h0(inh0), h1(inh1), chi_h0(*inh0),chi_h1(*inh1){
 		which_sample = 0; //default Poisson
-        which_mode = 0;
+        which_mode = 1; //default delta chi
         use_CNP = false;
         maxchival = 210;
 		rangen= new TRandom3(0);
@@ -80,6 +80,7 @@ class SBNcls{
     double pval2sig2sided(double p);
     int DrawSampleCovariance(std::string);
 
+    int setMode(int);
     int makePlots(TH1D& h0, TH1D& h1, std::string s, std::vector<double> & pval, int which_mode =0);
 
 };

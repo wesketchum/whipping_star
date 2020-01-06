@@ -1292,6 +1292,7 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
     return ans;
 }
 
+
 int SBNchi::CollapseVectorStandAlone(std::vector<double> * full_vector, std::vector<double> *collapsed_vector){
     for(int im = 0; im < num_modes; im++){
         for(int id =0; id < num_detectors; id++){
@@ -1569,14 +1570,14 @@ TH1D SBNchi::SamplePoissonVaryInput(SBNspec *specin, int num_MC, std::vector<dou
 
 }
 
-TH1D SBNchi::SamplePoisson_NP(SBNspec *specin, SBNchi &chi_h0, SBNchi & chi_h1, int num_MC, double maxchi){ 
+TH1D SBNchi::SamplePoisson_NP(SBNspec *specin, SBNchi &chi_h0, SBNchi & chi_h1, int num_MC, double maxchi,int which_sample){ 
     max_sample_chi_val = maxchi;
     std::vector<double>  tmp = {};
-    return SamplePoisson_NP(specin,chi_h0,chi_h1,num_MC,&tmp);
+    return SamplePoisson_NP(specin,chi_h0,chi_h1,num_MC,&tmp, which_sample);
 }
 
 
-TH1D SBNchi::SamplePoisson_NP(SBNspec *specin, SBNchi &chi_h0, SBNchi & chi_h1, int num_MC, std::vector<double> *chival){
+TH1D SBNchi::SamplePoisson_NP(SBNspec *specin, SBNchi &chi_h0, SBNchi & chi_h1, int num_MC, std::vector<double> *chival, int which_sample){
 
     float** h0_vec_matrix_inverted = new float*[num_bins_total_compressed];
     float** h1_vec_matrix_inverted = new float*[num_bins_total_compressed];
@@ -1638,14 +1639,22 @@ TH1D SBNchi::SamplePoisson_NP(SBNspec *specin, SBNchi &chi_h0, SBNchi & chi_h1, 
     std::cout<<otag<<" Starting to generate "<<num_MC<<" pseudo universes according to poisson distribution"<<std::endl;
     for(int i=0; i < num_MC;i++){
 
-        for(int j = 0; j < num_bins_total; j++){
-            //float p = dist_pois[j](*rangen_twister); 
-            int p = dist_pois[j](*rangen_twister); 
-            sampled_fullvector[j] =  (float)p;
-            //std::cout<<"P: "<<a_specin[j]<<" "<<sampled_fullvector[j]<<" "<<p<<std::endl;
-        }
+        if(which_sample==0){//Poisson Mode
+            for(int j = 0; j < num_bins_total; j++){
+                //float p = dist_pois[j](*rangen_twister); 
+                int p = dist_pois[j](*rangen_twister); 
+                sampled_fullvector[j] =  (float)p;
+                //std::cout<<"P: "<<a_specin[j]<<" "<<sampled_fullvector[j]<<" "<<p<<std::endl;
+            }
 
         this->CollapseVectorStandAlone(sampled_fullvector, collapsed);
+        }else if(which_sample==1){//Covariance Sampling
+            std::vector<float> exp  = this->GeneratePseudoExperiment();
+            for(int j = 0; j < num_bins_total_compressed; j++){
+                collapsed[j] = exp[j];
+            }
+        }
+
         float val_chi_h0  = chi_h0.CalcChi(h0_vec_matrix_inverted, h0_corein, collapsed);
         float val_chi_h1  = chi_h1.CalcChi(h1_vec_matrix_inverted, h1_corein, collapsed);
         a_vec_chis[i] = val_chi_h0-val_chi_h1;
