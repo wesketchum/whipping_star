@@ -13,6 +13,7 @@
 #include <iomanip>
 #include "TH1D.h"
 #include "TFile.h"
+#include "TTreeFormula.h"
 
 #include "tinyxml.h"
 #include "branch_variable.h"
@@ -159,6 +160,8 @@ class SBNconfig {
     std::vector<std::string> montecarlo_eventweight_branch_names;
     std::vector<bool> montecarlo_additional_weight_bool;
     std::vector<double> montecarlo_additional_weight;
+    std::vector<TTreeFormula*> montecarlo_additional_weight_formulas;
+
 
 
     std::map<std::string,std::vector<std::string>> montecarlo_file_friend_map;

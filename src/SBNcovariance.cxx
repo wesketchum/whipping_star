@@ -42,6 +42,8 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
     f_weights.resize(num_files,nullptr);
 
     montecarlo_additional_weight.resize(num_files,1.0);
+    montecarlo_additional_weight_formulas.resize(num_files);
+
 
     int good_event = 0;
 
@@ -116,8 +118,10 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
         if(montecarlo_additional_weight_bool[fid]){
             //we have an additional weight we want to apply at run time, otherwise its just set at 1.
             std::cout<<"Setting Additional weight of : "<< montecarlo_additional_weight_names[fid].c_str()<<std::endl; 
-            trees[fid]->SetBranchAddress(montecarlo_additional_weight_names[fid].c_str(), &montecarlo_additional_weight[fid]); 
+            //trees[fid]->SetBranchAddress(montecarlo_additional_weight_names[fid].c_str(), &montecarlo_additional_weight[fid]); 
+            montecarlo_additional_weight_formulas[fid] =  new TTreeFormula(("a_w"+std::to_string(fid)).c_str(),montecarlo_additional_weight_names[fid].c_str(),trees[fid]);
         }
+
 
         std::cout<<"Total Entries: "<<trees.at(fid)->GetEntries()<<" good event "<<good_event<<std::endl;
         trees.at(fid)->GetEntry(good_event);
@@ -213,7 +217,11 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
                             trees[fid]->GetEntry(i);
                             reco_var = *(static_cast<double*>(branch_var_jt->GetValue()));
                             // calculate the reconstructed weight
-                            reco_weight = montecarlo_additional_weight[fid];
+                            reco_weight = 1.0;
+                            if(montecarlo_additional_weight_bool[fid]){
+                               montecarlo_additional_weight_formulas[fid]->GetNdata();
+                               reco_weight = montecarlo_additional_weight_formulas[fid]->EvalInstance();
+                            }
                             reco_weight *= montecarlo_scale[fid]; 				
                             std::cout<<"SYS "<<reco_var<<" "<<reco_weight<<" "<<ih<<std::endl;
                             spec_central_value.hist[ih].Fill(reco_var, reco_weight);
@@ -225,7 +233,11 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
                             // use CV spec to get the global bin number, even for systematically varied histograms
                             reco_bin = spec_central_value.GetGlobalBinNumber(reco_var,ih);
                             // calculate the reconstructed weight
-                            reco_weight = montecarlo_additional_weight[fid];          
+                            reco_weight = 1.0;          
+                            if(montecarlo_additional_weight_bool[fid]){
+                               montecarlo_additional_weight_formulas[fid]->GetNdata();
+                               reco_weight = montecarlo_additional_weight_formulas[fid]->EvalInstance();
+                            }
                             reco_weight *= montecarlo_scale[fid]; 
                             std::cout<<"CV "<<reco_var<<" "<<reco_bin<<" "<<ih<<" "<<reco_weight<<" "<<vid<<"/"<<universes_used<<" "<<multi_vecspec.size()<<" "<<multi_vecspec[vid].size()<<std::endl;
                             multi_vecspec[vid][reco_bin] += reco_weight;
@@ -301,6 +313,8 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     f_weights.resize(num_files,nullptr);
 
     montecarlo_additional_weight.resize(num_files,1.0);
+    montecarlo_additional_weight_formulas.resize(num_files);
+
 
     int good_event = 0;
 
@@ -375,10 +389,10 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         if(montecarlo_additional_weight_bool[fid]){
             //we have an additional weight we want to apply at run time, otherwise its just set at 1.
             std::cout<<"Setting Additional weight of : "<< montecarlo_additional_weight_names[fid].c_str()<<std::endl; 
-            trees[fid]->SetBranchAddress(montecarlo_additional_weight_names[fid].c_str(), &montecarlo_additional_weight[fid]); 
+            //trees[fid]->SetBranchAddress(montecarlo_additional_weight_names[fid].c_str(), &montecarlo_additional_weight[fid]); 
+            montecarlo_additional_weight_formulas[fid] =  new TTreeFormula(("a_w"+std::to_string(fid)).c_str(),montecarlo_additional_weight_names[fid].c_str(),trees[fid]);
         }
-
-
+        
         std::cout<<"Total Entries: "<<trees.at(fid)->GetEntries()<<" good event "<<good_event<<std::endl;
         trees.at(fid)->GetEntry(good_event);
 
@@ -543,8 +557,11 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             size_t fileid,
             int entryid) {
 
-        double global_weight = montecarlo_additional_weight[fileid];//this will be 1.0 unless specified in xml
-
+        double global_weight = 1.0;
+        if( montecarlo_additional_weight_bool[fileid]){
+               montecarlo_additional_weight_formulas[fileid]->GetNdata();
+               global_weight = montecarlo_additional_weight_formulas[fileid]->EvalInstance();
+        };//this will be 1.0 unless specifi
 
         global_weight *= montecarlo_scale[fileid];
 
