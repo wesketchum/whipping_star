@@ -230,7 +230,7 @@ int SBNcls::makePlots(TH1D & h0_pdf, TH1D & h1_pdf, std::string tag, std::vector
     if(which_mode==0){
     	h0_pdf.GetXaxis()->SetTitle("#chi^{2}");
     }else if(which_mode==1){
-    	h0_pdf.GetXaxis()->SetTitle("#Delta #chi^{2} = #chi^{2}_{H1} - #chi^{2}_{H0} ");
+    	h0_pdf.GetXaxis()->SetTitle("#Delta #chi^{2} = #chi^{2}_{H0} - #chi^{2}_{H1} ");
     }
 	h0_pdf.GetYaxis()->SetTitle("PDF");
 
