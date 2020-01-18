@@ -1452,7 +1452,8 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     std::vector<std::string> SBNcovariance::buildWeightMaps(){
 
 
-        int n_wei = weightmaps_patterns.size();
+        std::cout<<"SBNcovariance::buildWeightMaps()\t\t||\t\t Starting to Build Weight Maps of TTreeFormulas "<<std::endl;
+            int n_wei = weightmaps_patterns.size();
 
         //this is what to return, this to be made into a TTreeFormula (for every single file!)
         std::vector<std::string> variation_weight_formulas(variations.size(),"1");

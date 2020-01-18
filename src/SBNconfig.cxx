@@ -448,7 +448,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
     if(!pWeiMaps){
          if(is_verbose)std::cout<<otag<<"WeightMaps not set, all weights for all variations are 1 (individual branch weights still apply)"<<std::endl;
     }else{
-        while(pMode){
+        while(pWeiMaps){
 
 
 
