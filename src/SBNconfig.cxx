@@ -458,7 +458,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
 
 
                 const char* w_pattern = pVariation->Attribute("pattern");
-                const char* w_formula = pVariation->Attribute("formula");
+                const char* w_formula = pVariation->Attribute("weight_formula");
                 const char* w_use = pVariation->Attribute("use");
 
                 if(w_pattern== NULL){
