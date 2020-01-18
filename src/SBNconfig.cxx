@@ -474,14 +474,14 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
                     std::cout<<otag<<"Warning! No formula passed for this variation in WeightMaps. Setting to 1."<<std::endl;
                     weightmaps_formulas.push_back("1");
                 }else{
-                    if(is_verbose)std::cout<<otag<<" Loading WeightMaps Variation Pattern : "<<w_formula<<std::endl;
+                    if(is_verbose)std::cout<<otag<<" with associated WeightMaps Variation formula : "<<w_formula<<std::endl;
                     weightmaps_formulas.push_back(std::string(w_formula));
                 }
 
                 if(w_use== NULL){
                     weightmaps_uses.push_back("true");
                 }else{
-                    if(is_verbose)std::cout<<otag<<" Loading WeightMaps Variation BlackList/WhiteList : "<<w_use<<std::endl;
+                    //if(is_verbose)std::cout<<otag<<" Loading WeightMaps Variation BlackList/WhiteList : "<<w_use<<std::endl;
                     weightmaps_uses.push_back(std::string(w_use));
                 }
 

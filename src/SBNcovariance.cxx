@@ -452,9 +452,11 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         //Variation Weight Maps Area
 
         std::vector<std::string> s_formulas = this->buildWeightMaps();
-        m_variation_weight_formulas.resize(num_files, std::vector<TTreeFormula*>(variations.size()));
+        m_variation_weight_formulas.resize(num_files, std::vector<TTreeFormula*>(s_formulas.size()));
 
+    
         for(int fid=0; fid < num_files; ++fid) {
+            files[fid]->cd();
             for(int vid = 0; vid < variations.size(); vid++){ 
                m_variation_weight_formulas[fid][vid] =  new TTreeFormula(("weightMapsFormulas_"+std::to_string(fid)+"_"+std::to_string(vid)).c_str(), s_formulas[vid].c_str(),trees[fid]);
             }
@@ -615,7 +617,8 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             
             //Grab newwer variation specfic weights;
             m_variation_weight_formulas[fileid][vid]->GetNdata();
-            double indiv_variation_weight =m_variation_weight_formulas[fileid][vid]->EvalInstance();
+            double indiv_variation_weight = m_variation_weight_formulas[fileid][vid]->EvalInstance();
+            //std::cout<<var<<" "<<indiv_variation_weight<<" "<<fileid<<" "<<vid<<std::endl;
 
             //is  
             var_iter = thisfWeight.find(var);
@@ -1465,7 +1468,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 // Check to see if pattern is in this variation
                 if (variations[v].find(weightmaps_patterns[i]) != std::string::npos) {
                         std::cout << "Variation "<<variations[v]<<" is a match for pattern "<<weightmaps_patterns[i]<<std::endl;
-                        variation_weight_formulas[v] = variation_weight_formulas[v] + "&&(" + weightmaps_formulas[i]+")";
+                        variation_weight_formulas[v] = variation_weight_formulas[v] + "*(" + weightmaps_formulas[i]+")";
                         std::cout<<" -- weight is thus "<<variation_weight_formulas[v]<<std::endl;
                 }
             }
