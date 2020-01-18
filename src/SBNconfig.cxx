@@ -33,7 +33,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
 
 
     // we have Modes, Detectors, Channels
-    TiXmlElement *pMode, *pDet, *pChan, *pCov, *pMC, *pData,*pPOT;
+    TiXmlElement *pMode, *pDet, *pChan, *pCov, *pMC, *pData,*pPOT, *pWeiMaps;
 
 
     //Grab the first element. Note very little error checking here! make sure they exist.
@@ -44,6 +44,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
     pMC   = doc.FirstChildElement("MultisimFile");
     pData   = doc.FirstChildElement("data");
     pPOT    = doc.FirstChildElement("plotpot");
+    pWeiMaps = doc.FirstChildElement("WeightMaps");
 
     if(!pMode){
         std::cout<<otag<<"ERROR: Need at least 1 mode defined in xml./n";
@@ -439,6 +440,55 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
             branch_variables.push_back(TEMP_branch_variables);
             //next file
             pMC=pMC->NextSiblingElement("MultisimFile");
+        }
+    }
+
+
+    //weightMaps
+    if(!pWeiMaps){
+         if(is_verbose)std::cout<<otag<<"WeightMaps not set, all weights for all variations are 1 (individual branch weights still apply)"<<std::endl;
+    }else{
+        while(pMode){
+
+
+
+            TiXmlElement *pVariation;
+            pVariation = pWeiMaps->FirstChildElement("variation");
+            while(pVariation){
+
+
+                const char* w_pattern = pBranch->Attribute("pattern");
+                const char* w_formula = pBranch->Attribute("formula");
+                const char* w_use = pBranch->Attribute("use");
+
+                if(w_pattern== NULL){
+                    std::cout<<otag<<" ERROR! No pattern passed for this variation in WeightMaps'"<<std::endl;
+                    exit(EXIT_FAILURE);
+                }else{
+                    if(is_verbose)std::cout<<otag<<" Loading WeightMaps Variation Pattern : "<<w_pattern<<std::endl;
+                    weightmaps_patterns.push_back(std::string(w_pattern));
+                }
+
+
+                if(w_formula== NULL){
+                    std::cout<<otag<<"Warning! No formula passed for this variation in WeightMaps. Setting to 1."<<std::endl;
+                    weightmaps_formulas.push_back("1");
+                }else{
+                    if(is_verbose)std::cout<<otag<<" Loading WeightMaps Variation Pattern : "<<w_formula<<std::endl;
+                    weightmaps_formulas.push_back(std::string(w_formula));
+                }
+
+                if(w_use== NULL){
+                    weightmaps_uses.push_back("true");
+                }else{
+                    if(is_verbose)std::cout<<otag<<" Loading WeightMaps Variation BlackList/WhiteList : "<<w_use<<std::endl;
+                    weightmaps_uses.push_back(std::string(w_use));
+                }
+
+               pVariation = pVariation->NextSiblingElement("variation");
+            }
+            
+            pWeiMaps=pWeiMaps->NextSiblingElement("WeightMaps");
         }
     }
 

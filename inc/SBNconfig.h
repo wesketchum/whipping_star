@@ -162,7 +162,9 @@ class SBNconfig {
     std::vector<double> montecarlo_additional_weight;
     std::vector<TTreeFormula*> montecarlo_additional_weight_formulas;
 
-
+    std::vector<std::string> weightmaps_formulas;
+    std::vector<std::string> weightmaps_uses;
+    std::vector<std::string> weightmaps_patterns;
 
     std::map<std::string,std::vector<std::string>> montecarlo_file_friend_map;
     std::map<std::string,std::vector<std::string>> montecarlo_file_friend_treename_map;
