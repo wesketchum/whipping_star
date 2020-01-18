@@ -457,9 +457,9 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
             while(pVariation){
 
 
-                const char* w_pattern = pBranch->Attribute("pattern");
-                const char* w_formula = pBranch->Attribute("formula");
-                const char* w_use = pBranch->Attribute("use");
+                const char* w_pattern = pVariation->Attribute("pattern");
+                const char* w_formula = pVariation->Attribute("formula");
+                const char* w_use = pVariation->Attribute("use");
 
                 if(w_pattern== NULL){
                     std::cout<<otag<<" ERROR! No pattern passed for this variation in WeightMaps'"<<std::endl;

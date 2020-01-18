@@ -34,6 +34,7 @@
 #include "TVector3.h"
 #include "THnSparse.h"
 #include "TStopwatch.h"
+#include "TTreeFormula.h"
 
 #include "params.h"
 #include <sys/stat.h> 
@@ -129,8 +130,8 @@ namespace sbn{
     
     
     void ProcessEvent(const std::map<std::string, std::vector<eweight_type> >& thisfWeight,   size_t fileid,     int entryid);
-    int buildWeighMaps();
-
+    std::vector<std::string> buildWeightMaps();
+    std::vector<std::vector<TTreeFormula*>> m_variation_weight_formulas;
 
     int DoConstraint(int which_signal, int which_constraint);
   };

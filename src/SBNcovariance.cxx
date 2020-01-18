@@ -445,6 +445,23 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         auto unique_iter = std::unique(variations_tmp.begin(), variations_tmp.end());
         variations.insert(variations.begin(),variations_tmp.begin(),unique_iter);
 
+
+
+
+
+        //Variation Weight Maps Area
+
+        std::vector<std::string> s_formulas = this->buildWeightMaps();
+        m_variation_weight_formulas.resize(num_files, std::vector<TTreeFormula*>(variations.size()));
+
+        for(int fid=0; fid < num_files; ++fid) {
+            for(int vid = 0; vid < variations.size(); vid++){ 
+               m_variation_weight_formulas[fid][vid] =  new TTreeFormula(("weightMapsFormulas_"+std::to_string(fid)+"_"+std::to_string(vid)).c_str(), s_formulas[vid].c_str(),trees[fid]);
+            }
+        }
+
+
+
         // make a map and start filling, before filling find if already in map, if it is check size.
         std::cout << otag<<" Found " << variations.size() << " unique variations: " << std::endl;
 
@@ -563,6 +580,8 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                global_weight = montecarlo_additional_weight_formulas[fileid]->EvalInstance();
         };//this will be 1.0 unless specifi
 
+
+
         global_weight *= montecarlo_scale[fileid];
 
         double additional_CV_weight = 1.0;
@@ -586,12 +605,17 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         //Loop over all variations
         std::map<std::string, std::vector<eweight_type> >::const_iterator var_iter;
         int woffset = 0;
-
+        int vid = 0;
         for(const auto& var : variations){
+
 
             //check if variation is in this file, if it isn't: then just push back 1's of appropiate number to keep universes consistent
             //this is of length of whatever the maximum length that was found in ANY file
             auto expected_num_universe_sz = map_var_to_num_universe.at(var); 
+            
+            //Grab newwer variation specfic weights;
+            m_variation_weight_formulas[fileid][vid]->GetNdata();
+            double indiv_variation_weight =m_variation_weight_formulas[fileid][vid]->EvalInstance();
 
             //is  
             var_iter = thisfWeight.find(var);
@@ -652,11 +676,11 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                     wei=1.0;
                 }
 
-                weights[wid1] *= wei;
+                weights[wid1] *= wei*indiv_variation_weight;
             }
 
             woffset += expected_num_universe_sz;
-
+            vid++;
         }//end of all variations
 
         if (woffset != weights.size()) {
@@ -1425,7 +1449,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     }
 
 
-    int SBNcovariance::buildWeighMaps(){
+    std::vector<std::string> SBNcovariance::buildWeightMaps(){
 
 
         int n_wei = weightmaps_patterns.size();
@@ -1433,16 +1457,20 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         //this is what to return, this to be made into a TTreeFormula (for every single file!)
         std::vector<std::string> variation_weight_formulas(variations.size(),"1");
 
-
         for(int i=0; i< n_wei; i++){
             
             for(int v=0; v< variations.size(); v++){
-                // Check to see if 
 
+                // Check to see if pattern is in this variation
+                if (variations[v].find(weightmaps_patterns[i]) != std::string::npos) {
+                        std::cout << "Variation "<<variations[v]<<" is a match for pattern "<<weightmaps_patterns[i]<<std::endl;
+                        variation_weight_formulas[v] = variation_weight_formulas[v] + "&&(" + weightmaps_formulas[i]+")";
+                        std::cout<<" -- weight is thus "<<variation_weight_formulas[v]<<std::endl;
+                }
             }
         }
 
-        return 0;
+        return variation_weight_formulas;
     }
 
 
