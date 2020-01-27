@@ -451,7 +451,6 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
         while(pWeiMaps){
 
 
-
             TiXmlElement *pVariation;
             pVariation = pWeiMaps->FirstChildElement("variation");
             while(pVariation){
@@ -460,7 +459,8 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
                 const char* w_pattern = pVariation->Attribute("pattern");
                 const char* w_formula = pVariation->Attribute("weight_formula");
                 const char* w_use = pVariation->Attribute("use");
-
+                const char* w_mode = pVariation->Attribute("mode");
+                    
                 if(w_pattern== NULL){
                     std::cout<<otag<<" ERROR! No pattern passed for this variation in WeightMaps'"<<std::endl;
                     exit(EXIT_FAILURE);
@@ -483,6 +483,23 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
                 }else{
                     //if(is_verbose)std::cout<<otag<<" Loading WeightMaps Variation BlackList/WhiteList : "<<w_use<<std::endl;
                     weightmaps_uses.push_back(std::string(w_use));
+                }
+ 
+                if(w_mode== NULL){
+                    if(is_verbose){
+                        std::cout<<otag<<" No mode passed for this variation in WeightMaps'"<<std::endl;
+                        std::cout<<otag<<" Assuming its the default multisim;"<<std::endl;
+                    }
+                    weightmaps_mode.push_back("multisim");
+                }else{
+                    if(is_verbose)std::cout<<otag<<" Loading WeightMaps Mode  : "<<w_mode<<std::endl;
+                    std::string mode = std::string(w_mode);
+                    if(mode=="multisim" || mode=="minmax"){
+                          weightmaps_mode.push_back(mode);
+                    }else{
+                        std::cout<<otag<<" ERROR! The mode passed in is "<<mode<<" but only allowed is multisim or minmax.'"<<std::endl;
+                        exit(EXIT_FAILURE);
+                    }
                 }
 
                pVariation = pVariation->NextSiblingElement("variation");

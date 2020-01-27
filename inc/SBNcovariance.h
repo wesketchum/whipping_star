@@ -132,6 +132,7 @@ namespace sbn{
     void ProcessEvent(const std::map<std::string, std::vector<eweight_type> >& thisfWeight,   size_t fileid,     int entryid);
     std::vector<std::string> buildWeightMaps();
     std::vector<std::vector<TTreeFormula*>> m_variation_weight_formulas;
+    std::vector<int> m_variation_modes;
 
     int DoConstraint(int which_signal, int which_constraint);
   };

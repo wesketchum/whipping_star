@@ -447,10 +447,8 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
 
 
-
-
         //Variation Weight Maps Area
-
+        m_variation_modes.resize(variations.size(),0);
         std::vector<std::string> s_formulas = this->buildWeightMaps();
         m_variation_weight_formulas.resize(num_files, std::vector<TTreeFormula*>(s_formulas.size()));
 
@@ -520,6 +518,15 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                         universes_used = used_montecarlos.at(j);
                     std::cerr <<otag<<"File " << j << " montecarlos: " << used_montecarlos.at(j) << std::endl;
                 }
+            }
+        }
+
+        ///Quick check on minmax
+        for(int v=0; v< variations.size(); v++){
+            if(m_variation_modes[v]==1 && map_var_to_num_universe[variations[v]]!=2){
+                std::cerr <<otag<<"ERROR! variation "<<variations[v]<<" is tagged as minmax mode, but has "<<map_var_to_num_universe[variations[v]]<<" universes (can only be 2)."<<std::endl;
+                std::cout <<otag<<"ERROR! variation "<<variations[v]<<" is tagged as minmax mode, but has "<<map_var_to_num_universe[variations[v]]<<" universes (can only be 2)."<<std::endl;
+                exit(EXIT_FAILURE);
             }
         }
 
@@ -809,14 +816,27 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         for(int k=0; k<universes_used; k++) {
             int varid = a_vec_universe_to_var[k];
             double vec_bot = ((double)a_num_universes_per_variation[k]);
+            //next bit probably breaks the acc
+            int varmode = m_variation_modes[varid];
+
+            if(varmode==0){ //run as normal. 
 #pragma acc loop seq
-            for(int i=0; i<num_bins_total; i++) {
+                for(int i=0; i<num_bins_total; i++) {
 #pragma acc loop vector
-                for(int j=0; j<num_bins_total; j++) {
-                    double vec_value = (a_CV[i]-a_multi_vecspec[k][i])*(a_CV[j]-a_multi_vecspec[k][j]) / vec_bot;
+                    for(int j=0; j<num_bins_total; j++) {
+                        double vec_value = (a_CV[i]-a_multi_vecspec[k][i])*(a_CV[j]-a_multi_vecspec[k][j]) / vec_bot;
 #pragma acc atomic update
-                    a_vec_full_covariance[varid][i*num_bins_total+j] += vec_value;
+                        a_vec_full_covariance[varid][i*num_bins_total+j] += vec_value;
+                    }
                 }
+            }else if(varmode==1){
+                //Instead, assign the covariance to be identicall the difference between this and the next universe (they come in 2's)
+                for(int i=0; i<num_bins_total; i++) {
+                    a_vec_full_covariance[varid][i*num_bins_total+i] = fabs(a_multi_vecspec[k][i]-a_multi_vecspec[k+1][i]);
+                }
+                //we will also need to jump th universe count ahead by 1, just to skip the variation on the other side too.
+                k++;
+                
             }
         }
         watch.Stop();
@@ -1456,7 +1476,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
 
         std::cout<<"SBNcovariance::buildWeightMaps()\t\t||\t\t Starting to Build Weight Maps of TTreeFormulas "<<std::endl;
-            int n_wei = weightmaps_patterns.size();
+        int n_wei = weightmaps_patterns.size();
 
         //this is what to return, this to be made into a TTreeFormula (for every single file!)
         std::vector<std::string> variation_weight_formulas(variations.size(),"1");
@@ -1470,6 +1490,10 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                         std::cout << "Variation "<<variations[v]<<" is a match for pattern "<<weightmaps_patterns[i]<<std::endl;
                         variation_weight_formulas[v] = variation_weight_formulas[v] + "*(" + weightmaps_formulas[i]+")";
                         std::cout<<" -- weight is thus "<<variation_weight_formulas[v]<<std::endl;
+                        std::cout<<" -- mode is "<<weightmaps_mode[i]<<std::endl;
+                        if(weightmaps_mode[i]=="multisim") m_variation_modes[v] = 0;
+                        if(weightmaps_mode[i]=="minmax") m_variation_modes[v] = 1;
+
                 }
             }
         }
