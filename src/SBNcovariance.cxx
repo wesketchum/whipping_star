@@ -122,7 +122,6 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
             montecarlo_additional_weight_formulas[fid] =  new TTreeFormula(("a_w"+std::to_string(fid)).c_str(),montecarlo_additional_weight_names[fid].c_str(),trees[fid]);
         }
 
-
         std::cout<<"Total Entries: "<<trees.at(fid)->GetEntries()<<" good event "<<good_event<<std::endl;
         trees.at(fid)->GetEntry(good_event);
 
@@ -172,7 +171,7 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
             vec_universe_to_var.push_back(vid);
             num_universes_per_variation.push_back(variation_length);// universe stuff
         }
-        
+
         map_var_to_num_universe[v] = variation_length;
     }  //end looping over variations 
 
@@ -201,7 +200,7 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
         const auto &v =  variations[vid];
         std::cout << "variation " << v << " total # of files" << num_files << std::endl;
         for(int fid=0; fid< num_files; fid++){
-            
+
             int nevents = std::min(montecarlo_maxevents[fid], nentries[fid]);
             for(int t=0; t< branch_variables[fid].size(); t++){
                 const auto branch_var_jt = branch_variables[fid][t];
@@ -219,8 +218,8 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
                             // calculate the reconstructed weight
                             reco_weight = 1.0;
                             if(montecarlo_additional_weight_bool[fid]){
-                               montecarlo_additional_weight_formulas[fid]->GetNdata();
-                               reco_weight = montecarlo_additional_weight_formulas[fid]->EvalInstance();
+                                montecarlo_additional_weight_formulas[fid]->GetNdata();
+                                reco_weight = montecarlo_additional_weight_formulas[fid]->EvalInstance();
                             }
                             reco_weight *= montecarlo_scale[fid]; 				
                             std::cout<<"SYS "<<reco_var<<" "<<reco_weight<<" "<<ih<<std::endl;
@@ -235,8 +234,8 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
                             // calculate the reconstructed weight
                             reco_weight = 1.0;          
                             if(montecarlo_additional_weight_bool[fid]){
-                               montecarlo_additional_weight_formulas[fid]->GetNdata();
-                               reco_weight = montecarlo_additional_weight_formulas[fid]->EvalInstance();
+                                montecarlo_additional_weight_formulas[fid]->GetNdata();
+                                reco_weight = montecarlo_additional_weight_formulas[fid]->EvalInstance();
                             }
                             reco_weight *= montecarlo_scale[fid]; 
                             std::cout<<"CV "<<reco_var<<" "<<reco_bin<<" "<<ih<<" "<<reco_weight<<" "<<vid<<"/"<<universes_used<<" "<<multi_vecspec.size()<<" "<<multi_vecspec[vid].size()<<std::endl;
@@ -244,11 +243,11 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
                         }
                     }		
                 } else continue;
-             std::cout<<"ebranch"<<std::endl;
+                std::cout<<"ebranch"<<std::endl;
             }// end of branch loop
-             std::cout<<"efile"<<std::endl;
+            std::cout<<"efile"<<std::endl;
         } // end of file loop
-             std::cout<<"evar"<<std::endl;
+        std::cout<<"evar"<<std::endl;
     } //end of variation loop
 
 
@@ -262,7 +261,7 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
 
     for(auto f: files){
         std::cout << otag<<" TFile::Close() file=" << f->GetName() << " @" << f << std::endl;
-//        f->Close();
+        //        f->Close();
     }
     std::cout << otag<<" End" << std::endl;
 
@@ -392,7 +391,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             //trees[fid]->SetBranchAddress(montecarlo_additional_weight_names[fid].c_str(), &montecarlo_additional_weight[fid]); 
             montecarlo_additional_weight_formulas[fid] =  new TTreeFormula(("a_w"+std::to_string(fid)).c_str(),montecarlo_additional_weight_names[fid].c_str(),trees[fid]);
         }
-        
+
         std::cout<<"Total Entries: "<<trees.at(fid)->GetEntries()<<" good event "<<good_event<<std::endl;
         trees.at(fid)->GetEntry(good_event);
 
@@ -452,11 +451,11 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         std::vector<std::string> s_formulas = this->buildWeightMaps();
         m_variation_weight_formulas.resize(num_files, std::vector<TTreeFormula*>(s_formulas.size()));
 
-    
+
         for(int fid=0; fid < num_files; ++fid) {
             files[fid]->cd();
             for(int vid = 0; vid < variations.size(); vid++){ 
-               m_variation_weight_formulas[fid][vid] =  new TTreeFormula(("weightMapsFormulas_"+std::to_string(fid)+"_"+std::to_string(vid)).c_str(), s_formulas[vid].c_str(),trees[fid]);
+                m_variation_weight_formulas[fid][vid] =  new TTreeFormula(("weightMapsFormulas_"+std::to_string(fid)+"_"+std::to_string(vid)).c_str(), s_formulas[vid].c_str(),trees[fid]);
             }
         }
 
@@ -585,8 +584,8 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
         double global_weight = 1.0;
         if( montecarlo_additional_weight_bool[fileid]){
-               montecarlo_additional_weight_formulas[fileid]->GetNdata();
-               global_weight = montecarlo_additional_weight_formulas[fileid]->EvalInstance();
+            montecarlo_additional_weight_formulas[fileid]->GetNdata();
+            global_weight = montecarlo_additional_weight_formulas[fileid]->EvalInstance();
         };//this will be 1.0 unless specifi
 
 
@@ -621,7 +620,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             //check if variation is in this file, if it isn't: then just push back 1's of appropiate number to keep universes consistent
             //this is of length of whatever the maximum length that was found in ANY file
             auto expected_num_universe_sz = map_var_to_num_universe.at(var); 
-            
+
             //Grab newwer variation specfic weights;
             m_variation_weight_formulas[fileid][vid]->GetNdata();
             double indiv_variation_weight = m_variation_weight_formulas[fileid][vid]->EvalInstance();
@@ -836,7 +835,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 }
                 //we will also need to jump th universe count ahead by 1, just to skip the variation on the other side too.
                 k++;
-                
+
             }
         }
         watch.Stop();
@@ -1032,6 +1031,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         TFile *fout = new TFile(("SBNfit_variation_plots_"+tag+".root").c_str(),"recreate");
         fout->cd();
 
+
         std::cout << "SBNcovariance::PrintVariations\t||\tStarting to Print all variations, this can take a little. " << std::endl;
 
         std::vector<TDirectory*> vec_dir;
@@ -1071,14 +1071,22 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             vec_canvas.push_back(tmpc);	
         }
 
+        time_t start_time = time(0);
         std::cout<<"SBNcovariance::PrintVariations\t||Starting universe loop [This can take a while!] "<<std::endl;
         TRandom3 *rangen = new TRandom3(20);
         for(int m=0; m < universes_used; m++){
-            std::string var = map_universe_to_var.at(m);
+
+            //are we in a new variation? maybe. 
+
+            if( m%((int)floor((double)universes_used/100.0))==0){
+                std::cout<<"On Universe: "<<m<<"/"<<universes_used<<std::endl;
+                std::cout<<"---time since last: " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
+                start_time = time(0);
+            }
+
+            std::string var =  map_universe_to_var.at(m);
             int which_matrix = map_var_to_matrix.at(var);
-
             vec_dir.at(which_matrix)->cd();
-
             SBNspec temp_spec(multi_vecspec.at(m), xmlname,false);
 
             for(int i=0; i< temp_spec.hist.size(); i++){
@@ -1086,7 +1094,30 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 temp_spec.hist.at(i).Scale(1,"width");
                 temp_spec.hist.at(i).SetLineColor((int)rangen->Uniform(300,1000));	
                 temp_spec.hist.at(i).DrawCopy("same hist");
+
             }	
+            //check to see if variation is over. if so
+            if(m+1 != universes_used && var != map_universe_to_var[m]){
+                fout->cd();
+                vec_dir.at(which_matrix)->cd();
+
+                for(int i=0; i< spec_central_value.hist.size(); i++){
+                    vec_canvas.at(which_matrix).at(i)->cd();
+                    TH1D * temp_cv_spec = (TH1D*)spec_central_value.hist.at(i).Clone((std::to_string(i)+var+"tmp2").c_str());
+                    temp_cv_spec->Scale(1,"width");
+                    temp_cv_spec->SetLineColor(kBlack);
+                    temp_cv_spec->SetMarkerStyle(34);
+                    temp_cv_spec->SetLineWidth(2);
+                    temp_cv_spec->DrawCopy("same hist p");
+
+                    vec_canvas.at(which_matrix).at(i)->Write();
+                    delete temp_cv_spec;
+                    delete vec_canvas.at(which_matrix).at(i);
+                }
+
+
+            }
+
 
 
         }//end universe loop
@@ -1096,6 +1127,224 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         if (access("variations",F_OK) == -1){
             mkdir("variations",0777);//Create a folder for pdf.
         }
+        /*
+           for(int v =0; v< variations.size(); v++){
+           fout->cd();
+           vec_dir.at(v)->cd();
+
+           for(int i=0; i< spec_central_value.hist.size(); i++){
+           vec_canvas.at(v).at(i)->cd();
+           TH1D * temp_cv_spec = (TH1D*)spec_central_value.hist.at(i).Clone((std::to_string(i)+variations.at(v)+"tmp2").c_str());
+           temp_cv_spec->Scale(1,"width");
+           temp_cv_spec->SetLineColor(kBlack);
+           temp_cv_spec->SetMarkerStyle(34);
+           temp_cv_spec->SetLineWidth(2);
+           temp_cv_spec->DrawCopy("same hist p");
+
+           vec_canvas.at(v).at(i)->Write();
+           delete temp_cv_spec;
+           }
+           }
+           */
+
+        fout->Close();
+        return 0;
+    }
+    int SBNcovariance::PrintVariations_2D(std::string tag){
+        TFile *fout = new TFile(("SBNfit_variation_plots_2D_"+tag+".root").c_str(),"recreate");
+        fout->cd();
+
+        std::cout << "SBNcovariance::PrintVariations_2D\t||\tStarting to Print all variations, this can take a little. " << std::endl;
+
+        std::vector<TDirectory*> vec_dir; // vector of directories in root file to keep variatinos separate
+
+        std::vector<std::vector<TCanvas*>> vec_canvas; //vector of vectors of canvases.  outer variations innner subchannels
+        std::vector<std::vector<TH2D*>> vec_hist; //vector of vector of histograms
+        //std::vector<std::vector<TCanvas*>> vec_canvas_2D; //vector of vectors of canvases.  outer variations innner subchannels
+        variation_scale.open("variation_scale_"+tag+".txt",std::ofstream::trunc);
+        sorted_variation_scale.open("sorted_variation_scale_"+tag+".txt",std::ofstream::trunc);
+        correlation_scale.open("correlation_scale_"+tag+".txt",std::ofstream::trunc);
+        correlation_constraint.open("correlation_constraint_"+tag+".txt",std::ofstream::trunc);
+
+        std::vector<std::string> var_names;
+        std::vector<double> var_percent;
+        for(const auto &v: variations){  //for each variationss
+
+            //std::cout<<"SBNcovariance::PrintVariations_2D\t|| Preparing directory and canvases for variation: "<<v<<std::endl;
+            fout->cd(); //enter directory
+            int which_matrix = map_var_to_matrix.at(v); 
+            vec_dir.push_back( fout->GetDirectory(v.c_str())); 
+            if (!vec_dir.back()) { 
+                vec_dir.back() = fout->mkdir(v.c_str());    //make variation folder    
+            }
+            vec_dir.back()->cd();
+
+
+            std::vector<TCanvas *> tmpc;
+            std::vector<TH2D *> tmpTH2;
+            std::vector<TH1D *> tmpTH1;
+
+            for(int i=0; i< spec_central_value.hist.size(); i++){ 
+                tmpc.push_back(new TCanvas((fullnames.at(i)+"||"+v).c_str()));
+                tmpc.back()->cd();
+                TH1D * temp_cv_spec = (TH1D*)spec_central_value.hist.at(i).Clone((std::to_string(i)+v).c_str()); //make clone so we can scale to arbitrary units.  Make clone so not messing up underlying values in case reused
+                tmpTH1.push_back(temp_cv_spec);
+                temp_cv_spec->Scale(1,"width");  //bunch of scaling and formatting
+
+                double maxval = temp_cv_spec->GetMaximum()+temp_cv_spec->GetMaximum()/5.0;
+                double minval= temp_cv_spec->GetMinimum()-temp_cv_spec->GetMinimum()/5.0;
+                //int num_hist_bins=((maxval+0.2)-(minval-0.2))/0.2;
+                int num_hist_bins=50;
+                std::vector<double> bins;
+                for(int j=0; j< temp_cv_spec->GetNbinsX(); j++){
+                    bins.push_back(temp_cv_spec->GetBinLowEdge(j+1));
+                }
+
+                //then add the last edge,
+                bins.push_back(  temp_cv_spec->GetBinLowEdge( temp_cv_spec->GetNbinsX())+ temp_cv_spec->GetBinWidth( temp_cv_spec->GetNbinsX()));
+                double * tbins= &bins[0];
+
+
+                //TH2D * temp_var_spec_2D = (TH2D*)spec_central_value.hist_2D.at(i).Clone((std::to_string(i)+v).c_str());
+
+                TH2D* temp_var_spec_2D=new TH2D((fullnames.at(i)+v+"_hist").c_str(),(fullnames.at(i)+v+"_hist").c_str(), temp_cv_spec->GetNbinsX(), tbins, num_hist_bins, minval, maxval);
+                tmpTH2.push_back(temp_var_spec_2D);
+
+
+                if(maxval > 0) 	temp_cv_spec->SetMaximum(maxval*1.45); //set higher maximum for plot
+                temp_cv_spec->SetStats(false);
+                temp_cv_spec->SetLineColor(kBlack);
+                temp_cv_spec->SetLineWidth(2.5);
+                temp_cv_spec->GetXaxis()->SetLabelSize(0.03);
+                temp_cv_spec->GetYaxis()->SetTitleOffset(1.1);
+                temp_cv_spec->GetYaxis()->SetLabelSize(0.03);
+                temp_cv_spec->GetYaxis()->SetTitleOffset(0.9);
+                temp_cv_spec->GetXaxis()->SetTitle("Visible Energy (MeV)");
+                temp_cv_spec->GetYaxis()->SetTitle("Arbitary Units");
+                temp_cv_spec->GetYaxis()->SetTitleSize(0.045);
+                temp_cv_spec->GetXaxis()->SetTitleSize(0.045);
+                temp_cv_spec->SetTitle((v + " || " +fullnames.at(i)).c_str());
+                std::vector<int> temp_indices = spec_central_value.map_tag_to_covariance_index.at(fullnames.at(i));
+                int k=1;	
+                TH1D * temp_cv_spec_2 = (TH1D*)temp_cv_spec->Clone((std::to_string(i)+v+"_2").c_str());
+                //ofstream variation_scale;
+                SBNchi collapse_chi(xmlname);
+                TMatrixT<double> coll_covariance(num_bins_total_compressed,num_bins_total_compressed);
+                TMatrixT<double> coll_correlation(num_bins_total_compressed,num_bins_total_compressed);
+                collapse_chi.CollapseModes(vec_full_covariance.at(which_matrix), coll_covariance);
+                for(int i=0; i<num_bins_total_compressed; i++){
+                    for(int j=0; j<num_bins_total_compressed; j++){
+                        coll_correlation(i,j)= coll_covariance(i,j)/(sqrt(coll_covariance(i,i))*sqrt(coll_covariance(j,j)));
+                    }
+                }
+                correlation_constraint<<v<<" "<<coll_correlation(0,0)<< " " <<coll_correlation(0,1)<<" " <<coll_correlation(1,0)<<" " <<coll_correlation(1,1)<<std::endl;
+
+                for(int j=temp_indices.at(0); j<=temp_indices.at(1); j++){
+                    std::cout<<"j="<<j<<std::endl;
+                    temp_cv_spec_2->SetBinError(k,sqrt(full_covariance(j,j))/temp_cv_spec->GetBinWidth(k));
+                    temp_cv_spec->SetBinError(k,sqrt(vec_full_covariance.at(which_matrix)(j,j))/temp_cv_spec->GetBinWidth(k));
+                    //std::cout<<"total error band="<<sqrt(full_covariance(j,j))/temp_cv_spec->GetBinWidth(k)<<std::endl;
+                    //std::cout<<"varation="<<fullnames.at(i)<<std::endl;
+                    //std::cout<<"variation error band="<<sqrt(vec_full_covariance.at(which_matrix)(j,j))/temp_cv_spec->GetBinWidth(k)<<std::endl;
+                    variation_scale<<which_matrix<<" "<<v<<" "<<sqrt(vec_frac_covariance.at(which_matrix)(j,j))*100<<std::endl;
+                    var_names.push_back(v);
+                    var_percent.push_back(sqrt(vec_frac_covariance.at(which_matrix)(j,j))*100);
+
+                    //collapse full covariance then make correlation
+                    //std::cout<<"matrix indices="<<j<<std::endl;
+                    //std::cout<<"hist indices="<<k<<std::endl;
+
+                    //int has_run=0;
+                    std::cout<<"temp_indices.at(0)="<<temp_indices.at(0)<<std::endl;
+                    std::cout<<"temp_indices.at(1)="<<temp_indices.at(1)<<std::endl;
+                    std::cout<<"temp_indices.size()="<<temp_indices.size()<<std::endl;
+                    //attempt to get off diagonal entries very adhoc ask Mark for better method
+
+                    correlation_scale<<v<<" ";
+                    correlation_scale<<sqrt(vec_frac_covariance.at(which_matrix)(0,1))*100<<std::endl;
+
+
+
+
+
+
+                    k++;
+                }
+                temp_cv_spec->SetLineWidth(1.0);
+                temp_cv_spec_2->SetLineWidth(1.0);
+                //temp_cv_spec->SetLineColorAlpha(kBlack, 0.35);
+                //temp_cv_spec_2->SetLineColorAlpha(kRed, 0.35);
+                temp_cv_spec->DrawCopy("E1 P");
+                temp_var_spec_2D->Draw("colz same");
+                temp_cv_spec_2->SetLineColor(kRed);
+                temp_cv_spec_2->DrawCopy("same E1 P");
+                temp_cv_spec->DrawCopy("same E1 P");
+                TLegend *leg = new TLegend(0.61,0.75,0.89,0.89);
+                leg->AddEntry(temp_cv_spec_2, "full uncertainty","l");
+                leg->AddEntry(temp_cv_spec, "variation uncertainty","l");
+                leg->Draw("same");
+
+            }
+
+            vec_canvas.push_back(tmpc);	 //vector of vector of canvases variations:signal with empty histogram plotted in each
+            vec_hist.push_back(tmpTH2); //vector of vector of histograms (currently empty)
+        }
+        //end variation loop
+        std::cout<<"SBNcovariance::PrintVariations_2D\t||Starting universe loop [This can take a while!] "<<std::endl;
+        TRandom3 *rangen = new TRandom3(20);
+
+        std::string last_var = "";
+        int number_of_used_universes = 0;
+
+
+        time_t start_time = time(0);
+
+        for(int m=universes_used-1; m >=0; m--){  //looping over every universe
+            std::string var = map_universe_to_var.at(m);  //in built map to universe, given universe which variation are we in
+            int which_matrix = map_var_to_matrix.at(var); //integer position in vector canvas
+            if(var != last_var){
+                last_var = var;
+                number_of_used_universes = 0;
+            }
+
+            if( m%((int)floor((double)universes_used/100.0))==0){
+                std::cout<<"On Universe: "<<m<<"/"<<universes_used<<std::endl;
+                std::cout<<"---time since last: " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
+                start_time = time(0);
+            }
+
+            vec_dir.at(which_matrix)->cd();
+
+            SBNspec temp_spec(multi_vecspec.at(m), xmlname,false);
+
+            for(int i=0; i< temp_spec.hist.size(); i++){
+                for(int j=0;j<temp_spec.hist.at(i).GetNbinsX(); j++){
+                    TH1D * temp_var_spec = (TH1D*)temp_spec.hist.at(i).Clone("temp_var_spec_name");
+                    temp_var_spec->Scale(1,"width");
+                    double center     = temp_var_spec->GetBinCenter(j+1);
+                    double value      = temp_var_spec->GetBinContent(j+1);
+                    vec_hist.at(which_matrix).at(i)->Fill(center, value);
+                    delete temp_var_spec;
+                }
+
+
+                vec_canvas.at(which_matrix).at(i)->Update();
+            }
+            number_of_used_universes++;
+        }
+
+        //end universe loop
+        //int status=system("std::sort -k -r -g -2 "variation_scale_"+tag+".txt" > "sorted_variation_scale_"+tag+".txt"");
+        std::vector<size_t> sorted_indicies = SortIndexes(var_percent);
+        for(int i= var_names.size()-1; i>-1; i--){
+            size_t index = sorted_indicies[i];
+            std::cout<<var_names[index]<<" "<<var_percent[index]<<std::endl;
+            sorted_variation_scale<<var_names[index]<<" "<<var_percent[index]<<std::endl;
+        }
+        std::cout << "SBNcovariance::PrintVariations_2D\t||\tFinished. Just tidying up and writing TCanvas. " << std::endl;
+        if (access("variations_2D",F_OK) == -1){
+            mkdir("variations_2D",0777);//Create a folder for pdf.
+        }
 
         for(int v =0; v< variations.size(); v++){
             fout->cd();
@@ -1103,18 +1352,27 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
             for(int i=0; i< spec_central_value.hist.size(); i++){
                 vec_canvas.at(v).at(i)->cd();
-                TH1D * temp_cv_spec = (TH1D*)spec_central_value.hist.at(i).Clone((std::to_string(i)+variations.at(v)+"tmp2").c_str());
-                temp_cv_spec->Scale(1,"width");
-                temp_cv_spec->SetLineColor(kBlack);
-                temp_cv_spec->SetMarkerStyle(34);
-                temp_cv_spec->SetLineWidth(2);
-                temp_cv_spec->DrawCopy("same hist p");
-
+                // TH1D * temp_cv_spec = (TH1D*)spec_central_value.hist.at(i).Clone((std::to_string(i)+variations.at(v)+"tmp2").c_str());
+                /*
+                   TLegend *l = new TLegend(0.61,0.61,0.89,0.89);
+                   l->SetLineColor(kWhite);
+                   l->SetLineWidth(0);
+                   temp_cv_spec->Scale(1,"width");
+                   temp_cv_spec->SetLineColor(kBlack);
+                   temp_cv_spec->SetMarkerStyle(48);
+                   temp_cv_spec->SetLineWidth(3);
+                   temp_cv_spec->DrawCopy("same hist");
+                   l->AddEntry(temp_cv_spec,"Central Value","l");
+                   l->Draw("same");
+                   */
                 vec_canvas.at(v).at(i)->Write();
-                delete temp_cv_spec;
-            }
-        }
+                vec_canvas.at(v).at(i)->SaveAs(("variations_2D/Variation_"+tag+"_"+variations[v]+"_"+fullnames[i]+"_2D.pdf").c_str(),"pdf");
 
+                //delete temp_cv_spec;
+            }
+
+
+        }
 
         fout->Close();
         return 0;
@@ -1471,22 +1729,183 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         return 0;
     }
 
+    std::vector<double> SBNcovariance::DoConstraint(int which_signal, int which_constraint, std::string tag){
 
-    std::vector<std::string> SBNcovariance::buildWeightMaps(){
+        return this->DoConstraint(which_signal, which_constraint, tag, -1);
+    }
+
+    std::vector<double> SBNcovariance::DoConstraint(int which_signal, int which_constraint, std::string tag, int which_var){
+        std::cout<<"----------------Starting covariance Constraint --------------------"<<std::endl;
+
+        SBNchi collapse_chi(xmlname);
+        TMatrixT<double> coll_covariance(num_bins_total_compressed,num_bins_total_compressed);
+
+        if(which_var<0){
+            collapse_chi.CollapseModes(full_covariance, coll_covariance);
+        }else{
+            collapse_chi.CollapseModes(vec_full_covariance.at(which_var), coll_covariance);
+        }
+
+        int num_bins_sig=num_bins[which_signal];
+        std::cout<<"signal bins="<<num_bins_sig<<std::endl;
+        int num_bins_con=num_bins[which_constraint];
+        std::cout<<"constraint bins="<<num_bins_con<<std::endl;
+        int num_bins_tot=num_bins_sig+num_bins_con;
+
+        spec_central_value.CollapseVector();
+        std::vector<double> n_events = spec_central_value.collapsed_vector; 
+        std::vector<double> n_sig;
+        std::vector<double> n_con;
+
+        for(int i=0; i< num_bins_sig; i++){
+            n_sig.push_back(n_events[i]);
+        }
+
+        for(int i=num_bins_sig; i< n_events.size(); i++){
+            n_con.push_back(n_events[i]);
+        }
+
+        std::cout<<"1g1p: "<<std::accumulate(n_sig.begin(),n_sig.end(),0.0)<<std::endl;
+        std::cout<<"2g1p: "<<std::accumulate(n_con.begin(),n_con.end(),0.0)<<std::endl;
+
+        for (int i=0; i<num_bins_tot;i++){
+            std::cout<<"vector entry "<<i<<"-"<<n_events[i]<<std::endl;
+        }
+        TMatrixD m_covar_full(num_bins_tot,num_bins_tot);
+        TMatrixD m_covar_full_sys = coll_covariance;
+        TMatrixD m_inv_full(num_bins_tot,num_bins_tot);
+        TMatrixD m_covar_con(num_bins_tot,num_bins_tot);
+        TMatrixD m_covar_con_sys(num_bins_tot,num_bins_tot);
+
+        for(int i=0; i<num_bins_tot;i++)
+        {
+            for(int j=0; j<num_bins_tot;j++)
+            {
+                if(i==j){
+                    m_covar_full(i,j)=coll_covariance(i,j)+n_events[i];
+                    m_inv_full(i,j)=coll_covariance(i,j)+n_events[i];
+
+                }
+                else{
+                    m_covar_full(i,j)=coll_covariance(i,j);
+                    m_inv_full(i,j)=coll_covariance(i,j);
+                }
+            }
+        }
+        std::cout<<"covar full pre-inversion"<<std::endl;
+        m_covar_full.Print();
+
+        m_inv_full.Invert();
+        std::cout<<"covar invert"<<std::endl;
+        m_inv_full.Print();
+
+        std::cout<<"check inversion"<<std::endl;
+        if(check_inversion(m_covar_full,m_inv_full,num_bins_tot)){
+            std::cout<<"Initial inversion good"<<std::endl;
+        }
+        else{
+            std::cout<<"bad inversion"<<std::endl;
+            //throw;
+        }
 
 
-        std::cout<<"SBNcovariance::buildWeightMaps()\t\t||\t\t Starting to Build Weight Maps of TTreeFormulas "<<std::endl;
-        int n_wei = weightmaps_patterns.size();
+        TMatrixD m_inv_con(num_bins_tot,num_bins_tot);
+        for(int i=0; i<num_bins_tot;i++){
+            for(int j=0; j<num_bins_tot; j++){
+                if(i==j  && j>=num_bins_sig){
+                    m_inv_con(i,j)=m_inv_full(i,j)+1/n_events[i];
+                    m_covar_con(i,j)=m_inv_full(i,j)+1/n_events[i];
+                }
+                else{
+                    m_inv_con(i,j)=m_inv_full(i,j);
+                    m_covar_con(i,j)=m_inv_full(i,j);
+                }
+            } 
+        }
+        m_covar_con.Invert();
 
-        //this is what to return, this to be made into a TTreeFormula (for every single file!)
-        std::vector<std::string> variation_weight_formulas(variations.size(),"1");
+        if(check_inversion(m_covar_con,m_inv_con,num_bins_tot)){
+            std::cout<<"Initial inversion good"<<std::endl;
+        }
+        else{
+            std::cout<<"bad inversion"<<std::endl;
+            //throw;
+        }
 
-        for(int i=0; i< n_wei; i++){
-            
-            for(int v=0; v< variations.size(); v++){
+        for(int i=0; i<num_bins_tot;i++)
+        {
+            for(int j=0; j<num_bins_tot;j++)
+            {
 
-                // Check to see if pattern is in this variation
-                if (variations[v].find(weightmaps_patterns[i]) != std::string::npos) {
+                if(i==j){
+                    m_covar_con_sys(i,j)=m_covar_con(i,j)-n_events[i];
+                }
+                else{
+                    m_covar_con_sys(i,j)=m_covar_con(i,j);
+                }
+            }
+        }
+        std::cout<<"covar con sys"<<std::endl;
+        m_covar_con_sys.Print();
+        //constraint_table.open(("constraint_table"+tag+"_knob_"+variations[which_var]+".txt").c_str(),std::ofstream::trunc);
+        constraint_table.open(("constraint_table_1bin_"+tag+".txt").c_str(),std::ios_base::app);
+        double avg_ratio;
+        double good_bins=0.0;
+        double uncon;
+        double con;
+        for(int i=0;i<num_bins_sig;i++){
+            std::cout<<"start_loop"<<std::endl;
+            uncon=sqrt(m_covar_full_sys(i,i))/n_events[i];
+            con=sqrt(m_covar_con_sys(i,i))/n_events[i];
+            //if (-100<uncon<100 && -100<con<100){
+            if (con>0 and uncon>0){
+                avg_ratio+=uncon/con;
+                good_bins+=1.0;
+            }
+            std::cout<<"bin="<<i<<"/events="<<n_events[i]<<"/uncon="<<uncon<<"/con="<<con<<" ratio: "<<uncon/con<<std::endl;
+            constraint_table<<"bin="<<i<<"/events="<<n_events[i]<<"/uncon="<<uncon<<"/con="<<con<<" ratio: "<<uncon/con<<std::endl;
+
+
+        }
+
+        avg_ratio=avg_ratio/good_bins;
+        //avg_ratio=0;
+
+        std::vector<double> out_1bin={n_events[0],uncon,con,avg_ratio};
+        TFile *fnew = new TFile(("constraint_test_"+tag+"_knob_"+variations[which_var]+".root").c_str(),"RECREATE");
+        TMatrixD cov_before = coll_covariance.GetSub(0,num_bins_sig-1,0,num_bins_sig-1);
+        TMatrixD cov_after = m_covar_con_sys.GetSub(0,num_bins_sig-1,0,num_bins_sig-1);
+        //constraint_table.close();
+        cov_before.Write("before");
+        cov_after.Write("after");
+
+        if(good_bins>0.0){
+            return out_1bin;
+        }
+        else{
+            std::vector<double> bad_out={-999,-999,-999,-999};
+
+            return bad_out;
+        }
+        }
+
+
+
+        std::vector<std::string> SBNcovariance::buildWeightMaps(){
+
+
+            std::cout<<"SBNcovariance::buildWeightMaps()\t\t||\t\t Starting to Build Weight Maps of TTreeFormulas "<<std::endl;
+            int n_wei = weightmaps_patterns.size();
+
+            //this is what to return, this to be made into a TTreeFormula (for every single file!)
+            std::vector<std::string> variation_weight_formulas(variations.size(),"1");
+
+            for(int i=0; i< n_wei; i++){
+
+                for(int v=0; v< variations.size(); v++){
+
+                    // Check to see if pattern is in this variation
+                    if (variations[v].find(weightmaps_patterns[i]) != std::string::npos) {
                         std::cout << "Variation "<<variations[v]<<" is a match for pattern "<<weightmaps_patterns[i]<<std::endl;
                         variation_weight_formulas[v] = variation_weight_formulas[v] + "*(" + weightmaps_formulas[i]+")";
                         std::cout<<" -- weight is thus "<<variation_weight_formulas[v]<<std::endl;
@@ -1494,11 +1913,11 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                         if(weightmaps_mode[i]=="multisim") m_variation_modes[v] = 0;
                         if(weightmaps_mode[i]=="minmax") m_variation_modes[v] = 1;
 
+                    }
                 }
             }
-        }
 
-        return variation_weight_formulas;
-    }
+            return variation_weight_formulas;
+        }
 
 

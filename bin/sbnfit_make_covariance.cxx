@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
 	const struct option longopts[] =
 	{
 		{"xml", 		required_argument, 	0, 'x'},
-		{"singlephoton",        no_argument,            0, 's'},
+		{"detsys",        no_argument,            0, 'd'},
 		{"printall", 		no_argument, 		0, 'p'},
 		{"tag", 		required_argument,	0, 't'},
 		{"help", 		no_argument,	0, 'h'},
@@ -68,13 +68,14 @@ int main(int argc, char* argv[])
 	opterr=1;
 	int index;
 	bool bool_use_universe = true;
+    bool constrain_mode=false;
 
         //a tag to identify outputs and this specific run. defaults to EXAMPLE1
         std::string tag = "TEST";
 
 	while(iarg != -1)
 	{
-		iarg = getopt_long(argc,argv, "x:t:sph", longopts, &index);
+		iarg = getopt_long(argc,argv, "x:t:dph", longopts, &index);
 
 		switch(iarg)
 		{
@@ -84,7 +85,7 @@ int main(int argc, char* argv[])
 			case 'p':
 				print_mode=true;
 				break;
-			case 's':
+			case 'd':
 				bool_use_universe=false;
 				break;
 			case 't':
@@ -99,7 +100,7 @@ int main(int argc, char* argv[])
 				std::cout<<"\t-x\t--xml\t\tInput configuration .xml file for SBNconfig"<<std::endl;
 				std::cout<<"\t-t\t--tag\t\tA unique tag to identify the outputs [Default to TEST]"<<std::endl;
 				std::cout<<"--- Optional arguments: ---"<<std::endl;
-				std::cout<<"\t-s\t--singlephoton\t use root files with systematically varied histograms to build the covariance matrix" << std::endl;
+				std::cout<<"\t-d\t--detsys\t use root files with systematically varied histograms (detsys) to build the covariance matrix" << std::endl;
 				std::cout<<"\t-p\t--printall\tRuns in BONUS print mode, making individual spectra plots for ALLVariations. (warning can take a while!) "<<std::endl;
                 		std::cout<<"\t-h\t--help\t\tThis help menu."<<std::endl;
 				std::cout<<"---------------------------------------------------"<<std::endl;
@@ -135,10 +136,18 @@ int main(int argc, char* argv[])
 
           //Constraint will be patched in shortly: mark
           //example_covar.DoConstraint(0,1);
-
+      if(constrain_mode){
+	  example_covar.DoConstraint(0,1,tag);
+	  for (int i=0;i<example_covar.variations.size();i++){
+	    //average_ratio=example_covar.DoConstraint(0,1,tag,i);
+	    //ratio_con<<i<<" " <<average_ratio<<std::endl;
+	    //ratio_con<<"var "<<i<<" name "<<example_covar.variations.at(i)<<" events "<<average_ratio[0]<<" uncon "<<average_ratio[1]<<" con "<<average_ratio[2]<<" ratio "<<average_ratio[3]<<std::endl;
+	  }
+      }
 	  if(print_mode){
 		//This takes a good bit longer, and prints every variation to file. 
 		example_covar.PrintVariations(tag);
+		example_covar.PrintVariations_2D(tag);
 	  }
 
 	}else{
