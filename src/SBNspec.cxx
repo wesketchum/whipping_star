@@ -356,7 +356,6 @@ int SBNspec::WriteOut(std::string tag){
     f2->cd();
     std::cout<<"This file has "<<hist.size()<<" histograms and "<<fullnames.size()<<" fullnames "<<std::endl;
 	for(auto& h: hist){
-        std::cout<<"WriteOut "<<h.Integral()<<std::endl;
 		h.Write();
 	}
 	f2->Close();

@@ -550,10 +550,10 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
         for(int j=0; j < num_files; j++){
             int nevents = std::min(montecarlo_maxevents[j], nentries[j]);
-            std::cout << otag<<" @ data file=" << files[j]->GetName() <<" which has "<<nevents<<std::endl;
+            std::cout << otag<<" Starting @ data file=" << files[j]->GetName() <<" which has "<<nevents<<" Events. "<<std::endl;
             size_t nbytes = 0;
             for(int i=0; i < nevents; i++) {
-                if(i%100==0)std::cout<<i<<" / "<<nevents<<std::endl;
+                if(i%100==0)std::cout<<" -- uni :"<<i<<" / "<<nevents<<std::endl;
                 nbytes+= trees[j]->GetEntry(i);
                 ProcessEvent(*(f_weights[j]),j,i);
             } //end of entry loop
@@ -1031,6 +1031,9 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         TFile *fout = new TFile(("SBNfit_variation_plots_"+tag+".root").c_str(),"recreate");
         fout->cd();
 
+        if (access("variations",F_OK) == -1){
+            mkdir("variations",0777);//Create a folder for pdf.
+        }
 
         std::cout << "SBNcovariance::PrintVariations\t||\tStarting to Print all variations, this can take a little. " << std::endl;
 
@@ -1072,15 +1075,14 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         }
 
         time_t start_time = time(0);
-        std::cout<<"SBNcovariance::PrintVariations\t||Starting universe loop [This can take a while!] "<<std::endl;
+        std::cout<<"SBNcovariance::PrintVariations\t||Starting universe loop [This can take a while!] as were plotting "<<universes_used<<" Histograms."<<std::endl;
         TRandom3 *rangen = new TRandom3(20);
         for(int m=0; m < universes_used; m++){
 
             //are we in a new variation? maybe. 
 
             if( m%((int)floor((double)universes_used/100.0))==0){
-                std::cout<<"On Universe: "<<m<<"/"<<universes_used<<std::endl;
-                std::cout<<"---time since last: " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
+                std::cout<<"SBNcovariance::PrintVariations\t||\t On Universe: "<<m<<"/"<<universes_used<<" ---time elapsed since last notification: " << difftime(time(0), start_time) << " Seconds.\n";
                 start_time = time(0);
             }
 
@@ -1097,11 +1099,12 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
             }	
             //check to see if variation is over. if so
-            if(m+1 != universes_used && var != map_universe_to_var[m]){
+            if(m+1 != universes_used && var != map_universe_to_var[m+1]){
                 fout->cd();
-                vec_dir.at(which_matrix)->cd();
 
                 for(int i=0; i< spec_central_value.hist.size(); i++){
+                    fout->cd();
+                    vec_dir.at(which_matrix)->cd();
                     vec_canvas.at(which_matrix).at(i)->cd();
                     TH1D * temp_cv_spec = (TH1D*)spec_central_value.hist.at(i).Clone((std::to_string(i)+var+"tmp2").c_str());
                     temp_cv_spec->Scale(1,"width");
@@ -1110,7 +1113,11 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                     temp_cv_spec->SetLineWidth(2);
                     temp_cv_spec->DrawCopy("same hist p");
 
+                    fout->cd();
+                    vec_dir.at(which_matrix)->cd();
                     vec_canvas.at(which_matrix).at(i)->Write();
+                    vec_canvas.at(which_matrix).at(i)->SaveAs(("variations/Variation_"+tag+"_"+var+"_"+fullnames[i]+"_1D.pdf").c_str(),"pdf");
+;
                     delete temp_cv_spec;
                     delete vec_canvas.at(which_matrix).at(i);
                 }
@@ -1123,10 +1130,6 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         }//end universe loop
 
         std::cout << "SBNcovariance::PrintVariations\t||\tFinished. Just tidying up and writing TCanvas. " << std::endl;
-
-        if (access("variations",F_OK) == -1){
-            mkdir("variations",0777);//Create a folder for pdf.
-        }
         /*
            for(int v =0; v< variations.size(); v++){
            fout->cd();
@@ -1240,7 +1243,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 correlation_constraint<<v<<" "<<coll_correlation(0,0)<< " " <<coll_correlation(0,1)<<" " <<coll_correlation(1,0)<<" " <<coll_correlation(1,1)<<std::endl;
 
                 for(int j=temp_indices.at(0); j<=temp_indices.at(1); j++){
-                    std::cout<<"j="<<j<<std::endl;
+                    //std::cout<<"j="<<j<<std::endl;
                     temp_cv_spec_2->SetBinError(k,sqrt(full_covariance(j,j))/temp_cv_spec->GetBinWidth(k));
                     temp_cv_spec->SetBinError(k,sqrt(vec_full_covariance.at(which_matrix)(j,j))/temp_cv_spec->GetBinWidth(k));
                     //std::cout<<"total error band="<<sqrt(full_covariance(j,j))/temp_cv_spec->GetBinWidth(k)<<std::endl;
@@ -1255,16 +1258,13 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                     //std::cout<<"hist indices="<<k<<std::endl;
 
                     //int has_run=0;
-                    std::cout<<"temp_indices.at(0)="<<temp_indices.at(0)<<std::endl;
-                    std::cout<<"temp_indices.at(1)="<<temp_indices.at(1)<<std::endl;
-                    std::cout<<"temp_indices.size()="<<temp_indices.size()<<std::endl;
+                    //std::cout<<"temp_indices.at(0)="<<temp_indices.at(0)<<std::endl;
+                    //std::cout<<"temp_indices.at(1)="<<temp_indices.at(1)<<std::endl;
+                    //std::cout<<"temp_indices.size()="<<temp_indices.size()<<std::endl;
                     //attempt to get off diagonal entries very adhoc ask Mark for better method
 
                     correlation_scale<<v<<" ";
                     correlation_scale<<sqrt(vec_frac_covariance.at(which_matrix)(0,1))*100<<std::endl;
-
-
-
 
 
 
@@ -1308,8 +1308,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             }
 
             if( m%((int)floor((double)universes_used/100.0))==0){
-                std::cout<<"On Universe: "<<m<<"/"<<universes_used<<std::endl;
-                std::cout<<"---time since last: " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
+                std::cout<<"SBNcovariance::PrintVariations_2D\t||\t On Universe: "<<m<<"/"<<universes_used<<" ---time elapsed since last notification: " << difftime(time(0), start_time) << " Seconds.\n";
                 start_time = time(0);
             }
 
@@ -1338,7 +1337,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         std::vector<size_t> sorted_indicies = SortIndexes(var_percent);
         for(int i= var_names.size()-1; i>-1; i--){
             size_t index = sorted_indicies[i];
-            std::cout<<var_names[index]<<" "<<var_percent[index]<<std::endl;
+            //std::cout<<var_names[index]<<" "<<var_percent[index]<<std::endl;
             sorted_variation_scale<<var_names[index]<<" "<<var_percent[index]<<std::endl;
         }
         std::cout << "SBNcovariance::PrintVariations_2D\t||\tFinished. Just tidying up and writing TCanvas. " << std::endl;
@@ -1765,12 +1764,13 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             n_con.push_back(n_events[i]);
         }
 
-        std::cout<<"1g1p: "<<std::accumulate(n_sig.begin(),n_sig.end(),0.0)<<std::endl;
-        std::cout<<"2g1p: "<<std::accumulate(n_con.begin(),n_con.end(),0.0)<<std::endl;
+        std::cout<<"Signal: "<<std::accumulate(n_sig.begin(),n_sig.end(),0.0)<<std::endl;
+        std::cout<<"Constraint: "<<std::accumulate(n_con.begin(),n_con.end(),0.0)<<std::endl;
 
         for (int i=0; i<num_bins_tot;i++){
-            std::cout<<"vector entry "<<i<<"-"<<n_events[i]<<std::endl;
+            std::cout<<"Vector entry "<<i<<"-"<<n_events[i]<<std::endl;
         }
+
         TMatrixD m_covar_full(num_bins_tot,num_bins_tot);
         TMatrixD m_covar_full_sys = coll_covariance;
         TMatrixD m_inv_full(num_bins_tot,num_bins_tot);
@@ -1864,8 +1864,6 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             }
             std::cout<<"bin="<<i<<"/events="<<n_events[i]<<"/uncon="<<uncon<<"/con="<<con<<" ratio: "<<uncon/con<<std::endl;
             constraint_table<<"bin="<<i<<"/events="<<n_events[i]<<"/uncon="<<uncon<<"/con="<<con<<" ratio: "<<uncon/con<<std::endl;
-
-
         }
 
         avg_ratio=avg_ratio/good_bins;
