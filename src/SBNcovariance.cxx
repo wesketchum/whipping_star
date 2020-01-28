@@ -1285,7 +1285,6 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 leg->Draw("same");
 
             }
-
             vec_canvas.push_back(tmpc);	 //vector of vector of canvases variations:signal with empty histogram plotted in each
             vec_hist.push_back(tmpTH2); //vector of vector of histograms (currently empty)
         }
@@ -1493,10 +1492,15 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         }
         c_coll_full->Write();
 
+        if (access("matrix_plots",F_OK) == -1){
+            mkdir("matrix_plots",0777);//Create a folder for pdf.
+        }
+
+
         for(int m=0; m< variations.size();m++){
-            this->plot_one(vec_full_correlation.at(m), "varplot_Correlation_"+variations.at(m), fout,true,true);
-            this->plot_one(vec_frac_covariance.at(m), "varplot_Fractional_Covariance_"+variations.at(m), fout,true,true);
-            this->plot_one(vec_full_covariance.at(m), "varplot_Full_Covariance_"+variations.at(m), fout,true,true);
+            this->plot_one(vec_full_correlation.at(m), "matrix_plots/varplot_Correlation_"+tag+"_"variations.at(m), fout,true,true);
+            this->plot_one(vec_frac_covariance.at(m), "matrix_plots/varplot_Fractional_Covariance_"+tag+"_"+variations.at(m), fout,true,true);
+            this->plot_one(vec_full_covariance.at(m), "matrix_plots/varplot_Full_Covariance_"+tag+"_"+variations.at(m), fout,true,true);
         }
 
         fout->cd();
