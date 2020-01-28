@@ -372,7 +372,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
                     systematic_name.push_back("");
                 }else{
                     systematic_name.push_back(bsyst);	
-                    std::cout<<otag<<"Setting systematic name: "<<bsyst<<std::endl;
+                    if(is_verbose)std::cout<<otag<<"Setting systematic name: "<<bsyst<<std::endl;
 
                 }
 

@@ -176,6 +176,8 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
     }  //end looping over variations 
 
 
+    m_variation_modes.resize(variations.size(),0);
+
     universes_used = num_universes_per_variation.size();
 
     std::cout << otag<<" -------------------------------------------------------------" << std::endl;
@@ -198,14 +200,14 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
     double reco_weight;
     for( size_t vid =0; vid < variations.size() ; vid++){
         const auto &v =  variations[vid];
-        std::cout << "variation " << v << " total # of files" << num_files << std::endl;
+        std::cout <<otag<<" On Variation " << v << ", total # of files: " << num_files << std::endl;
         for(int fid=0; fid< num_files; fid++){
 
             int nevents = std::min(montecarlo_maxevents[fid], nentries[fid]);
             for(int t=0; t< branch_variables[fid].size(); t++){
                 const auto branch_var_jt = branch_variables[fid][t];
 
-                std::cout<<fid<<" "<<t<<" "<<branch_var_jt->associated_systematic<<" "<<branch_var_jt->associated_hist<<" on "<<v<<std::endl;
+                //std::cout<<fid<<" "<<t<<" "<<branch_var_jt->associated_systematic<<" "<<branch_var_jt->associated_hist<<" on "<<v<<std::endl;
                 if(branch_var_jt->associated_systematic == v){  // if we find the branch with right systematic variation
                     int ih = spec_central_value.map_hist.at(branch_var_jt->associated_hist);
                     double reco_var;
@@ -222,7 +224,7 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
                                 reco_weight = montecarlo_additional_weight_formulas[fid]->EvalInstance();
                             }
                             reco_weight *= montecarlo_scale[fid]; 				
-                            std::cout<<"SYS "<<reco_var<<" "<<reco_weight<<" "<<ih<<std::endl;
+                            //std::cout<<"SYS "<<reco_var<<" "<<reco_weight<<" "<<ih<<std::endl;
                             spec_central_value.hist[ih].Fill(reco_var, reco_weight);
                         }
                     }else{
@@ -238,16 +240,14 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
                                 reco_weight = montecarlo_additional_weight_formulas[fid]->EvalInstance();
                             }
                             reco_weight *= montecarlo_scale[fid]; 
-                            std::cout<<"CV "<<reco_var<<" "<<reco_bin<<" "<<ih<<" "<<reco_weight<<" "<<vid<<"/"<<universes_used<<" "<<multi_vecspec.size()<<" "<<multi_vecspec[vid].size()<<std::endl;
+                            //std::cout<<"CV "<<reco_var<<" "<<reco_bin<<" "<<ih<<" "<<reco_weight<<" "<<vid<<"/"<<universes_used<<" "<<multi_vecspec.size()<<" "<<multi_vecspec[vid].size()<<std::endl;
+                            if(reco_bin<0)continue; // if its not to be plotted
                             multi_vecspec[vid][reco_bin] += reco_weight;
                         }
                     }		
                 } else continue;
-                std::cout<<"ebranch"<<std::endl;
             }// end of branch loop
-            std::cout<<"efile"<<std::endl;
         } // end of file loop
-        std::cout<<"evar"<<std::endl;
     } //end of variation loop
 
 
@@ -270,7 +270,7 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
 
 
 SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
-    otag = "SBN covariance::SBNcovariance\t||\t";
+    otag = "SBNcovariance::SBNcovariance\t||\t";
 
     std::cout <<otag<<"Start in EventWeight Mode." << std::endl;
 
@@ -281,16 +281,16 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
     //Is there a Global weight to be applied to ALL weights, CV and otherwise, inside the eventweight class? 
     bnbcorrection_str = "NAN";//"TunedCentralValue_Genie";//"bnbcorrection_FluxHist";
 
+
+    //Old text, ignore!
     bool restrict_variations = false;
-
     variations_to_use = {"expskin_FluxUnisim","horncurrent_FluxUnisim","kminus_PrimaryHadronNormalization","kplus_PrimaryHadronFeynmanScaling","kzero_PrimaryHadronSanfordWang","nucleoninexsec_FluxUnisim","nucleonqexsec_FluxUnisim","nucleontotxsec_FluxUnisim","piminus_PrimaryHadronSWCentralSplineVariation","pioninexsec_FluxUnisim","pionqexsec_FluxUnisim","piontotxsec_FluxUnisim","piplus_PrimaryHadronSWCentralSplineVariation","genie_ccresAxial_Genie","genie_ncresAxial_Genie","genie_qema_Genie","genie_NC_Genie","genie_NonResRvbarp1pi_Genie","genie_NonResRvbarp2pi_Genie","genie_NonResRvp1pi_Genie","genie_NonResRvp2pi_Genie","genie_NonResRvbarp1piAlt_Genie","genie_NonResRvbarp2piAlt_Genie","genie_NonResRvp1piAlt_Genie","genie_NonResRvp2piAlt_Genie"};
-
     variations_to_use = {"AGKYpT1pi_Genie"," AGKYxF1pi_Genie"," AhtBY_Genie"," AxFFCCQEshape_Genie"," BhtBY_Genie"," CV1uBY_Genie"," CV2uBY_Genie"," DecayAngMEC_Genie"," EtaNCEL_Genie"," FrAbs_N_Genie"," FrAbs_pi_Genie"," FrCEx_N_Genie"," FrCEx_pi_Genie"," FrInel_N_Genie"," FrInel_pi_Genie"," FrPiProd_N_Genie"," FrPiProd_pi_Genie"," FracDelta_CCMEC_Genie"," FracPN_CCMEC_Genie"," MFP_N_Genie"," MFP_pi_Genie"," MaCCQE_Genie"    ," MaCCRES_Genie"," MaCOHpi_Genie"," MaNCEL_Genie"," MvCCRES_Genie"," NonRESBGvbarnCC1pi_Genie"," NonRESBGvbarnCC2pi_Genie"," NonRESBGvbarnNC1pi_Genie"," NonRESBGvbarnNC2pi_Genie"," NonRESBGvbarpCC1pi_Genie"," NonRESBGvbarpCC2pi_Genie"," NonRESBGvbarpNC1pi_Genie"," NonRESBGvbarpNC2pi_Genie"," NonRESBGvnCC1pi_Genie"," NonRESBGvnCC2pi_Genie"," NonRESBGvnNC1pi_Genie"," NonRESBGvnNC2pi_Genie"," NonRESBGvpCC1pi_Genie"," NonRESBGvpCC2pi_Genie"," NonRESBGvpNC1pi_Genie"," NonRESBGvpNC2pi_Genie"," NormCCMEC_Genie"," NormNCMEC_Genie"," R0COHpi_Genie"," RDecBR1eta_Genie"," RDecBR1gamma_Genie"," RPA_CCQE_Genie"," Theta_Delta2Npi_Genie"," VecFFCCQEshape_Genie"," XSecShape_CCMEC_Genie"};
-
-
     for(auto &s: variations_to_use){
         m_variations_to_use[s]=true;
     }
+
+
 
     std::map<std::string, int> parameter_sims;
 
@@ -313,7 +313,6 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
     montecarlo_additional_weight.resize(num_files,1.0);
     montecarlo_additional_weight_formulas.resize(num_files);
-
 
     int good_event = 0;
 
@@ -1099,30 +1098,31 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
             }	
             //check to see if variation is over. if so
-            if(m+1 != universes_used && var != map_universe_to_var[m+1]){
-                fout->cd();
-
-                for(int i=0; i< spec_central_value.hist.size(); i++){
+            if(m+1 != universes_used ) {
+                if(var != map_universe_to_var[m+1]){
                     fout->cd();
-                    vec_dir.at(which_matrix)->cd();
-                    vec_canvas.at(which_matrix).at(i)->cd();
-                    TH1D * temp_cv_spec = (TH1D*)spec_central_value.hist.at(i).Clone((std::to_string(i)+var+"tmp2").c_str());
-                    temp_cv_spec->Scale(1,"width");
-                    temp_cv_spec->SetLineColor(kBlack);
-                    temp_cv_spec->SetMarkerStyle(34);
-                    temp_cv_spec->SetLineWidth(2);
-                    temp_cv_spec->DrawCopy("same hist p");
 
-                    fout->cd();
-                    vec_dir.at(which_matrix)->cd();
-                    vec_canvas.at(which_matrix).at(i)->Write();
-                    vec_canvas.at(which_matrix).at(i)->SaveAs(("variations/Variation_"+tag+"_"+var+"_"+fullnames[i]+"_1D.pdf").c_str(),"pdf");
-;
-                    delete temp_cv_spec;
-                    delete vec_canvas.at(which_matrix).at(i);
+                    for(int i=0; i< spec_central_value.hist.size(); i++){
+                        fout->cd();
+                        vec_dir.at(which_matrix)->cd();
+                        vec_canvas.at(which_matrix).at(i)->cd();
+                        TH1D * temp_cv_spec = (TH1D*)spec_central_value.hist.at(i).Clone((std::to_string(i)+var+"tmp2").c_str());
+                        temp_cv_spec->Scale(1,"width");
+                        temp_cv_spec->SetLineColor(kBlack);
+                        temp_cv_spec->SetMarkerStyle(34);
+                        temp_cv_spec->SetLineWidth(2);
+                        temp_cv_spec->DrawCopy("same hist p");
+
+                        fout->cd();
+                        vec_dir.at(which_matrix)->cd();
+                        vec_canvas.at(which_matrix).at(i)->Write();
+                        vec_canvas.at(which_matrix).at(i)->SaveAs(("variations/Variation_"+tag+"_"+var+"_"+fullnames[i]+"_1D.pdf").c_str(),"pdf");
+                        ;
+                        delete temp_cv_spec;
+                        delete vec_canvas.at(which_matrix).at(i);
+                    }
+
                 }
-
-
             }
 
 
@@ -1894,7 +1894,6 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
 
         std::vector<std::string> SBNcovariance::buildWeightMaps(){
-
 
             std::cout<<"SBNcovariance::buildWeightMaps()\t\t||\t\t Starting to Build Weight Maps of TTreeFormulas "<<std::endl;
             int n_wei = weightmaps_patterns.size();

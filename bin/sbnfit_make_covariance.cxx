@@ -109,6 +109,13 @@ int main(int argc, char* argv[])
         }
     }
 
+    if(print_mode==true && !bool_use_universe){
+        std::cout<<"Error! Sorry, cant use printall and detsys together yet!"<<std::endl;
+        return 1;
+    }
+
+
+
     //std::string dict_location = "../libio/libEventWeight.so";
     //std::cout<<"Trying to load dictionary: "<<dict_location<<std::endl;
     //gSystem->Load(  (dict_location).c_str());
