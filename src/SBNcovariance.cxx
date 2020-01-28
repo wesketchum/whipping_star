@@ -1498,7 +1498,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
 
         for(int m=0; m< variations.size();m++){
-            this->plot_one(vec_full_correlation.at(m), "matrix_plots/varplot_Correlation_"+tag+"_"variations.at(m), fout,true,true);
+            this->plot_one(vec_full_correlation.at(m), "matrix_plots/varplot_Correlation_"+tag+"_"+variations.at(m), fout,true,true);
             this->plot_one(vec_frac_covariance.at(m), "matrix_plots/varplot_Fractional_Covariance_"+tag+"_"+variations.at(m), fout,true,true);
             this->plot_one(vec_full_covariance.at(m), "matrix_plots/varplot_Full_Covariance_"+tag+"_"+variations.at(m), fout,true,true);
         }
