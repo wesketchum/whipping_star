@@ -553,7 +553,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             std::cout << otag<<" Starting @ data file=" << files[j]->GetName() <<" which has "<<nevents<<" Events. "<<std::endl;
             size_t nbytes = 0;
             for(int i=0; i < nevents; i++) {
-                if(i%100==0)std::cout<<" -- uni :"<<i<<" / "<<nevents<<std::endl;
+                if(i%100==0)std::cout<<otag<<" -- uni :"<<i<<" / "<<nevents<<std::endl;
                 nbytes+= trees[j]->GetEntry(i);
                 ProcessEvent(*(f_weights[j]),j,i);
             } //end of entry loop
