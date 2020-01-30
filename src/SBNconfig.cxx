@@ -33,7 +33,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
 
 
     // we have Modes, Detectors, Channels
-    TiXmlElement *pMode, *pDet, *pChan, *pCov, *pMC, *pData,*pPOT, *pWeiMaps, *pWhiteList, *pBlackList;
+    TiXmlElement *pMode, *pDet, *pChan, *pCov, *pMC, *pData,*pPOT, *pWeiMaps, *pList;
 
 
     //Grab the first element. Note very little error checking here! make sure they exist.
@@ -453,9 +453,10 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
                      while(pWhiteList){
                              variation_whitelist.push_back( std::string(pWhiteList->GetText()) );
                              if(is_verbose)std::cout<<otag<<" Whitelisting variation "<<" "<<variation_whitelist.back()<<std::endl;
-                             pWhiteList = pWhiteLisit->NextSiblingElement("whitelist");
+                             pWhiteList = pWhiteList->NextSiblingElement("whitelist");
                      }
                     
+                    TiXmlElement *pBlackList = pList->FirstChildElement("blacklist");
                      while(pBlackList){
                              variation_blacklist.push_back( std::string(pBlackList->GetText()) );
                              if(is_verbose)std::cout<<otag<<" Blacklisting variation "<<" "<<variation_blacklist.back()<<std::endl;

@@ -905,7 +905,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         for(int i=0; i < num_bins_total; i++) {
             for(int j=0; j < num_bins_total; j++) {
                 a_frac_covariance[i*num_bins_total+j]  = a_full_covariance[i*num_bins_total+j]/(a_CV[i]*a_CV[j]);
-                std::cout<<"HALP "<<i<<" "<<j<<" "<<a_full_covariance[i*num_bins_total+j]<<" "<<a_CV[i]<<" "<<a_CV[j]<<" || "<<a_frac_covariance[i*num_bins_total+j]<<std::endl;
+//                std::cout<<"HALP "<<i<<" "<<j<<" "<<a_full_covariance[i*num_bins_total+j]<<" "<<a_CV[i]<<" "<<a_CV[j]<<" || "<<a_frac_covariance[i*num_bins_total+j]<<std::endl;
                 a_full_correlation[i*num_bins_total+j] = a_full_covariance[i*num_bins_total+j]/(sqrt(a_full_covariance[i*num_bins_total+i])*sqrt(a_full_covariance[j*num_bins_total+j]));
 #pragma acc loop
                 for(int m=0; m<num_variations; m++){
