@@ -451,17 +451,20 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
                     
                     TiXmlElement *pWhiteList = pList->FirstChildElement("whitelist");
                      while(pWhiteList){
-                             variation_whitelist.push_back( std::string(pWhiteList->GetText()) );
-                             if(is_verbose)std::cout<<otag<<" Whitelisting variation "<<" "<<variation_whitelist.back()<<std::endl;
+                             std::string wt = std::string(pWhiteList->GetText());
+                             variation_whitelist[wt] = true; 
+                             if(is_verbose)std::cout<<otag<<" Whitelisting variation "<<" "<<wt<<std::endl;
                              pWhiteList = pWhiteList->NextSiblingElement("whitelist");
                      }
                     
                     TiXmlElement *pBlackList = pList->FirstChildElement("blacklist");
                      while(pBlackList){
-                             variation_blacklist.push_back( std::string(pBlackList->GetText()) );
-                             if(is_verbose)std::cout<<otag<<" Blacklisting variation "<<" "<<variation_blacklist.back()<<std::endl;
+                             std::string bt = std::string(pBlackList->GetText());
+                             variation_blacklist[bt] = true; 
+                             if(is_verbose)std::cout<<otag<<" Blacklisting variation "<<" "<<bt<<std::endl;
                              pBlackList = pBlackList->NextSiblingElement("blacklist");
                      }
+                     pList = pList->NextSiblingElement("variation_list");
         }
     }
 

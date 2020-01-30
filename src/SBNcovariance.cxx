@@ -425,14 +425,16 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
             if(variation_whitelist.size()> 0 ){
                     if(variation_whitelist.count(it.first)==0){
-                    std::cout<<"Skipping "<<it.first<<" as its not in the WhiteList!!"<<std::endl;
-                    continue;
+                        std::cout<<"Skipping "<<it.first<<" as its not in the WhiteList!!"<<std::endl;
+                        continue;
+                    }
             }
 
             if(variation_blacklist.size()> 0 ){
                     if(variation_blacklist.count(it.first)>0){
-                    std::cout<<"Skipping "<<it.first<<" as it is the BlackList!!"<<std::endl;
-                    continue;
+                        std::cout<<"Skipping "<<it.first<<" as it is the BlackList!!"<<std::endl;
+                        continue;
+                    }
             }
 
 
