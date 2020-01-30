@@ -108,8 +108,9 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
                 std::cout<<otag<<" ERROR ERROR: This branch matched more than 1 subchannel!: " <<branch_variable->associated_hist<<std::endl;
                 exit(EXIT_FAILURE);
             }
-            //set the address of branch 
-            trees.at(fid)->SetBranchAddress(branch_variable->name.c_str(),    branch_variable->GetValue());
+            //set the address of branch , old way required a branch. new is better
+            //trees.at(fid)->SetBranchAddress(branch_variable->name.c_str(),    branch_variable->GetValue());
+            branch_variable->branch_formula =  new TTreeFormula(("branch_form"+std::to_string(fid)).c_str(), branch_variable->name.c_str(), trees[fid]);
         }
 
 
@@ -215,7 +216,11 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
                     if(branch_var_jt->central_value == true ){
                         for(int i=0; i< nevents; i++){
                             trees[fid]->GetEntry(i);
-                            reco_var = *(static_cast<double*>(branch_var_jt->GetValue()));
+                //            reco_var = *(static_cast<double*>(branch_var_jt->GetValue()));
+                            branch_var_jt->GetFormula()->GetNdata();
+                            double reco_var = branch_var_jt->GetFormula()->EvalInstance();
+
+
                             // calculate the reconstructed weight
                             reco_weight = 1.0;
                             if(montecarlo_additional_weight_bool[fid]){
@@ -233,7 +238,11 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
                     }else{
                         for(int i=0; i< nevents ; i++){
                             trees[fid]->GetEntry(i);
-                            reco_var = *(static_cast<double*>(branch_var_jt->GetValue()));
+                            //reco_var = *(static_cast<double*>(branch_var_jt->GetValue()));
+                            branch_var_jt->GetFormula()->GetNdata();
+                            double reco_var = branch_var_jt->GetFormula()->EvalInstance();
+
+
                             // use CV spec to get the global bin number, even for systematically varied histograms
                             reco_bin = spec_central_value.GetGlobalBinNumber(reco_var,ih);
                             // calculate the reconstructed weight
@@ -391,7 +400,11 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 std::cout<<otag<<" ERROR ERROR: This branch matched more than 1 subchannel!: " <<branch_variable->associated_hist<<std::endl;
                 exit(EXIT_FAILURE);
             }
-            trees.at(fid)->SetBranchAddress(branch_variable->name.c_str(),    branch_variable->GetValue());
+            
+            
+            //trees.at(fid)->SetBranchAddress(branch_variable->name.c_str(),    branch_variable->GetValue());
+            branch_variable->branch_formula =  new TTreeFormula(("branch_form"+std::to_string(fid)).c_str(), branch_variable->name.c_str(), trees[fid]);
+
         }
 
         if(montecarlo_additional_weight_bool[fid]){
@@ -733,10 +746,15 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         }
 
         for(int t=0; t < branch_variables[fileid].size(); t++) {
+
+
             const auto branch_var_jt = branch_variables[fileid][t];
             int ih = spec_central_value.map_hist.at(branch_var_jt->associated_hist);
-            double reco_var = *(static_cast<double*>(branch_var_jt->GetValue()));
-            //reco_var = 1.031*reco_var;
+
+            branch_var_jt->GetFormula()->GetNdata();
+            double reco_var = branch_var_jt->GetFormula()->EvalInstance();
+           // double reco_varold = *(static_cast<double*>(branch_var_jt->GetValue()));
+
             int reco_bin = spec_central_value.GetGlobalBinNumber(reco_var,ih);
             spec_central_value.hist[ih].Fill(reco_var, global_weight*additional_CV_weight);
             //std::cout<<reco_var<<" "<<reco_bin<<" "<<ih<<std::endl;
