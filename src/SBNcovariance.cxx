@@ -973,9 +973,9 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             }
         }
         fout->cd();
-        full_covariance.Write("collapsed_covariance",TObject::kWriteDelete);
-        frac_covariance.Write("collapsed_frac_covariance",TObject::kWriteDelete);
-        full_correlation.Write("collapsed_full_correlation",TObject::kWriteDelete);
+        coll_covariance.Write("collapsed_covariance",TObject::kWriteDelete);
+        coll_frac_covariance.Write("collapsed_frac_covariance",TObject::kWriteDelete);
+        coll_correlation.Write("collapsed_correlation",TObject::kWriteDelete);
 
 
         TDirectory *individualDir = fout->GetDirectory("individualDir"); 
