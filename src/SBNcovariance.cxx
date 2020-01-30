@@ -69,7 +69,7 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
 
         auto montecarlo_file_friend_treename_iter = montecarlo_file_friend_treename_map.find(fn);
         if (montecarlo_file_friend_treename_iter != montecarlo_file_friend_treename_map.end()) {
-            std::cout<<otag<<" Detected friend trees" << std::endl;
+            std::cout<<otag<<" Detected friend trees "<<std::endl;
 
             auto montecarlo_file_friend_iter = montecarlo_file_friend_map.find(fn);
             if (montecarlo_file_friend_iter == montecarlo_file_friend_map.end()) {
@@ -348,7 +348,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
         auto montecarlo_file_friend_treename_iter = montecarlo_file_friend_treename_map.find(fn);
         if (montecarlo_file_friend_treename_iter != montecarlo_file_friend_treename_map.end()) {
-            std::cout<<otag<<" Detected friend trees" << std::endl;
+            std::cout<<otag<<" Detected friend trees "<<std::endl;
 
             auto montecarlo_file_friend_iter = montecarlo_file_friend_map.find(fn);
             if (montecarlo_file_friend_iter == montecarlo_file_friend_map.end()) {

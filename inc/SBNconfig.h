@@ -170,6 +170,7 @@ class SBNconfig {
     std::map<std::string,bool> variation_whitelist;
     std::map<std::string,bool> variation_blacklist;
 
+    //A map between a MC file and its friends
     std::map<std::string,std::vector<std::string>> montecarlo_file_friend_map;
     std::map<std::string,std::vector<std::string>> montecarlo_file_friend_treename_map;
 
