@@ -137,6 +137,7 @@ namespace sbn{
     
     
     void ProcessEvent(const std::map<std::string, std::vector<eweight_type> >& thisfWeight,   size_t fileid,     int entryid);
+   
     std::ofstream variation_scale;
     std::ofstream sorted_variation_scale;
     std::ofstream correlation_scale;

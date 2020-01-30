@@ -44,7 +44,6 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
     montecarlo_additional_weight.resize(num_files,1.0);
     montecarlo_additional_weight_formulas.resize(num_files);
 
-
     int good_event = 0;
 
     for(int fid=0; fid < num_files; ++fid) {
@@ -119,7 +118,7 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
             //we have an additional weight we want to apply at run time, otherwise its just set at 1.
             std::cout<<"Setting Additional weight of : "<< montecarlo_additional_weight_names[fid].c_str()<<std::endl; 
             //trees[fid]->SetBranchAddress(montecarlo_additional_weight_names[fid].c_str(), &montecarlo_additional_weight[fid]); 
-            montecarlo_additional_weight_formulas[fid] =  new TTreeFormula(("a_w"+std::to_string(fid)).c_str(),montecarlo_additional_weight_names[fid].c_str(),trees[fid]);
+            montecarlo_additional_weight_formulas[fid] =  new TTreeFormula(("a_w"+std::to_string(fid)).c_str(), montecarlo_additional_weight_names[fid].c_str(), trees[fid]);
         }
 
         std::cout<<"Total Entries: "<<trees.at(fid)->GetEntries()<<" good event "<<good_event<<std::endl;
@@ -222,9 +221,13 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
                             if(montecarlo_additional_weight_bool[fid]){
                                 montecarlo_additional_weight_formulas[fid]->GetNdata();
                                 reco_weight = montecarlo_additional_weight_formulas[fid]->EvalInstance();
+                                if(reco_weight!= reco_weight || reco_weight <0){
+                                    std::cout<<"ERROR! the additional wight is nan or negative "<<reco_weight<<" Breakign!"<<std::endl;
+                                    exit(EXIT_FAILURE);
+                                }
                             }
                             reco_weight *= montecarlo_scale[fid]; 				
-                            //std::cout<<"SYS "<<reco_var<<" "<<reco_weight<<" "<<ih<<std::endl;
+                           // std::cout<<"CV "<<reco_var<<" "<<reco_weight<<" "<<ih<<" "<<montecarlo_additional_weight_formulas[fid]->EvalInstance()<<" "<<montecarlo_scale[fid]<<std::endl;
                             spec_central_value.hist[ih].Fill(reco_var, reco_weight);
                         }
                     }else{
@@ -235,12 +238,17 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
                             reco_bin = spec_central_value.GetGlobalBinNumber(reco_var,ih);
                             // calculate the reconstructed weight
                             reco_weight = 1.0;          
+ 
                             if(montecarlo_additional_weight_bool[fid]){
                                 montecarlo_additional_weight_formulas[fid]->GetNdata();
                                 reco_weight = montecarlo_additional_weight_formulas[fid]->EvalInstance();
+                                if(reco_weight!= reco_weight || reco_weight <0){
+                                    std::cout<<"ERROR! the additional wight is nan or negative "<<reco_weight<<" Breakign!"<<std::endl;
+                                    exit(EXIT_FAILURE);
+                                }
                             }
-                            reco_weight *= montecarlo_scale[fid]; 
-                            //std::cout<<"CV "<<reco_var<<" "<<reco_bin<<" "<<ih<<" "<<reco_weight<<" "<<vid<<"/"<<universes_used<<" "<<multi_vecspec.size()<<" "<<multi_vecspec[vid].size()<<std::endl;
+                            reco_weight *= montecarlo_scale[fid]; 				
+                            //std::cout<<"SYS "<<reco_var<<" "<<reco_weight<<" "<<ih<<" "<<montecarlo_additional_weight_formulas[fid]->EvalInstance()<<" "<<montecarlo_scale[fid]<<std::endl;
                             if(reco_bin<0)continue; // if its not to be plotted
                             multi_vecspec[vid][reco_bin] += reco_weight;
                         }
@@ -623,6 +631,10 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             //Grab newwer variation specfic weights;
             m_variation_weight_formulas[fileid][vid]->GetNdata();
             double indiv_variation_weight = m_variation_weight_formulas[fileid][vid]->EvalInstance();
+            if(indiv_variation_weight!= indiv_variation_weight || indiv_variation_weight <0){
+                                    std::cout<<"ERROR! the additional wight is nan or negative "<<indiv_variation_weight<<" Breakign!"<<std::endl;
+                                    exit(EXIT_FAILURE);
+                                }
             //std::cout<<var<<" "<<indiv_variation_weight<<" "<<fileid<<" "<<vid<<std::endl;
 
             //is  
@@ -893,6 +905,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         for(int i=0; i < num_bins_total; i++) {
             for(int j=0; j < num_bins_total; j++) {
                 a_frac_covariance[i*num_bins_total+j]  = a_full_covariance[i*num_bins_total+j]/(a_CV[i]*a_CV[j]);
+                std::cout<<"HALP "<<i<<" "<<j<<" "<<a_full_covariance[i*num_bins_total+j]<<" "<<a_CV[i]<<" "<<a_CV[j]<<" || "<<a_frac_covariance[i*num_bins_total+j]<<std::endl;
                 a_full_correlation[i*num_bins_total+j] = a_full_covariance[i*num_bins_total+j]/(sqrt(a_full_covariance[i*num_bins_total+i])*sqrt(a_full_covariance[j*num_bins_total+j]));
 #pragma acc loop
                 for(int m=0; m<num_variations; m++){
@@ -1164,6 +1177,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         std::vector<std::vector<TCanvas*>> vec_canvas; //vector of vectors of canvases.  outer variations innner subchannels
         std::vector<std::vector<TH2D*>> vec_hist; //vector of vector of histograms
         //std::vector<std::vector<TCanvas*>> vec_canvas_2D; //vector of vectors of canvases.  outer variations innner subchannels
+
         variation_scale.open("variation_scale_"+tag+".txt",std::ofstream::trunc);
         sorted_variation_scale.open("sorted_variation_scale_"+tag+".txt",std::ofstream::trunc);
         correlation_scale.open("correlation_scale_"+tag+".txt",std::ofstream::trunc);
@@ -1171,6 +1185,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
         std::vector<std::string> var_names;
         std::vector<double> var_percent;
+
         for(const auto &v: variations){  //for each variationss
 
             //std::cout<<"SBNcovariance::PrintVariations_2D\t|| Preparing directory and canvases for variation: "<<v<<std::endl;
@@ -1218,29 +1233,33 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 temp_cv_spec->SetStats(false);
                 temp_cv_spec->SetLineColor(kBlack);
                 temp_cv_spec->SetLineWidth(2.5);
+
                 temp_cv_spec->GetXaxis()->SetLabelSize(0.03);
                 temp_cv_spec->GetYaxis()->SetTitleOffset(1.1);
                 temp_cv_spec->GetYaxis()->SetLabelSize(0.03);
                 temp_cv_spec->GetYaxis()->SetTitleOffset(0.9);
-                temp_cv_spec->GetXaxis()->SetTitle("Visible Energy (MeV)");
+                temp_cv_spec->GetXaxis()->SetTitle("Unit");
                 temp_cv_spec->GetYaxis()->SetTitle("Arbitary Units");
                 temp_cv_spec->GetYaxis()->SetTitleSize(0.045);
                 temp_cv_spec->GetXaxis()->SetTitleSize(0.045);
+
                 temp_cv_spec->SetTitle((v + " || " +fullnames.at(i)).c_str());
                 std::vector<int> temp_indices = spec_central_value.map_tag_to_covariance_index.at(fullnames.at(i));
                 int k=1;	
                 TH1D * temp_cv_spec_2 = (TH1D*)temp_cv_spec->Clone((std::to_string(i)+v+"_2").c_str());
                 //ofstream variation_scale;
-                SBNchi collapse_chi(xmlname);
-                TMatrixT<double> coll_covariance(num_bins_total_compressed,num_bins_total_compressed);
-                TMatrixT<double> coll_correlation(num_bins_total_compressed,num_bins_total_compressed);
-                collapse_chi.CollapseModes(vec_full_covariance.at(which_matrix), coll_covariance);
-                for(int i=0; i<num_bins_total_compressed; i++){
-                    for(int j=0; j<num_bins_total_compressed; j++){
-                        coll_correlation(i,j)= coll_covariance(i,j)/(sqrt(coll_covariance(i,i))*sqrt(coll_covariance(j,j)));
-                    }
-                }
-                correlation_constraint<<v<<" "<<coll_correlation(0,0)<< " " <<coll_correlation(0,1)<<" " <<coll_correlation(1,0)<<" " <<coll_correlation(1,1)<<std::endl;
+
+                /*SBNchi collapse_chi(xmlname);
+                  TMatrixT<double> coll_covariance(num_bins_total_compressed,num_bins_total_compressed);
+                  TMatrixT<double> coll_correlation(num_bins_total_compressed,num_bins_total_compressed);
+                  collapse_chi.CollapseModes(vec_full_covariance.at(which_matrix), coll_covariance);
+                  for(int i=0; i<num_bins_total_compressed; i++){
+                  for(int j=0; j<num_bins_total_compressed; j++){
+                  coll_correlation(i,j)= coll_covariance(i,j)/(sqrt(coll_covariance(i,i))*sqrt(coll_covariance(j,j)));
+                  }
+                  }
+                  correlation_constraint<<v<<" "<<coll_correlation(0,0)<< " " <<coll_correlation(0,1)<<" " <<coll_correlation(1,0)<<" " <<coll_correlation(1,1)<<std::endl;
+                  */
 
                 for(int j=temp_indices.at(0); j<=temp_indices.at(1); j++){
                     //std::cout<<"j="<<j<<std::endl;
@@ -1249,6 +1268,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                     //std::cout<<"total error band="<<sqrt(full_covariance(j,j))/temp_cv_spec->GetBinWidth(k)<<std::endl;
                     //std::cout<<"varation="<<fullnames.at(i)<<std::endl;
                     //std::cout<<"variation error band="<<sqrt(vec_full_covariance.at(which_matrix)(j,j))/temp_cv_spec->GetBinWidth(k)<<std::endl;
+
                     variation_scale<<which_matrix<<" "<<v<<" "<<sqrt(vec_frac_covariance.at(which_matrix)(j,j))*100<<std::endl;
                     var_names.push_back(v);
                     var_percent.push_back(sqrt(vec_frac_covariance.at(which_matrix)(j,j))*100);
@@ -1266,12 +1286,12 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                     correlation_scale<<v<<" ";
                     correlation_scale<<sqrt(vec_frac_covariance.at(which_matrix)(0,1))*100<<std::endl;
 
-
-
                     k++;
                 }
+
                 temp_cv_spec->SetLineWidth(1.0);
                 temp_cv_spec_2->SetLineWidth(1.0);
+
                 //temp_cv_spec->SetLineColorAlpha(kBlack, 0.35);
                 //temp_cv_spec_2->SetLineColorAlpha(kRed, 0.35);
                 temp_cv_spec->DrawCopy("E1 P");
@@ -1280,14 +1300,15 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 temp_cv_spec_2->DrawCopy("same E1 P");
                 temp_cv_spec->DrawCopy("same E1 P");
                 TLegend *leg = new TLegend(0.61,0.75,0.89,0.89);
-                leg->AddEntry(temp_cv_spec_2, "full uncertainty","l");
-                leg->AddEntry(temp_cv_spec, "variation uncertainty","l");
+                leg->AddEntry(temp_cv_spec_2, "Full uncertainty","l");
+                leg->AddEntry(temp_cv_spec, "Variation uncertainty","l");
                 leg->Draw("same");
 
             }
             vec_canvas.push_back(tmpc);	 //vector of vector of canvases variations:signal with empty histogram plotted in each
             vec_hist.push_back(tmpTH2); //vector of vector of histograms (currently empty)
         }
+
         //end variation loop
         std::cout<<"SBNcovariance::PrintVariations_2D\t||Starting universe loop [This can take a while!] "<<std::endl;
         TRandom3 *rangen = new TRandom3(20);
@@ -1331,14 +1352,13 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             number_of_used_universes++;
         }
 
-        //end universe loop
-        //int status=system("std::sort -k -r -g -2 "variation_scale_"+tag+".txt" > "sorted_variation_scale_"+tag+".txt"");
         std::vector<size_t> sorted_indicies = SortIndexes(var_percent);
         for(int i= var_names.size()-1; i>-1; i--){
             size_t index = sorted_indicies[i];
-            //std::cout<<var_names[index]<<" "<<var_percent[index]<<std::endl;
             sorted_variation_scale<<var_names[index]<<" "<<var_percent[index]<<std::endl;
         }
+
+
         std::cout << "SBNcovariance::PrintVariations_2D\t||\tFinished. Just tidying up and writing TCanvas. " << std::endl;
         if (access("variations_2D",F_OK) == -1){
             mkdir("variations_2D",0777);//Create a folder for pdf.
@@ -1386,10 +1406,8 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         gStyle->SetOptStat(0);
 
         this->plot_one(full_correlation, "SBNfit_correlation_matrix_"+tag, fout, true,false);
-        this->plot_one(full_covariance, "SBNfit_covariance_matrix_"+tag, fout, true,false);
-        this->plot_one(frac_covariance, "SBNfit_fractional_covariance_matrix_"+tag, fout, true,false);
-        //Print the collapsed matricies too: Need to fudge this a bit
-
+        this->plot_one(full_covariance,  "SBNfit_covariance_matrix_"+tag, fout, true,false);
+        this->plot_one(frac_covariance,  "SBNfit_fractional_covariance_matrix_"+tag, fout, true,false);
 
         SBNchi collapse_chi(xmlname);
 
@@ -1581,7 +1599,6 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                            tunit->Draw();
                            */
 
-
                         if(isc<num_subchannels[ic]-1){
                             TLine *lscv = new TLine(-num_bins_total*percent_left, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
                             TLine *lsch = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total*1.045);
@@ -1749,21 +1766,24 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             collapse_chi.CollapseModes(vec_full_covariance.at(which_var), coll_covariance);
         }
 
-        int num_bins_sig=num_bins[which_signal];
+        //Does this assume only 2 channels?
+        int num_bins_sig = num_bins[which_signal];
         std::cout<<"signal bins="<<num_bins_sig<<std::endl;
         int num_bins_con=num_bins[which_constraint];
         std::cout<<"constraint bins="<<num_bins_con<<std::endl;
         int num_bins_tot=num_bins_sig+num_bins_con;
+
 
         spec_central_value.CollapseVector();
         std::vector<double> n_events = spec_central_value.collapsed_vector; 
         std::vector<double> n_sig;
         std::vector<double> n_con;
 
+
+        //This assumes that the signal is first in order and the background is next AND THAT IT. 
         for(int i=0; i< num_bins_sig; i++){
             n_sig.push_back(n_events[i]);
         }
-
         for(int i=num_bins_sig; i< n_events.size(); i++){
             n_con.push_back(n_events[i]);
         }
@@ -1861,7 +1881,6 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             std::cout<<"start_loop"<<std::endl;
             uncon=sqrt(m_covar_full_sys(i,i))/n_events[i];
             con=sqrt(m_covar_con_sys(i,i))/n_events[i];
-            //if (-100<uncon<100 && -100<con<100){
             if (con>0 and uncon>0){
                 avg_ratio+=uncon/con;
                 good_bins+=1.0;
@@ -1873,7 +1892,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         avg_ratio=avg_ratio/good_bins;
         //avg_ratio=0;
 
-        std::vector<double> out_1bin={n_events[0],uncon,con,avg_ratio};
+        std::vector<double> out_1bin={n_events[0], uncon, con, avg_ratio};
         TFile *fnew = new TFile(("constraint_test_"+tag+"_knob_"+variations[which_var]+".root").c_str(),"RECREATE");
         TMatrixD cov_before = coll_covariance.GetSub(0,num_bins_sig-1,0,num_bins_sig-1);
         TMatrixD cov_after = m_covar_con_sys.GetSub(0,num_bins_sig-1,0,num_bins_sig-1);
@@ -1886,39 +1905,38 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         }
         else{
             std::vector<double> bad_out={-999,-999,-999,-999};
-
             return bad_out;
         }
-        }
+    }
 
 
 
-        std::vector<std::string> SBNcovariance::buildWeightMaps(){
+    std::vector<std::string> SBNcovariance::buildWeightMaps(){
 
-            std::cout<<"SBNcovariance::buildWeightMaps()\t\t||\t\t Starting to Build Weight Maps of TTreeFormulas "<<std::endl;
-            int n_wei = weightmaps_patterns.size();
+        std::cout<<"SBNcovariance::buildWeightMaps()\t\t||\t\t Starting to Build Weight Maps of TTreeFormulas "<<std::endl;
+        int n_wei = weightmaps_patterns.size();
 
-            //this is what to return, this to be made into a TTreeFormula (for every single file!)
-            std::vector<std::string> variation_weight_formulas(variations.size(),"1");
+        //this is what to return, this to be made into a TTreeFormula (for every single file!)
+        std::vector<std::string> variation_weight_formulas(variations.size(),"1");
 
-            for(int i=0; i< n_wei; i++){
+        for(int i=0; i< n_wei; i++){
 
-                for(int v=0; v< variations.size(); v++){
+            for(int v=0; v< variations.size(); v++){
 
-                    // Check to see if pattern is in this variation
-                    if (variations[v].find(weightmaps_patterns[i]) != std::string::npos) {
-                        std::cout << "Variation "<<variations[v]<<" is a match for pattern "<<weightmaps_patterns[i]<<std::endl;
-                        variation_weight_formulas[v] = variation_weight_formulas[v] + "*(" + weightmaps_formulas[i]+")";
-                        std::cout<<" -- weight is thus "<<variation_weight_formulas[v]<<std::endl;
-                        std::cout<<" -- mode is "<<weightmaps_mode[i]<<std::endl;
-                        if(weightmaps_mode[i]=="multisim") m_variation_modes[v] = 0;
-                        if(weightmaps_mode[i]=="minmax") m_variation_modes[v] = 1;
+                // Check to see if pattern is in this variation
+                if (variations[v].find(weightmaps_patterns[i]) != std::string::npos) {
+                    std::cout << "Variation "<<variations[v]<<" is a match for pattern "<<weightmaps_patterns[i]<<std::endl;
+                    variation_weight_formulas[v] = variation_weight_formulas[v] + "*(" + weightmaps_formulas[i]+")";
+                    std::cout<<" -- weight is thus "<<variation_weight_formulas[v]<<std::endl;
+                    std::cout<<" -- mode is "<<weightmaps_mode[i]<<std::endl;
+                    if(weightmaps_mode[i]=="multisim") m_variation_modes[v] = 0;
+                    if(weightmaps_mode[i]=="minmax") m_variation_modes[v] = 1;
 
-                    }
                 }
             }
-
-            return variation_weight_formulas;
         }
+
+        return variation_weight_formulas;
+    }
 
 
