@@ -956,6 +956,28 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         frac_covariance.Write("frac_covariance",TObject::kWriteDelete);
         full_correlation.Write("full_correlation",TObject::kWriteDelete);
 
+
+        SBNchi collapse_chi(xmlname);
+
+        TMatrixT<double > coll_correlation(num_bins_total_compressed,num_bins_total_compressed);
+        TMatrixT<double > coll_frac_covariance(num_bins_total_compressed,num_bins_total_compressed);
+        TMatrixT<double > coll_covariance(num_bins_total_compressed,num_bins_total_compressed);
+
+        collapse_chi.CollapseModes(full_covariance, coll_covariance);
+        spec_central_value.CollapseVector();
+
+        for(int i=0; i<num_bins_total_compressed; i++){
+            for(int j=0; j<num_bins_total_compressed; j++){
+                coll_frac_covariance(i,j) = coll_covariance(i,j)/(spec_central_value.collapsed_vector.at(i)*spec_central_value.collapsed_vector.at(j)) ;
+                coll_correlation(i,j)= coll_covariance(i,j)/(sqrt(coll_covariance(i,i))*sqrt(coll_covariance(j,j)));
+            }
+        }
+        fout->cd();
+        full_covariance.Write("collapsed_covariance",TObject::kWriteDelete);
+        frac_covariance.Write("collapsed_frac_covariance",TObject::kWriteDelete);
+        full_correlation.Write("collapsed_full_correlation",TObject::kWriteDelete);
+
+
         TDirectory *individualDir = fout->GetDirectory("individualDir"); 
         if (!individualDir) { 
             individualDir = fout->mkdir("individualDir");       
@@ -968,6 +990,9 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             vec_frac_covariance.at(m).Write( (variations.at(m)+"_frac_covariance").c_str(), TObject::kWriteDelete);
             vec_full_covariance.at(m).Write( (variations.at(m)+"_full_covariance").c_str(), TObject::kWriteDelete);
         }
+
+
+
 
         std::vector<TH2D> h2_corr;
         std::vector<TH2D> h2_cov;
