@@ -1650,7 +1650,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         return 0;
     }
 
-    int SBNcovariance::DoConstraint(int which_signal, int which_constraint){
+/*int SBNcovariance::DoConstraint(int which_signal, int which_constraint){
         std::cout<<"----------------Starting covariance Constraint --------------------"<<std::endl;
 
         SBNchi collapse_chi(xmlname);
@@ -1760,7 +1760,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
         return 0;
     }
-
+*/
     std::vector<double> SBNcovariance::DoConstraint(int which_signal, int which_constraint, std::string tag){
 
         return this->DoConstraint(which_signal, which_constraint, tag, -1);

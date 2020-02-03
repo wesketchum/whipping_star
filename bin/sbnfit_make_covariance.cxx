@@ -61,6 +61,8 @@ int main(int argc, char* argv[])
         {"printall", 		no_argument, 		0, 'p'},
         {"tag", 		required_argument,	0, 't'},
         {"help", 		no_argument,	0, 'h'},
+	{"constrain",		no_argument,    0, 'c'},
+
         {0,			    no_argument, 		0,  0},
     };
 
@@ -91,6 +93,9 @@ int main(int argc, char* argv[])
             case 't':
                 tag = optarg;
                 break;
+	    case 'c':
+	      constrain_mode=true;
+	      break;
             case '?':
             case 'h':
                 std::cout<<"---------------------------------------------------"<<std::endl;
@@ -142,16 +147,19 @@ int main(int argc, char* argv[])
         example_covar.PrintMatricies(tag);
 
         //Constraint will be patched in shortly: mark
-        /* 
+	std::ofstream ratio_con;
+	std::vector<double> average_ratio;
+	 ratio_con.open("ratio_list_"+tag+".txt",std::ofstream::trunc);
            if(constrain_mode){
-           example_covar.DoConstraint(0,1,tag);
+	                example_covar.DoConstraint(0,1,tag);
            for (int i=0;i<example_covar.variations.size();i++){
-        //average_ratio=example_covar.DoConstraint(0,1,tag,i);
-        //ratio_con<<i<<" " <<average_ratio<<std::endl;
-        //ratio_con<<"var "<<i<<" name "<<example_covar.variations.at(i)<<" events "<<average_ratio[0]<<" uncon "<<average_ratio[1]<<" con "<<average_ratio[2]<<" ratio "<<average_ratio[3]<<std::endl;
+	     
+	     average_ratio=example_covar.DoConstraint(0,1,tag,i);
+	     //ratio_con<<i<<" " <<average_ratio<<std::endl;
+	     ratio_con<<"var "<<i<<" name "<<example_covar.variations.at(i)<<" events "<<average_ratio[0]<<" uncon "<<average_ratio[1]<<" con "<<average_ratio[2]<<" ratio "<<average_ratio[3]<<std::endl;
         }
         }
-        */
+        
         if(print_mode){
             //This takes a good bit longer, and prints every variation to file. 
             example_covar.PrintVariations(tag);
