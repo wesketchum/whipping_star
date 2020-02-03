@@ -310,11 +310,13 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
             //Here we can grab some friend tree information
             TiXmlElement *pFriend;
             pFriend = pMC->FirstChildElement("friend");
-            if(pFriend){
+            while(pFriend){
 
                 if(montecarlo_file_friend_treename_map.count(montecarlo_file.back())>0){
+
                     (montecarlo_file_friend_treename_map[montecarlo_file.back()]).push_back( pFriend->Attribute("treename") );
                     (montecarlo_file_friend_map[montecarlo_file.back()]).push_back(pFriend->Attribute("filename"));
+
                 }else{
                     std::vector<std::string> temp_treename = {pFriend->Attribute("treename")};
                     std::vector<std::string> temp_filename = {pFriend->Attribute("filename")};
@@ -322,6 +324,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
                     montecarlo_file_friend_treename_map[montecarlo_file.back()] = temp_treename;
                     montecarlo_file_friend_map[montecarlo_file.back()] = temp_filename;
                 }
+                pFriend = pFriend->NextSiblingElement("friend");
             }
 
             TiXmlElement *pBranch;

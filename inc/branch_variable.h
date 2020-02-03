@@ -8,7 +8,7 @@
 #include <sstream>
 #include <map>
 #include <time.h>
-
+#include "TTreeFormula.h"
 
 struct BranchVariable{
 	std::string name;
@@ -17,6 +17,7 @@ struct BranchVariable{
 	std::string associated_systematic;
 	bool central_value;
 
+    TTreeFormula * branch_formula;
 
 	bool oscillate;
 	std::string true_param_name;
@@ -39,6 +40,10 @@ struct BranchVariable{
 	virtual void* GetValue(){};
 	virtual void* GetTrueValue(){};
 	virtual void* GetTrueL(){};
+
+    TTreeFormula* GetFormula(){
+            return branch_formula;
+    }
 
 	int SetOscillate(bool inbool){ oscillate = inbool;};
 	bool GetOscillate(){ return oscillate;};
