@@ -232,7 +232,6 @@ int SBNgenerate::WriteCVSpec(std::string tag){
 
     std::cout<<"SBNGenerate::WriteCVSpec()\t\t||\t\tWriting out "<<tag<<std::endl;
     spec_central_value.WriteOut(tag+"_CV");
-
     return 0;
 }
 

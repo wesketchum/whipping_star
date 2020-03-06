@@ -1,0 +1,48 @@
+<?xml version="1.0" ?>
+
+<mode name="nu" />
+
+<detector name="uBooNE" />
+
+<channel name="2g1p" unit="GeV">
+	<bins
+        edges="0 50 100 150 200 250" 
+		/>
+    <subchannel name="BNBoverlay" osc = "0" />
+    <subchannel name="BNBext" osc = "0"  />
+    <subchannel name="ccpi0" osc = "0" />
+    <subchannel name="dirt" osc = "0" />
+    <subchannel name="ncpi0overlay" osc = "0" />
+</channel>
+
+<channel name="2g0p" unit="GeV">
+	<bins
+        edges="0 50 100 150 200 250" 
+		/>
+    <subchannel name="BNBoverlay" osc = "0" />
+    <subchannel name="BNBext" osc = "0"  />
+    <subchannel name="ccpi0" osc = "0" />
+    <subchannel name="dirt" osc = "0" />
+    <subchannel name="ncpi0overlay" osc = "0" />
+</channel>
+
+
+
+<plotpot value="6.6e20"/>
+
+<MultisimFile treename="singlephoton/vertex_tree" filename="/uboone/app/users/amogan/hive_v2.5_xgboost/hellstroms_hive/hive/build/bin/2g1p_v33.0_run1/sbnfit_files/sbnfit_pigLEE_Run1_C1_stage_2_Data5e19.root" scale = "2.0" maxevents="5000000" pot="1.568e+20"> 
+     <branch
+         name="mctruth_lepton_E"
+         type="double"
+         associated_subchannel="nu_uBooNE_2g1p_BNBoverlay"
+         />
+</MultisimFile>
+
+
+<MultisimFile treename="singlephoton/vertex_tree" filename="/uboone/app/users/amogan/hive_v2.5_xgboost/hellstroms_hive/hive/build/bin/2g0p_v33.0_run1/sbnfit_files/sbnfit_2g0p_Run1_C1_stage_2_Data5e19.root" scale = "2.0" maxevents="5000000" pot="4.066e+19"> 
+     <branch
+         name="mctruth_lepton_E"
+         type="double"
+         associated_subchannel="nu_uBooNE_2g0p_BNBoverlay"
+         />
+</MultisimFile>
