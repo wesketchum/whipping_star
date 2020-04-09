@@ -47,6 +47,7 @@ int main(int argc, char* argv[])
     opterr=1;
     int index;
     bool sample_from_covariance = true;
+    bool stats_only = false;
     int num_MC_events = 100000;
     bool use_cnp = false;
     int which_mode = 1;
@@ -115,7 +116,7 @@ int main(int argc, char* argv[])
                 std::cout<<"\t-t\t--tag\t\t\tA unique tag to identify the outputs [Default to TEST]"<<std::endl;
                 std::cout<<"\t-s\t--signal\t\tInput signal SBNspec.root file"<<std::endl;
                 std::cout<<"\t-b\t--background\t\tInput background only SBNspec.root file"<<std::endl;
-                std::cout<<"\t-c\t--covariance\t\tInput Fractional Covariance Matrix SBNcovar.root file"<<std::endl;
+                std::cout<<"\t-c\t--covariance\t\tInput Fractional Covariance Matrix SBNcovar.root file. If not passed, defaults to stats only!"<<std::endl;
                 std::cout<<"--- Optional arguments: ---"<<std::endl;
                 std::cout<<"\t-n\t--number\t\tNumber of MC events for frequentist studies (default 100k)"<<std::endl;
                 std::cout<<"\t-m\t--mode\t\tMode for test statistics 0: absolute chi^2, 1: delta chi^2 (default Delta Chi)"<<std::endl;
@@ -135,10 +136,10 @@ int main(int argc, char* argv[])
         std::cout<<"Error! Run `--help` or `-h`  for more details."<<std::endl;
         return 1;
     }
-    if(covariance_file =="EMPTY" && sample_from_covariance){
-        std::cout<<"Error! You must enter a covariance root file with the  `--covariance  XX.SBNcovar.root` or `-c XX.SBNcovar.root`. "<<std::endl;
-        std::cout<<"Error! Run `--help` or `-h`  for more details."<<std::endl;
-        return 1;
+    if(covariance_file =="EMPTY"){
+        std::cout<<"Note! No covariance root file with the  `--covariance  XX.SBNcovar.root` or `-c XX.SBNcovar.root`. was passed, running in stats only mode. "<<std::endl;
+        stats_only = true;
+        sample_from_covariance = false;
     }
 
     std::cout<<"Loading signal file : "<<signal_file<<" with xml "<<xml<<std::endl;
@@ -149,12 +150,17 @@ int main(int argc, char* argv[])
 
     std::cout<<"Loading fractional covariance matrix from "<<covariance_file<<std::endl;
 
-    TFile * fsys = new TFile(covariance_file.c_str(),"read");
-    TMatrixD * cov = (TMatrixD*)fsys->Get("frac_covariance");
+    TFile * fsys;
+    TMatrixD * cov;
+    
+    if(!stats_only){
+        fsys = new TFile(covariance_file.c_str(),"read");
+        cov = (TMatrixD*)fsys->Get("frac_covariance");
+    }
 
-    if(sample_from_covariance){
+    if(!stats_only){
         SBNcls cls_factory(&bkg, &sig,*cov);
-        cls_factory.SetSampleCovariance();
+        if(sample_from_covariance)cls_factory.SetSampleCovariance();
         cls_factory.setMode(which_mode);
         cls_factory.CalcCLS(num_MC_events, tag);
     }else{

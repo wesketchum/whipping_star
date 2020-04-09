@@ -224,7 +224,7 @@ int main(int argc, char* argv[])
         std::cout<<"Starting to peform a globalScan analysis"<<std::endl;
         std::vector<std::vector<double>> vec_grid = mygrid.GetGrid();
 
-        TFile *fin = new TFile("SBNfeld_output_TEST.root","read");
+        TFile *fin = new TFile(("SBNfeld_output_"+tag+".root").c_str(),"read");
 
         int plotting_true_gridpoint = 5;
         std::vector<double> plotting_pvals = {0.6827, 0.90, 0.9545, 0.9973};

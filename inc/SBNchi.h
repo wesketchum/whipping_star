@@ -31,6 +31,25 @@
 
 namespace sbn{
 
+struct CLSresult{
+
+    public:
+    std::string m_tag;
+    TH1D m_pdf;
+    float m_min_value;
+    float m_max_value;
+    std::vector<float> m_values;
+    std::vector<double> m_quantiles; 
+    std::vector<double> m_nlower; 
+    std::vector<float> m_pvalues; 
+    
+    CLSresult(){
+        m_tag = "Default";
+        m_min_value = 9999999;
+        m_max_value = -999999;
+    }
+};
+
 
 class SBNchi : public SBNconfig{
 
@@ -62,6 +81,7 @@ class SBNchi : public SBNconfig{
 
 
 	TMatrixT<double> matrix_systematics;
+	TMatrixT<double> m_matrix_systematics_collapsed;
 	TMatrixT<double> matrix_fractional_covariance;
 	TMatrixT<double> matrix_collapsed;
 
@@ -114,6 +134,8 @@ class SBNchi : public SBNconfig{
     
 
 
+
+
 	TMatrixT<double> * GetCollapsedMatrix();
 	int FillCollapsedCovarianceMatrix(TMatrixT<double>*);
 	int FillCollapsedCorrelationMatrix(TMatrixT<double>*);
@@ -136,6 +158,9 @@ class SBNchi : public SBNconfig{
 	double CalcChi(double ** inv, double *, double *);
 	float CalcChi(float ** inv, float *, float *);
 
+    float PoissonLogLiklihood(float * h0_corein, float *collapsed);
+    float CalcChi_CNP(float * pred, float* data);
+
 	std::vector<std::vector<double >> TMatrixDToVector(TMatrixT <double> McI);
 	
 
@@ -154,6 +179,8 @@ class SBNchi : public SBNconfig{
 	TH1D SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<double>*);
 
 
+
+    std::vector<CLSresult> Mike_NP(SBNspec *specin, SBNchi &chi_h0, SBNchi & chi_h1, int num_MC, int which_sample,int id);
     TH1D SamplePoisson_NP(SBNspec *specin, SBNchi &chi_h0, SBNchi & chi_h1, int num_MC, std::vector<double> *chival,int which_sample);
     TH1D SamplePoisson_NP(SBNspec *specin, SBNchi &chi_h0, SBNchi & chi_h1, int num_MC, double,int which_sample);
 

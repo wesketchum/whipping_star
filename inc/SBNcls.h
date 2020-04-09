@@ -81,7 +81,9 @@ class SBNcls{
     int DrawSampleCovariance(std::string);
 
     int setMode(int);
-    int makePlots(TH1D& h0, TH1D& h1, std::string s, std::vector<double> & pval, int which_mode =0);
+    int makePlots(CLSresult &h0_result, CLSresult & h1_result, std::string tag,  int which_mode=0);
+    int runConstraintTest();
+
 
 };
 
