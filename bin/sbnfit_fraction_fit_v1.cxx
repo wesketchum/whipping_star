@@ -6,6 +6,7 @@
 #include <vector>
 #include <unistd.h>
 #include <getopt.h>
+#include <float.h>
 #include <cstring>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_interp2d.h>
@@ -15,8 +16,7 @@
 #include "TTree.h"
 #include "TH1F.h"
 #include "TH2D.h"
-#include "THStack.h"
-#include "TLegend.h"
+#include "TH3.h"
 #include "TMultiGraph.h"
 #include "TString.h"
 #include "TNtuple.h"
@@ -92,7 +92,7 @@ int main(int argc, char* argv[])
     double random_number_seed = -1;
 
     bool input_data = false;
-    std::string data_filename;
+    std::string data_filename;  //root file containing data/mc spectra
     std::string mc_filename;
     std::string covmatrix_file;  //root file containing covariance matrix
 
@@ -165,9 +165,9 @@ int main(int argc, char* argv[])
     NGrid mygrid;
 
     //now only available for 2 subchannels only
-    mygrid.AddDimension("NCPi0Coh", 0., 5., 0.1); //0.1full
-    //mygrid.AddFixedDimension("NCPi0Coh", 1.0);   //fixed
-    mygrid.AddDimension("NCPi0NotCoh", 0.5, 1.25, 0.01);   //0.1 FULL
+    mygrid.AddDimension("NCPi0Coh", 0, 5, 0.1);   //0.1 FULL
+    mygrid.AddDimension("NCPi0NotCoh", 0., 3, 0.1);   //0.1 FULL
+    mygrid.AddDimension("NCDeltaRadOverlaySM", 0., 4, 0.2);   //0.1 FULL
 
 
     std::cout << "Fraction Fit|| "<< "\tStart initializing MC and data spectrum" << std::endl;
@@ -223,15 +223,18 @@ int main(int argc, char* argv[])
 	return 1;
    }
 
+
    //collect the name of dimensions: subchannels you want to vary; and the range
    std::vector<std::string> dimension_name;
    const double range_x_low = mygrid.f_dimensions.at(0).f_min;
-   //const double range_x_up = mygrid.f_dimensions.at(0).f_max+1;
    const double range_x_up = mygrid.f_dimensions.at(0).f_max;
    const double range_y_low = mygrid.f_dimensions.at(1).f_min;
    const double range_y_up = mygrid.f_dimensions.at(1).f_max;
+   const double range_z_low = mygrid.f_dimensions.at(2).f_min;
+   const double range_z_up = mygrid.f_dimensions.at(2).f_max;
    int nbin_x = mygrid.f_dimensions.at(0).f_N;  //number of point in x axis
    int nbin_y = mygrid.f_dimensions.at(1).f_N;  
+   int nbin_z = mygrid.f_dimensions.at(2).f_N;  
  
    dimension_name.clear(); 
    for(int i=0; i< mygrid.f_num_dimensions ; i++){
@@ -242,26 +245,15 @@ int main(int argc, char* argv[])
 
    //*********************loop over grid points, calc chi square********************************
    TFile* f_output = new TFile("chi_contour.root", "recreate");
-   TH2D* h_chi2_raw = new TH2D("h_chi2_raw", Form("h_chi2_raw; %s;%s", dimension_name[0].c_str(), dimension_name[1].c_str()), nbin_x, range_x_low,range_x_up, nbin_y, range_y_low, range_y_up);
-   TH2D* h_chi2_delta = new TH2D("h_chi2_delta", Form("h_chi2_delta; %s;%s",dimension_name[0].c_str(), dimension_name[1].c_str()), nbin_x, range_x_low,range_x_up, nbin_y, range_y_low, range_y_up);
-   TH2D* h_chi2_inter=NULL;  
-   //CNP chi
-   TH2D* h_CNPchi2_raw = new TH2D("h_CNPchi2_raw", Form("h_CNPchi2_raw;%s;%s",dimension_name[0].c_str(), dimension_name[1].c_str()), nbin_x, range_x_low,range_x_up, nbin_y, range_y_low, range_y_up);
-   TH2D* h_CNPchi2_delta = new TH2D("h_CNPchi2_delta", Form("h_CNPchi2_delta;%s;%s",dimension_name[0].c_str(), dimension_name[1].c_str()), nbin_x, range_x_low,range_x_up, nbin_y, range_y_low, range_y_up);
-   //difference between regular chi and CNP chi
-   TH2D* h_chi2_diff;
+   TH3D* h_chi2_raw = new TH3D("h_chi2_raw", Form("h_chi2_raw;%s;%s;%s", dimension_name[0].c_str(), dimension_name[1].c_str(), dimension_name[2].c_str()), nbin_x, range_x_low,range_x_up, nbin_y, range_y_low, range_y_up, nbin_z, range_z_low, range_z_up);
+   TH3D* h_chi2_delta = new TH3D("h_chi2_delta", Form("h_chi2_raw;%s;%s;%s", dimension_name[0].c_str(), dimension_name[1].c_str(), dimension_name[2].c_str()), nbin_x, range_x_low,range_x_up, nbin_y, range_y_low, range_y_up, nbin_z, range_z_low, range_z_up);
+   TH3D* h_chi2_inter=NULL;  
+
 
    std::cout << "Fraction Fit||"<<  "\tStart GLOBAL SCAN" <<std::endl;
    std::vector<double> chi;  //vector to save chi square values.
-   std::vector<double> chi_CNP;  //vector to save CNP chi square values.
    chi.reserve(grid.size());  //reserve the memory
-   chi_CNP.reserve(grid.size()); 
 
-
-   //covariance matrix
-   TMatrixT<double> collapsed_temp(mc_spec.num_bins_total_compressed, mc_spec.num_bins_total_compressed);
-   TMatrixT<double> invert_collapsed_temp(mc_spec.num_bins_total_compressed, mc_spec.num_bins_total_compressed);
- 
    for(int i =0; i< grid.size() ;i++){
 
 	std::cout << "on Point " << i << std::endl;
@@ -283,28 +275,19 @@ int main(int argc, char* argv[])
 	}
 
 	spec_temp.CollapseVector();
-	//std::cout << "Point " << i << " FULL VECTOR: ";
-	//for(int j =0; j<spec_temp.full_vector.size(); j++) std::cout << " " << spec_temp.full_vector.at(j) ;
-	//std::cout << std::endl;	
 
-
-	//regular Chi calculation	
-	//setup SBNchi with spectrum expected at this grid point
-	SBNchi chi_temp(data_spec, frac_syst_matrix);
+	//initialize a SBNchi
+	SBNchi chi_temp(xml);
+	//inverted collapsed covariance matrix	
+	TMatrixT<double> collapsed_temp(spec_temp.num_bins_total_compressed, spec_temp.num_bins_total_compressed);
+	TMatrixT<double> invert_collapsed_temp(spec_temp.num_bins_total_compressed, spec_temp.num_bins_total_compressed);
+	collapsed_temp = chi_temp.CalcCovarianceMatrixCNP(frac_syst_matrix, spec_temp.full_vector, spec_temp.collapsed_vector, data_spec.collapsed_vector);
+	invert_collapsed_temp = chi_temp.InvertMatrix(collapsed_temp);
 	//calculate chi2
-	chi.push_back(chi_temp.CalcChi(spec_temp.collapsed_vector));
-	h_chi2_raw->Fill(point[0], point[1], chi.back());
-
-
-	//CNP Chi calculation
-	SBNchi chi_CNP_temp(xml);
-	//calculate CNP full covariance matrix
-        collapsed_temp = chi_CNP_temp.CalcCovarianceMatrixCNP(frac_syst_matrix, spec_temp.full_vector, spec_temp.collapsed_vector, data_spec.collapsed_vector);
-        invert_collapsed_temp = chi_CNP_temp.InvertMatrix(collapsed_temp);  //inverted covariance matrix
-	//calculate CNP chi value
-	double chi_value = chi_CNP_temp.CalcChi(invert_collapsed_temp, spec_temp.collapsed_vector, data_spec.collapsed_vector);
-        chi_CNP.push_back(chi_value);
-	h_CNPchi2_raw->Fill(point[0], point[1], chi_CNP.back());
+	double chi_value = chi_temp.CalcChi(invert_collapsed_temp, spec_temp.collapsed_vector, data_spec.collapsed_vector);
+	chi.push_back(chi_value);
+	//chi.push_back(chi_temp.CalcChi(data_spec.collapsed_vector));
+	h_chi2_raw->Fill(point[0], point[1], point[2],chi.back());
 
 	//print out chi square value
 	//std::cout << "CHI2: " << i << " " << chi.back();
@@ -314,90 +297,99 @@ int main(int argc, char* argv[])
    }
    
    f_output->cd();
-   h_chi2_raw->Write();  
-   h_CNPchi2_raw->Write(); 
+   h_chi2_raw->Write();   
 
    double chi_min=DBL_MAX; // minimum of chi2.
+   int chi_min_index = -99;   // index of the min chi value
+   chi_min_index = std::min_element(chi.begin(), chi.end()) - chi.begin();
    chi_min = *std::min_element(chi.begin(), chi.end());
-   int chi_CNP_min_index = -99;   // index of the min CNP chi value
-   double chi_CNP_min = DBL_MAX;
-   chi_CNP_min = *std::min_element(chi_CNP.begin(), chi_CNP.end());  //minimum of CNP chi
-   chi_CNP_min_index = std::min_element(chi_CNP.begin(), chi_CNP.end()) - chi_CNP.begin();
 
-   //compare spectrum between data and the best fit point of CNP chi
+   //compare spectrum between data and the best fit point
    SBNspec spec_temp(mc_filename, xml, false);
-   std::vector<double> best_point = grid[chi_CNP_min_index];
+   std::vector<double> best_point = grid[chi_min_index];
    for(int i=0; i< best_point.size(); i++ ){
                 spec_temp.Scale(dimension_name[i], best_point[i]);
    }
    tag = "best_fit";
    spec_temp.CompareSBNspecs(&data_spec, tag);
-   std::cout << "Fraction Fit||" <<  "\tBest Fit Point: (" << best_point[0] << ", " << best_point[1] << ")"<<std::endl;
+   std::cout << "Fraction Fit||" <<  "\tBest Fit Point: (" << best_point[0] << ", " << best_point[1] << ", " << best_point[2] << ")"<<std::endl;
 
 
-   std::cout << "Print out delta CNP chi square for grid points now" << std::endl;
-   //TH1D* h_cnp = new TH1D("h_cnp", "CNP chi; NCpi0 non-coherent; CNP chi", 300, 0, 3);
-   //TH1D* h_chi = new TH1D("h_chi", "regular chi", 300, 0, 3);
+   std::cout << "Fraction Fit||\tPrint out delta chi square for grid points now" << std::endl;
    //delta chi2;
    for(int i=0; i< grid.size(); i++){
-	 std::vector<double> point = grid[i];
-	 
 	 chi[i] -= chi_min;
-	 h_chi2_delta->Fill(point[0], point[1], chi[i]);	
-         //h_chi->Fill(point[1], chi[i]); 
-
-	 chi_CNP[i] -= chi_CNP_min;
-	 h_CNPchi2_delta->Fill(point[0], point[1], chi_CNP[i]);
-	 //h_cnp->Fill(point[1], chi_CNP[i]);
-	 std::cout << "Delta CNP Chi: " << i << " " << chi_CNP[i];
-	 for(int j =0;j <point.size(); j++) std::cout << " " << point[j];
-	 std::cout << std::endl;
+	 std::vector<double> point = grid[i];
+	 h_chi2_delta->Fill(point[0], point[1], point[2], chi[i]);	 
+	 //std::cout << "DeltaChi: " << i << " " << chi[i];
+	 //for(int j =0;j <point.size(); j++) std::cout << " " << point[j];
+	 //std::cout << std::endl;
    }
    h_chi2_delta->SetMinimum(-1);  // to show the zero z values
-
-   h_chi2_diff = (TH2D*)h_chi2_delta->Clone("h_chi2_diff");
-   h_chi2_diff->Add(h_CNPchi2_delta, -1.0);
-   h_chi2_diff->SetName("h_chi2_diff");  
- 
    f_output->cd();
-   //h_cnp->Write();
-   //h_chi->Write();
    h_chi2_delta->Write();
-   h_CNPchi2_delta->Write();
-   h_chi2_diff->Write();
-   std::cout << "Fraction Fit||" <<  "\t End of Global Scan--CNP Chi2 calculation" << std::endl;
+   std::cout << "Fraction Fit||" <<  "\t End of Global Scan--Chi2 calculation" << std::endl;
 
-  /*
-   //do projection to compare chi and CNP chi
-   TCanvas* c_compare = new TCanvas("c_compare", "c_compare");
-   h_chi->SetLineColor(kBlue);
-   h_cnp->SetLineColor(kRed);
-   THStack* h_stack=new THStack("h_stack", "delta chi");
-   TLegend* leg = new TLegend(0.1,0.7,0.48,0.9);
-   h_stack->Add(h_chi, "HIST");
-   h_stack->Add(h_cnp, "HIST");
-   leg->AddEntry(h_chi, "regular chi", "l");
-   leg->AddEntry(h_cnp, "CNP chi", "l");
-   c_compare->cd();
-   h_stack->Draw("nostack");
-   leg->Draw();
-   h_stack->GetXaxis()->SetTitle("NC pi0 non-coherent");
-   h_stack->GetYaxis()->SetTitle("delta chi");
-   c_compare->Update();
-   c_compare->Write();
-   */
+   std::cout << "Fraction Fit||" <<  "\t Start projecting on 2D plots" << std::endl;
+
+   //histograms saving delta chi values with one parameter being marginalized
+   TH2D* h_mchi2_xy = new TH2D("h_mchi2_xy", Form("h_mchi2_xy; %s;%s",dimension_name[0].c_str(), dimension_name[1].c_str()),nbin_x, range_x_low,range_x_up, nbin_y, range_y_low, range_y_up);
+   TH2D* h_mchi2_xz = new TH2D("h_mchi2_xz", Form("h_mchi2_xz; %s;%s",dimension_name[0].c_str(), dimension_name[2].c_str()),nbin_x, range_x_low,range_x_up, nbin_z, range_z_low, range_z_up);
+   TH2D* h_mchi2_yz = new TH2D("h_mchi2_yz", Form("h_mchi2_yz; %s;%s",dimension_name[1].c_str(), dimension_name[2].c_str()),nbin_y, range_y_low,range_y_up, nbin_z, range_z_low, range_z_up);
+
+   //histograms saving delta chi values with respect to global minimum
+   TH2D* h_gchi2_xy = new TH2D("h_gchi2_xy", Form("h_gchi2_xy; %s;%s",dimension_name[0].c_str(), dimension_name[1].c_str()),nbin_x, range_x_low,range_x_up, nbin_y, range_y_low, range_y_up);
+   TH2D* h_gchi2_xz = new TH2D("h_gchi2_xz", Form("h_gchi2_xz; %s;%s",dimension_name[0].c_str(), dimension_name[2].c_str()),nbin_x, range_x_low,range_x_up, nbin_z, range_z_low, range_z_up);
+   TH2D* h_gchi2_yz = new TH2D("h_gchi2_yz", Form("h_gchi2_yz; %s;%s",dimension_name[1].c_str(), dimension_name[2].c_str()),nbin_y, range_y_low,range_y_up, nbin_z, range_z_low, range_z_up);
 
 
-   //print out info
-  /* for(int i =0; i<mygrid.f_num_dimensions; i++){
-	std::vector<double> tem = mygrid.f_dimensions.at(i).f_points;
+   double max_bin=*std::max_element(chi.begin(), chi.end());;
+   //set the bin content to DBL_MAX
+   for(int ix=1;ix <= nbin_x; ix++){
+	for(int iy=1; iy <= nbin_y; iy++) h_mchi2_xy->SetBinContent(ix, iy, max_bin);
+	for(int iz=1; iz <= nbin_z; iz++) h_mchi2_xz->SetBinContent(ix, iz, max_bin);
+   }
+   for(int iy=1; iy <= nbin_y; iy++){
+	for(int iz=1; iz <= nbin_z; iz++) h_mchi2_yz->SetBinContent(iy, iz, max_bin);
+   }
 
-	std::cout << "AXIS "<< i << ":";
-	for(int j=0; j<tem.size(); j++) std::cout << " " << tem[j];
-	std::cout<<std::endl;
+
+   
+   //marginalize one parameter
+   for(int ix=0; ix < nbin_x; ix++){
+	for(int iy=0; iy < nbin_y; iy++){
+	   for(int iz=0 ; iz< nbin_z; iz++){
+		int ip = ix*nbin_y*nbin_z + iy*nbin_z + iz; // index of grid point
+		std::vector<double> point = grid[ip]; 
+
+
+		//marginalized minimum
+		//conditional operator, saver the smaller chi.
+		if(chi[ip]< h_mchi2_xy->GetBinContent(ix+1, iy+1)){
+			 h_mchi2_xy->SetBinContent(ix+1, iy+1, chi[ip]);
+			std::cout << "chi2 value: " << chi[ip] << std::endl;
+		}
+		if(chi[ip]< h_mchi2_xz->GetBinContent(ix+1, iz+1)) h_mchi2_xz->SetBinContent(ix+1, iz+1, chi[ip]);
+		if(chi[ip]< h_mchi2_yz->GetBinContent(iy+1, iz+1)) h_mchi2_yz->SetBinContent(iy+1, iz+1, chi[ip]);
+
+
+		//global minimum
+		if(point[2] == best_point[2]) h_gchi2_xy->Fill(point[0], point[1], chi[ip]);
+		if(point[1] == best_point[1]) h_gchi2_xz->Fill(point[0], point[2], chi[ip]);
+		if(point[0] == best_point[0]) h_gchi2_yz->Fill(point[1], point[2], chi[ip]);
+	   }
+	}
    } 
 
-   std::cout << "DeltaChi:" <<std::endl;
+  f_output->cd();
+  h_gchi2_xy->Write();
+  h_gchi2_yz->Write();
+  h_gchi2_xz->Write();
+  h_mchi2_xy->Write();
+  h_mchi2_yz->Write();
+  h_mchi2_xz->Write();
+
+   /*std::cout << "DeltaChi:" <<std::endl;
    for(int i =0; i< chi.size(); i++) std::cout << " " << chi[i];
    std::cout<< std::endl;
    */
@@ -405,7 +397,7 @@ int main(int argc, char* argv[])
 
    //****************** START INTERPOLATION*********************************
 
-   if(interpolation_number != -99){
+/*   if(interpolation_number != -99){
 
 	//the upper range of x, y axis for interpolation
 	double range_x_inter = mygrid.f_dimensions.at(0).f_max - mygrid.f_dimensions.at(0).f_step;
@@ -419,7 +411,7 @@ int main(int argc, char* argv[])
 	//h_chi2_inter->SetAxisRange(range_y_low, range_y_inter, "Y");
 
 
-	std::cout << "Fraction Fit||" << "\tStart interpolation of CNP chi2 with number "<< interpolation_number <<std::endl;
+	std::cout << "Fraction Fit||" << "\tStart interpolation with number "<< interpolation_number <<std::endl;
    	const gsl_interp2d_type *T = gsl_interp2d_bicubic;
 	std::vector<double> grid_x;   //to save grid point values.
 	std::vector<double> grid_y;
@@ -436,12 +428,11 @@ int main(int argc, char* argv[])
   	gsl_interp_accel *xacc = gsl_interp_accel_alloc();
   	gsl_interp_accel *yacc = gsl_interp_accel_alloc();
 
-	/* initialize interpolation */
-	//gsl_spline2d_init(spline,  &grid_y[0], &grid_x[0], &chi[0] , nbin_y, nbin_x);
-	gsl_spline2d_init(spline,  &grid_y[0], &grid_x[0], &chi_CNP[0] , nbin_y, nbin_x);
+	// initialize interpolation 
+	gsl_spline2d_init(spline,  &grid_y[0], &grid_x[0], &chi[0] , nbin_y, nbin_x);
 
 
-	/* interpolate N values in x and y and print out grid for plotting */
+	// interpolate N values in x and y and print out grid for plotting 
 	for (int i = 0; i < interpolation_number; i++){
 
 	      double xi;
@@ -472,11 +463,9 @@ int main(int argc, char* argv[])
 	  gsl_spline2d_free(spline);
 	  gsl_interp_accel_free(xacc);
 	  gsl_interp_accel_free(yacc);
-	  
-         std::cout << "Fraction Fit||" << "\tFinish interpolation of CNP chi2 with number "<< interpolation_number <<std::endl;
   }
   else{ 
-	h_chi2_inter = (TH2D*)h_CNPchi2_delta->Clone();
+	h_chi2_inter = (TH3D*)h_chi2_delta->Clone();
   }
 
    //*****************END OF INTERPOLATION*************************************************
@@ -561,10 +550,9 @@ int main(int argc, char* argv[])
 	std::cout << "range for x :" << x_min << "~" << x_max << std::endl;
 	std::cout << "range for y : " << y_min << "~" << y_max << std::endl;
    } // contour loop
-
+*/
     f_output->Close(); 
 
-    std::cout << "Fraction Fit||" << "\tFinish drawing contours"<<std::endl;
     std::cout << "Fraction Fit||" << "\tFinished" <<std::endl;
     std::cout << "Total wall time: " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
     return 0;

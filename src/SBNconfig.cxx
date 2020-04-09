@@ -610,7 +610,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
     }
 
 
-
+    if(is_verbose) std::cout<<otag<<"There are "<< fullnames.size() << " used subchannel histograms" << std::endl;
 
 
     //For here on down everything is derivable, above is just until I actually Get config working.

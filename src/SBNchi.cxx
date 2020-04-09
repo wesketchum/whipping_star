@@ -434,7 +434,17 @@ double SBNchi::CalcChi(double **invert_matrix, double* core, double *sig){
     return tchi;
 }
 
+double SBNchi::CalcChi(TMatrixT<double> M_invert, std::vector<double>& spec, std::vector<double>& data){
 
+	double tchi = 0;
+	for(int i=0; i< num_bins_total_compressed; i++){
+		for(int j=0; j< num_bins_total_compressed ;j++){
+			tchi += M_invert(i,j)*(spec[i]- data[i])*(spec[j]-data[j]);
+		}
+	}
+	
+	return tchi;
+}
 
 
 //same as above but passing in a vector instead of whole SBNspec
@@ -626,11 +636,48 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<do
 
                 Mout(i,j) = (*M)(i,j)*spec[i]*spec[j];
             }
-            if(i==j) Mout(i,i) += spec[i];
+            if(i==j) Mout(i,i) += spec[i];   //stats part
         }
     }
     return Mout;
 }
+
+
+//here spec is full vector of MC, spec_collapse is collapsed vector of MC, datavec is collapsed vector of data
+TMatrixT<double> SBNchi::CalcCovarianceMatrixCNP(TMatrixT<double> M, std::vector<double>& spec, std::vector<double>& spec_collapse, const std::vector<double>& datavec ){
+
+    if(M.GetNcols() != spec.size()){
+	 std::cout << "ERROR: your input vector does not have the right dimenstion  " << std::endl; 
+	 std::cout << "Fractional Matrix size :"<< M.GetNcols() << " || Input Full Vector size "<< spec.size() << std::endl;  
+	 exit(EXIT_FAILURE);
+    }
+
+    TMatrixT<double> M_temp(M.GetNcols(), M.GetNcols() );
+    TMatrixT<double> Mout(spec_collapse.size(), spec_collapse.size()); //collapsed covariance matrix
+  
+    //systematic apart 
+    for(int i =0; i<M.GetNcols(); i++)
+    {
+        for(int j =0; j<M.GetNrows(); j++)
+        {
+            if(  std::isnan( M(i,j) )){
+                M_temp(i,j) = 0.0;
+            }else{
+
+                M_temp(i,j) = M(i,j)*spec[i]*spec[j];
+            }
+        }
+    }
+  
+    CollapseModes(M_temp, Mout);
+    //add stats part	
+    for(int i=0; i< spec_collapse.size(); i++){
+	Mout(i,i) +=   ( datavec[i] >0.001 ? 3.0/(1.0/datavec[i] +  2.0/spec_collapse[i])  : spec_collapse[i]/2.0 ); 
+   }
+    return Mout;
+}
+
+
 TMatrixT<double> SBNchi::CalcCovarianceMatrixCNP(TMatrixT<double>*M, std::vector<double>& spec, const std::vector<float>& datavec ){
 
     TMatrixT<double> Mout(M->GetNcols(), M->GetNcols() );

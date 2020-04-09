@@ -45,7 +45,9 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
 
     int num_files = montecarlo_file.size();
     montecarlo_additional_weight.resize(num_files,1.0);
-   
+    montecarlo_additional_weight_formulas.resize(num_files);   
+
+
     for(auto &fn: montecarlo_file){
         files.push_back(new TFile(fn.c_str()));
         if(files.back()->IsZombie() || !files.back()->IsOpen()){
@@ -62,18 +64,29 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
     }
 
     for(int i=0; i<montecarlo_file.size(); i++){
+	const auto& fn = montecarlo_file.at(i);
+	auto montecarlo_file_friend_treename_iter = montecarlo_file_friend_treename_map.find(fn);
+	if (montecarlo_file_friend_treename_iter != montecarlo_file_friend_treename_map.end()) {
+            std::cout<<" Detected friend trees "<<std::endl;
 
-        if( montecarlo_file_friend_treename_map.count(montecarlo_file.at(i))>0){
-            for(int k=0; k< montecarlo_file_friend_treename_map.at(montecarlo_file.at(i)).size(); k++){
+            auto montecarlo_file_friend_iter = montecarlo_file_friend_map.find(fn);
+            if (montecarlo_file_friend_iter == montecarlo_file_friend_map.end()) {
+                std::stringstream ss;
+                ss << "Looked for filename=" << fn << " in fnmontecarlo_file_friend_iter, but could not be found... bad config?" << std::endl;
+                throw std::runtime_error(ss.str());
+            }
 
-                std::string treefriendname = (montecarlo_file_friend_treename_map.at(montecarlo_file.at(i))).at(k);
-                std::string treefriendfile = (montecarlo_file_friend_map.at(montecarlo_file.at(i))).at(k);
+            for(int k=0; k < (*montecarlo_file_friend_iter).second.size(); k++){
 
-                std::cout<<"SBNmontecarlo::SBNmontecarlo\t|| Adding a friend tree  "<< treefriendfile<<" to file "<<montecarlo_file.at(i)<<std::endl;
+                std::string treefriendname = (*montecarlo_file_friend_treename_iter).second.at(k);
+                std::string treefriendfile = (*montecarlo_file_friend_iter).second.at(k);
 
-                trees.at(i)->AddFriend( treefriendname.c_str()   ,  treefriendfile.c_str()   );
+                std::cout <<" Adding a friend tree:  " <<treefriendname<<" from file: "<< treefriendfile <<std::endl;
+
+                trees[i]->AddFriend(treefriendname.c_str(),treefriendfile.c_str());
             }
         }
+
     }
 
     std::vector<int> nentries;
@@ -96,23 +109,28 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
         std::cout << " Has POT " <<montecarlo_pot[i] <<" and "<<nentries[i] <<" entries "<<std::endl;
 
 
-        if(m_use_eventweight)  trees[i]->SetBranchAddress("eventweights", &(f_weights[i]) );
+        //if(m_use_eventweight)  trees[i]->SetBranchAddress("eventweights", &(f_weights[i]) );
+	if(m_use_eventweight)  trees.at(i)->SetBranchAddress(montecarlo_eventweight_branch_names[i].c_str(), &(f_weights[i]));
         //delete f_weights->at(i);	f_weights->at(i) = 0;
         
         for(int k=0; k<branch_variables.at(i).size(); k++){
-            std::cout<<"Setting Branch: "<<branch_variables.at(i).at(k)->name<<std::endl;
-            trees.at(i)->SetBranchAddress( branch_variables.at(i).at(k)->name.c_str(), branch_variables.at(i).at(k)->GetValue() );
+	    const auto branch_variable = branch_variables.at(i).at(k);
+            std::cout<<"Setting Branch: "<<branch_variable->name<<std::endl;
+            //trees.at(i)->SetBranchAddress( branch_variables.at(i).at(k)->name.c_str(), branch_variables.at(i).at(k)->GetValue() );
+	    branch_variable->branch_formula =  new TTreeFormula(("branch_form"+std::to_string(i)).c_str(), branch_variable->name.c_str(), trees[i]);
 
-            if(branch_variables.at(i).at(k)->GetOscillate()){
+            if(branch_variable->GetOscillate()){
                 std::cout<<"Setting true branch variables"<<std::endl;
-                trees.at(i)->SetBranchAddress( branch_variables.at(i).at(k)->true_param_name.c_str(), branch_variables.at(i).at(k)->GetTrueValue() );
-                trees.at(i)->SetBranchAddress( branch_variables.at(i).at(k)->true_L_name.c_str(), branch_variables.at(i).at(k)->GetTrueL() );
+                trees.at(i)->SetBranchAddress( branch_variable->true_param_name.c_str(), branch_variable->GetTrueValue() );
+                trees.at(i)->SetBranchAddress( branch_variable->true_L_name.c_str(), branch_variable->GetTrueL() );
             }
         }
 
         if(montecarlo_additional_weight_bool[i]){
             //we have an additional weight we want to apply at run time, otherwise its just set at 1. 
-            trees[i]->SetBranchAddress(montecarlo_additional_weight_names[i].c_str(), &montecarlo_additional_weight[i]); 
+	    std::cout<<"Setting Additional weight of : "<< montecarlo_additional_weight_names[i].c_str()<<std::endl;
+            //trees[i]->SetBranchAddress(montecarlo_additional_weight_names[i].c_str(), &montecarlo_additional_weight[i]); 
+	    montecarlo_additional_weight_formulas[i] =  new TTreeFormula(("a_w"+std::to_string(i)).c_str(),montecarlo_additional_weight_names[i].c_str(),trees[i]);
         }
 
 
@@ -134,9 +152,12 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
 
             if(i%100==0) std::cout<<"SBNgenerate::SBNgenerate\t|| On event: "<<i<<" of "<<nentries[j]<<" from File: "<<montecarlo_file[j]<<std::endl;
 
-            double global_weight = montecarlo_additional_weight[j];
+            double global_weight = 1.0;
+	    if( montecarlo_additional_weight_bool[j]){
+		    montecarlo_additional_weight_formulas[j]->GetNdata();
+		    global_weight = montecarlo_additional_weight_formulas[j]->EvalInstance();
+            };//this will be 1.0 unless specified
             global_weight = global_weight*montecarlo_scale[j];
-
 
             if(m_use_eventweight){
                 if(thisfWeight->count("bnbcorrection_FluxHist")>0){
@@ -149,6 +170,7 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
                 std::cout<<"SBNgenerate::SBNgenerate\t|| ERROR  error @ "<<i<<" in File "<<montecarlo_file.at(j)<<" as its either inf/nan: "<<global_weight<<std::endl;
                 exit(EXIT_FAILURE);
             }
+	
 
             if( this->EventSelection(j) ){
                 
@@ -156,10 +178,12 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
                     //std::cout<<"Starting branch : "<<branch_variables.at(j).at(t)->name<<" "<<branch_variables.at(j).at(t)->associated_hist<<std::endl;
                     //Need the histogram index, the value, the global bin...
 
-                    int ih = spec_central_value.map_hist.at(branch_variables[j][t]->associated_hist);
-                    double reco_var = *(static_cast<double*>(branch_variables[j][t]->GetValue()));
+		    const auto branch_variable = branch_variables[j][t];
+                    int ih = spec_central_value.map_hist.at(branch_variable->associated_hist);
+		    branch_variable->GetFormula()->GetNdata();
+		    double reco_var = branch_variable->GetFormula()->EvalInstance();
+                    //double reco_var = *(static_cast<double*>(branch_variables[j][t]->GetValue()));
                     int reco_bin = spec_central_value.GetGlobalBinNumber(reco_var,ih);
-
 
 //                    reco_var = reco_var*1.031;
 

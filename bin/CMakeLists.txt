@@ -12,6 +12,9 @@ target_link_libraries (sbnfit_feldman_cousins SBNfitlib tinyxmllib EventWeight)
 add_executable (sbnfit_fraction_fit sbnfit_fraction_fit.cxx)
 target_link_libraries (sbnfit_fraction_fit SBNfitlib tinyxmllib EventWeight)
 
+add_executable (sbnfit_fraction_fit_v1 sbnfit_fraction_fit_v1.cxx)
+target_link_libraries (sbnfit_fraction_fit_v1 SBNfitlib tinyxmllib EventWeight)
+
 add_executable (sbnfit_uboone_scaling_fc sbnfit_uboone_scaling_fc.cxx)
 target_link_libraries (sbnfit_uboone_scaling_fc SBNfitlib tinyxmllib EventWeight)
 
