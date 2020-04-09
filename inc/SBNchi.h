@@ -130,7 +130,8 @@ class SBNchi : public SBNconfig{
     TMatrixT<double> InvertMatrix(TMatrixT<double> &M);
     TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<double>& spec);
     TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec);
-    TMatrixT<double> CalcCovarianceMatrixCNP(TMatrixT<double>*M, std::vector<double>& spec, const std::vector<float>& datavec );
+    TMatrixT<double> CalcCovarianceMatrixCNP(TMatrixT<double> M, std::vector<double>& spec, std::vector<double>& spec_collapse, const std::vector<double>& datavec );
+    TMatrixT<double> CalcCovarianceMatrixCNP(TMatrixT<double>* M, std::vector<double>& spec, const std::vector<float>& datavec );
     
 
 
@@ -160,8 +161,9 @@ class SBNchi : public SBNconfig{
 
     float PoissonLogLiklihood(float * h0_corein, float *collapsed);
     float CalcChi_CNP(float * pred, float* data);
-
-	std::vector<std::vector<double >> TMatrixDToVector(TMatrixT <double> McI);
+	double CalcChi(TMatrixT<double> M, std::vector<double>& spec, std::vector<double>& data);
+	
+    std::vector<std::vector<double >> TMatrixDToVector(TMatrixT <double> McI);
 	
 
 	//Cholosky related

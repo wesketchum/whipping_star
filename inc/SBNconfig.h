@@ -85,7 +85,7 @@ class SBNconfig {
 	int num_modes;
 	int num_modes_xml;
 
-    double plot_pot;
+    double plot_pot = 1.0;
 
 	//vectors of length num_channels
 	std::vector<int> num_subchannels; 

@@ -63,7 +63,6 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
 
         montecarlo_scale[fid] = montecarlo_scale[fid]*pot_scale;
 
-
         std::cout << otag<<"" << std::endl;
         std::cout << otag<<" TFile::Open() file=" << files[fid]->GetName() << " @" << files[fid] << std::endl;
         std::cout << otag<<" Has POT " <<montecarlo_pot[fid] <<" and "<<nentries[fid] <<" entries "<<std::endl;
