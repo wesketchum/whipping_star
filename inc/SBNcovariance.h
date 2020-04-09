@@ -150,7 +150,8 @@ namespace sbn{
 
     int DoConstraint(int which_signal, int which_constraint);
     std::vector<double> DoConstraint(int which_signal, int which_constraint, std::string tag);
-    std::vector<double> DoConstraint(int which_signal, int which_constraint, std::string tag,int);
+    std::vector<double> DoConstraint(int which_signal, int which_constraint, std::string tag,int which_var);
+    std::vector<double> DoConstraint_test(int which_signal, int which_constraint, std::string tag);
 
     int make_tables(std::string tag);
     std::ofstream constraint_table;

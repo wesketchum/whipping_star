@@ -2,7 +2,8 @@
 #include <stdexcept>
 #include <sstream>
 #include <cassert>
-
+#include <iostream>
+#include <fstream>
 using namespace sbn;
 
 // for single photon: when we use root files with systematics already applied.
@@ -301,10 +302,11 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
     bool restrict_variations = false;
     
-    variations_to_use = {"expskin_FluxUnisim","horncurrent_FluxUnisim","kminus_PrimaryHadronNormalization","kplus_PrimaryHadronFeynmanScaling","kzero_PrimaryHadronSanfordWang","nucleoninexsec_FluxUnisim","nucleonqexsec_FluxUnisim","nucleontotxsec_FluxUnisim","piminus_PrimaryHadronSWCentralSplineVariation","pioninexsec_FluxUnisim","pionqexsec_FluxUnisim","piontotxsec_FluxUnisim","piplus_PrimaryHadronSWCentralSplineVariation","genie_ccresAxial_Genie","genie_ncresAxial_Genie","genie_qema_Genie","genie_NC_Genie","genie_NonResRvbarp1pi_Genie","genie_NonResRvbarp2pi_Genie","genie_NonResRvp1pi_Genie","genie_NonResRvp2pi_Genie","genie_NonResRvbarp1piAlt_Genie","genie_NonResRvbarp2piAlt_Genie","genie_NonResRvp1piAlt_Genie","genie_NonResRvp2piAlt_Genie"};
+    //variations_to_use = {"expskin_FluxUnisim","horncurrent_FluxUnisim","kminus_PrimaryHadronNormalization","kplus_PrimaryHadronFeynmanScaling","kzero_PrimaryHadronSanfordWang","nucleoninexsec_FluxUnisim","nucleonqexsec_FluxUnisim","nucleontotxsec_FluxUnisim","piminus_PrimaryHadronSWCentralSplineVariation","pioninexsec_FluxUnisim","pionqexsec_FluxUnisim","piontotxsec_FluxUnisim","piplus_PrimaryHadronSWCentralSplineVariation","genie_ccresAxial_Genie","genie_ncresAxial_Genie","genie_qema_Genie","genie_NC_Genie","genie_NonResRvbarp1pi_Genie","genie_NonResRvbarp2pi_Genie","genie_NonResRvp1pi_Genie","genie_NonResRvp2pi_Genie","genie_NonResRvbarp1piAlt_Genie","genie_NonResRvbarp2piAlt_Genie","genie_NonResRvp1piAlt_Genie","genie_NonResRvp2piAlt_Genie"};
+    //genie_all+flux
+    variations_to_use={"expskin_FluxUnisim","horncurrent_FluxUnisim","kminus_PrimaryHadronNormalization","kplus_PrimaryHadronFeynmanScaling","kzero_PrimaryHadronSanfordWang","nucleoninexsec_FluxUnisim","nucleonqexsec_FluxUnisim","nucleontotxsec_FluxUnisim","piminus_PrimaryHadronSWCentralSplineVariation","pioninexsec_FluxUnisim","pionqexsec_FluxUnisim","piontotxsec_FluxUnisim","piplus_PrimaryHadronSWCentralSplineVariation","All"};
     
-    
-    variations_to_use = {"AGKYpT1pi_Genie"," AGKYxF1pi_Genie"," AhtBY_Genie"," AxFFCCQEshape_Genie"," BhtBY_Genie"," CV1uBY_Genie"," CV2uBY_Genie"," DecayAngMEC_Genie"," EtaNCEL_Genie"," FrAbs_N_Genie"," FrAbs_pi_Genie"," FrCEx_N_Genie"," FrCEx_pi_Genie"," FrInel_N_Genie"," FrInel_pi_Genie"," FrPiProd_N_Genie"," FrPiProd_pi_Genie"," FracDelta_CCMEC_Genie"," FracPN_CCMEC_Genie"," MFP_N_Genie"," MFP_pi_Genie"," MaCCQE_Genie"    ," MaCCRES_Genie"," MaCOHpi_Genie"," MaNCEL_Genie"," MvCCRES_Genie"," NonRESBGvbarnCC1pi_Genie"," NonRESBGvbarnCC2pi_Genie"," NonRESBGvbarnNC1pi_Genie"," NonRESBGvbarnNC2pi_Genie"," NonRESBGvbarpCC1pi_Genie"," NonRESBGvbarpCC2pi_Genie"," NonRESBGvbarpNC1pi_Genie"," NonRESBGvbarpNC2pi_Genie"," NonRESBGvnCC1pi_Genie"," NonRESBGvnCC2pi_Genie"," NonRESBGvnNC1pi_Genie"," NonRESBGvnNC2pi_Genie"," NonRESBGvpCC1pi_Genie"," NonRESBGvpCC2pi_Genie"," NonRESBGvpNC1pi_Genie"," NonRESBGvpNC2pi_Genie"," NormCCMEC_Genie"," NormNCMEC_Genie"," R0COHpi_Genie"," RDecBR1eta_Genie"," RDecBR1gamma_Genie"," RPA_CCQE_Genie"," Theta_Delta2Npi_Genie"," VecFFCCQEshape_Genie"," XSecShape_CCMEC_Genie"};
+    // variations_to_use = {"AGKYpT1pi_Genie"," AGKYxF1pi_Genie"," AhtBY_Genie"," AxFFCCQEshape_Genie"," BhtBY_Genie"," CV1uBY_Genie"," CV2uBY_Genie"," DecayAngMEC_Genie"," EtaNCEL_Genie"," FrAbs_N_Genie"," FrAbs_pi_Genie"," FrCEx_N_Genie"," FrCEx_pi_Genie"," FrInel_N_Genie"," FrInel_pi_Genie"," FrPiProd_N_Genie"," FrPiProd_pi_Genie"," FracDelta_CCMEC_Genie"," FracPN_CCMEC_Genie"," MFP_N_Genie"," MFP_pi_Genie"," MaCCQE_Genie"    ," MaCCRES_Genie"," MaCOHpi_Genie"," MaNCEL_Genie"," MvCCRES_Genie"," NonRESBGvbarnCC1pi_Genie"," NonRESBGvbarnCC2pi_Genie"," NonRESBGvbarnNC1pi_Genie"," NonRESBGvbarnNC2pi_Genie"," NonRESBGvbarpCC1pi_Genie"," NonRESBGvbarpCC2pi_Genie"," NonRESBGvbarpNC1pi_Genie"," NonRESBGvbarpNC2pi_Genie"," NonRESBGvnCC1pi_Genie"," NonRESBGvnCC2pi_Genie"," NonRESBGvnNC1pi_Genie"," NonRESBGvnNC2pi_Genie"," NonRESBGvpCC1pi_Genie"," NonRESBGvpCC2pi_Genie"," NonRESBGvpNC1pi_Genie"," NonRESBGvpNC2pi_Genie"," NormCCMEC_Genie"," NormNCMEC_Genie"," R0COHpi_Genie"," RDecBR1eta_Genie"," RDecBR1gamma_Genie"," RPA_CCQE_Genie"," Theta_Delta2Npi_Genie"," VecFFCCQEshape_Genie"," XSecShape_CCMEC_Genie"};
     for(auto &s: variations_to_use){
         m_variations_to_use[s]=true;
     }
@@ -1693,7 +1695,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         return 0;
     }
 
-    int SBNcovariance::DoConstraint(int which_signal, int which_constraint){
+/*int SBNcovariance::DoConstraint(int which_signal, int which_constraint){
         std::cout<<"----------------Starting covariance Constraint --------------------"<<std::endl;
 
         SBNchi collapse_chi(xmlname);
@@ -1803,7 +1805,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
         return 0;
     }
-
+*/
     std::vector<double> SBNcovariance::DoConstraint(int which_signal, int which_constraint, std::string tag){
 
         return this->DoConstraint(which_signal, which_constraint, tag, -1);
@@ -1927,45 +1929,270 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         std::cout<<"covar con sys"<<std::endl;
         m_covar_con_sys.Print();
         //constraint_table.open(("constraint_table"+tag+"_knob_"+variations[which_var]+".txt").c_str(),std::ofstream::trunc);
-        constraint_table.open(("constraint_table_1bin_"+tag+".txt").c_str(),std::ios_base::app);
+        //constraint_table.open(("constraint_table_1bin_"+tag+"_"+variations[which_var]+".txt").c_str(),std::ios_base::app);
         double avg_ratio;
         double good_bins=0.0;
         double uncon;
         double con;
+	
         for(int i=0;i<num_bins_sig;i++){
             std::cout<<"start_loop"<<std::endl;
-            uncon=sqrt(m_covar_full_sys(i,i))/n_events[i];
-            con=sqrt(m_covar_con_sys(i,i))/n_events[i];
-            if (con>0 and uncon>0){
+	    if (n_events[i]>0 && m_covar_full_sys(i,i)>0 && m_covar_con_sys(i,i)>0){
+	      uncon=sqrt(m_covar_full_sys(i,i))/n_events[i];
+	      con=sqrt(m_covar_con_sys(i,i))/n_events[i];
+	      if (con>0 and uncon>0){
                 avg_ratio+=uncon/con;
                 good_bins+=1.0;
-            }
-            std::cout<<"bin="<<i<<"/events="<<n_events[i]<<"/uncon="<<uncon<<"/con="<<con<<" ratio: "<<uncon/con<<std::endl;
-            constraint_table<<"bin="<<i<<"/events="<<n_events[i]<<"/uncon="<<uncon<<"/con="<<con<<" ratio: "<<uncon/con<<std::endl;
-        }
-
-        avg_ratio=avg_ratio/good_bins;
-        //avg_ratio=0;
-
+	      }
+	      
+     
+	    }
+	     
+	    else {
+	      con=-999.0;
+	      uncon=-999.0;
+	    }
+	    std::cout<<"bin="<<i<<" events="<<n_events[i]<<" uncon "<<uncon<<" con "<<con<<" ratio "<<uncon/con<<std::endl;
+	    //constraint_table<<" bin "<<i<<" events "<<n_events[i]<<" uncon "<<uncon<<" con "<<con<<" ratio "<<uncon/con<<std::endl;
+	}
+	    
+	    if (good_bins!=0){
+	      avg_ratio=avg_ratio/good_bins;
+	      //avg_ratio=0;
+	}
+	    else{
+	      avg_ratio=-999;
+	    }
+	 
+	    std::cout<<"finished loop"<<std::endl;
         std::vector<double> out_1bin={n_events[0], uncon, con, avg_ratio};
-        TFile *fnew = new TFile(("constraint_test_"+tag+"_knob_"+variations[which_var]+".root").c_str(),"RECREATE");
+	std::cout<<"made_vector"<<std::endl;
+	if (which_var>0){
+	  std::cout<<variations[which_var]<<std::endl;
+	  std::cout<<("constraint_test_"+tag+"_knob_"+variations[which_var]+".root").c_str()<<std::endl;
+	
+       
+	  TFile *fnew = new TFile(("constraint_test_"+tag+"_knob_"+variations[which_var]+".root").c_str(),"RECREATE");
+	}
+	else{
+	   TFile *fnew = new TFile(("constraint_test_"+tag+"_knob_"+".root").c_str(),"RECREATE");
+	}
+	std::cout<<"made TFile"<<std::endl;
         TMatrixD cov_before = coll_covariance.GetSub(0,num_bins_sig-1,0,num_bins_sig-1);
         TMatrixD cov_after = m_covar_con_sys.GetSub(0,num_bins_sig-1,0,num_bins_sig-1);
+	 std::cout<<"made matrices"<<std::endl;
         //constraint_table.close();
         cov_before.Write("before");
         cov_after.Write("after");
-
+	std::cout<<"wrote"<<std::endl;
+	//constraint_table.close();
+	std::cout<<"Closed file"<<std::endl;
         if(good_bins>0.0){
+	  std::cout<<"good"<<std::endl;
             return out_1bin;
         }
         else{
             std::vector<double> bad_out={-999,-999,-999,-999};
+	    std::cout<<"bad"<<std::endl;
+            return bad_out;
+        }
+    }
+std::vector<double> SBNcovariance::DoConstraint_test(int which_signal, int which_constraint, std::string tag){
+        std::cout<<"----------------Starting covariance Constraint --------------------"<<std::endl;
+
+        SBNchi collapse_chi(xmlname);
+        TMatrixT<double> coll_covariance(2,2);
+	int which_var=-1;
+	/*
+        if(which_var<0){
+            collapse_chi.CollapseModes(full_covariance, coll_covariance);
+        }else{
+            collapse_chi.CollapseModes(vec_full_covariance.at(which_var), coll_covariance);
+        }
+	*/
+	double a_coll_covariance [4][4]={{6400, 9600, 912000, 456000},{9600,14400,1368000,684000},{912000,1368000,144000000,72000000},{456000,684000,72000000,36000000}};
+	coll_covariance.Use(0,3,0,3,*a_coll_covariance);
+        //Does this assume only 2 channels?
+        int num_bins_sig = 2;
+        std::cout<<"signal bins="<<num_bins_sig<<std::endl;
+        int num_bins_con=2;
+        std::cout<<"constraint bins="<<num_bins_con<<std::endl;
+        int num_bins_tot=num_bins_sig+num_bins_con;
+
+	
+        //spec_central_value.CollapseVector();
+        std::vector<double> n_events = {400, 600, 60000,30000}; 
+        std::vector<double> n_sig;
+        std::vector<double> n_con;
+
+
+        //This assumes that the signal is first in order and the background is next AND THAT IT. 
+        for(int i=0; i< num_bins_sig; i++){
+            n_sig.push_back(n_events[i]);
+        }
+        for(int i=num_bins_sig; i< n_events.size(); i++){
+            n_con.push_back(n_events[i]);
+        }
+
+        std::cout<<"Signal: "<<std::accumulate(n_sig.begin(),n_sig.end(),0.0)<<std::endl;
+        std::cout<<"Constraint: "<<std::accumulate(n_con.begin(),n_con.end(),0.0)<<std::endl;
+
+        for (int i=0; i<num_bins_tot;i++){
+            std::cout<<"Vector entry "<<i<<"-"<<n_events[i]<<std::endl;
+        }
+
+        TMatrixD m_covar_full(num_bins_tot,num_bins_tot);
+        TMatrixD m_covar_full_sys = coll_covariance;
+        TMatrixD m_inv_full(num_bins_tot,num_bins_tot);
+        TMatrixD m_covar_con(num_bins_tot,num_bins_tot);
+        TMatrixD m_covar_con_sys(num_bins_tot,num_bins_tot);
+
+        for(int i=0; i<num_bins_tot;i++)
+        {
+            for(int j=0; j<num_bins_tot;j++)
+            {
+                if(i==j){
+                    m_covar_full(i,j)=coll_covariance(i,j)+n_events[i];
+                    m_inv_full(i,j)=coll_covariance(i,j)+n_events[i];
+
+                }
+                else{
+                    m_covar_full(i,j)=coll_covariance(i,j);
+                    m_inv_full(i,j)=coll_covariance(i,j);
+                }
+            }
+        }
+        std::cout<<"covar full pre-inversion"<<std::endl;
+        m_covar_full.Print();
+
+        m_inv_full.Invert();
+        std::cout<<"covar invert"<<std::endl;
+        m_inv_full.Print();
+
+        std::cout<<"check inversion"<<std::endl;
+        /*if(check_inversion(m_covar_full,m_inv_full,num_bins_tot)){
+            std::cout<<"Initial inversion good"<<std::endl;
+        }
+	
+        else{
+            std::cout<<"bad inversion"<<std::endl;
+            //throw;
+        }
+	*/
+
+        TMatrixD m_inv_con(num_bins_tot,num_bins_tot);
+        for(int i=0; i<num_bins_tot;i++){
+            for(int j=0; j<num_bins_tot; j++){
+                if(i==j  && j>=num_bins_sig){
+                    m_inv_con(i,j)=m_inv_full(i,j)+1/n_events[i];
+                    m_covar_con(i,j)=m_inv_full(i,j)+1/n_events[i];
+                }
+                else{
+                    m_inv_con(i,j)=m_inv_full(i,j);
+                    m_covar_con(i,j)=m_inv_full(i,j);
+                }
+            } 
+        }
+        m_covar_con.Invert();
+
+        /*if(check_inversion(m_covar_con,m_inv_con,num_bins_tot)){
+            std::cout<<"Initial inversion good"<<std::endl;
+        }
+	
+        else{
+            std::cout<<"bad inversion"<<std::endl;
+            //throw;
+        }
+	*/
+        for(int i=0; i<num_bins_tot;i++)
+        {
+            for(int j=0; j<num_bins_tot;j++)
+            {
+
+                if(i==j){
+                    m_covar_con_sys(i,j)=m_covar_con(i,j);
+                }
+                else{
+                    m_covar_con_sys(i,j)=m_covar_con(i,j);
+                }
+            }
+        }
+        std::cout<<"covar con sys"<<std::endl;
+        m_covar_con_sys.Print();
+        //constraint_table.open(("constraint_table"+tag+"_knob_"+variations[which_var]+".txt").c_str(),std::ofstream::trunc);
+        //constraint_table.open(("constraint_table_1bin_"+tag+"_"+variations[which_var]+".txt").c_str(),std::ios_base::app);
+        double avg_ratio;
+        double good_bins=0.0;
+        double uncon;
+        double con;
+	
+        for(int i=0;i<num_bins_sig;i++){
+            std::cout<<"start_loop"<<std::endl;
+	    if (n_events[i]>0 && m_covar_full_sys(i,i)>0 && m_covar_con_sys(i,i)>0){
+	      uncon=sqrt(m_covar_full_sys(i,i))/n_events[i];
+	      con=sqrt(m_covar_con_sys(i,i))/n_events[i];
+	      if (con>0 and uncon>0){
+                avg_ratio+=uncon/con;
+                good_bins+=1.0;
+	      }
+	      
+     
+	    }
+	     
+	    else {
+	      con=-999.0;
+	      uncon=-999.0;
+	    }
+	    std::cout<<"bin="<<i<<" events="<<n_events[i]<<" uncon "<<uncon<<" con "<<con<<" ratio "<<uncon/con<<std::endl;
+	    //constraint_table<<" bin "<<i<<" events "<<n_events[i]<<" uncon "<<uncon<<" con "<<con<<" ratio "<<uncon/con<<std::endl;
+	}
+	    
+	    if (good_bins!=0){
+	      avg_ratio=avg_ratio/good_bins;
+	      //avg_ratio=0;
+	}
+	    else{
+	      avg_ratio=-999;
+	    }
+	 
+	    std::cout<<"finished loop"<<std::endl;
+        std::vector<double> out_1bin={n_events[0], uncon, con, avg_ratio};
+	std::cout<<"made_vector"<<std::endl;
+	if (which_var>0){
+	  std::cout<<variations[which_var]<<std::endl;
+	  std::cout<<("constraint_test_"+tag+"_knob_"+variations[which_var]+".root").c_str()<<std::endl;
+	
+       
+	  TFile *fnew = new TFile(("constraint_test_"+tag+"_knob_"+variations[which_var]+".root").c_str(),"RECREATE");
+	}
+	else{
+	   TFile *fnew = new TFile(("constraint_test_"+tag+"_knob_"+".root").c_str(),"RECREATE");
+	}
+	std::cout<<"made TFile"<<std::endl;
+        TMatrixD cov_before = coll_covariance.GetSub(0,num_bins_sig-1,0,num_bins_sig-1);
+        TMatrixD cov_after = m_covar_con_sys.GetSub(0,num_bins_sig-1,0,num_bins_sig-1);
+	 std::cout<<"made matrices"<<std::endl;
+        //constraint_table.close();
+        cov_before.Write("before");
+        cov_after.Write("after");
+	std::cout<<"wrote"<<std::endl;
+	//constraint_table.close();
+	std::cout<<"Closed file"<<std::endl;
+        if(good_bins>0.0){
+	  std::cout<<"good"<<std::endl;
+            return out_1bin;
+        }
+        else{
+            std::vector<double> bad_out={-999,-999,-999,-999};
+	    std::cout<<"bad"<<std::endl;
             return bad_out;
         }
     }
 
 
+	
 
+	
     std::vector<std::string> SBNcovariance::buildWeightMaps(){
 
         std::cout<<"SBNcovariance::buildWeightMaps()\t\t||\t\t Starting to Build Weight Maps of TTreeFormulas "<<std::endl;
