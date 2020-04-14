@@ -160,7 +160,7 @@ int main(int argc, char* argv[])
 
     if(!stats_only){
         SBNcls cls_factory(&bkg, &sig,*cov);
-        if(sample_from_covariance)cls_factory.SetSampleCovariance();
+        if(sample_from_covariance) cls_factory.SetSampleCovariance();
         cls_factory.setMode(which_mode);
         cls_factory.CalcCLS(num_MC_events, tag);
     }else{

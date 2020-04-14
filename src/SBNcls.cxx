@@ -34,9 +34,7 @@ int SBNcls::setMode(int input_mode){
 int SBNcls::CalcCLS(int numMC, std::string tag){
 
     
-    runConstraintTest();
-
-    return 0;
+    //runConstraintTest();
 
     if(which_sample == 0){
         std::cout<<"SBNcls::CalcCLS\t|| Running in Poission sampling mode!"<<std::endl;

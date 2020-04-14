@@ -294,6 +294,13 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
                 montecarlo_pot.push_back(strtod(inpot,&end) );
             }
 
+            const char* isfake = pMC->Attribute("fake");
+            if(isfake==NULL){
+                montecarlo_fake.push_back(false);
+            }else{
+                montecarlo_fake.push_back(true);
+            }
+
 
             /*
             //Currently take all parameter variations in at once. Depreciated code. 

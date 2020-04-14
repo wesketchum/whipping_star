@@ -174,6 +174,7 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
     // Fill stats from the back ground vector
     TMatrixT <double> Mstat(num_bins_total, num_bins_total);
     FillStatsMatrix(Mstat, core_spectrum.full_vector);
+    //FillStatsMatrix(Mstat, core_spectrum.full_error);
 
     if(Mstat.IsSymmetric()){
         if(is_verbose)std::cout<<otag<<"Stat matrix is symmetric (it is just diagonal core)"<<std::endl;

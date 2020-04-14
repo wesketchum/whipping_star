@@ -722,7 +722,11 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                     wei=1.0;
                 }
 
-                weights[wid1] *= wei*indiv_variation_weight;
+                if(montecarlo_fake[fileid]){
+                    weights[wid1] *= wei;
+                }else{
+                    weights[wid1] *= wei*indiv_variation_weight;
+                }
             }
 
             woffset += expected_num_universe_sz;

@@ -265,7 +265,7 @@ int SBNspec::Norm(std::string name, double val){
 
 int SBNspec::CalcFullVector(){
   full_vector.clear();
-
+  
   full_vector.resize(num_bins_total);
 
   int hoffset = 0;
