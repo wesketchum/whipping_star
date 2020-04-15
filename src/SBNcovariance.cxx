@@ -657,8 +657,8 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             //Grab newwer variation specfic weights;
             m_variation_weight_formulas[fileid][vid]->GetNdata();
             double indiv_variation_weight = m_variation_weight_formulas[fileid][vid]->EvalInstance();
-            if(indiv_variation_weight!= indiv_variation_weight || indiv_variation_weight <0){
-                                    std::cout<<"ERROR! the additional wight is nan or negative "<<indiv_variation_weight<<" Breakign!"<<std::endl;
+            if((indiv_variation_weight!= indiv_variation_weight || indiv_variation_weight <0 )&& !montecarlo_fake[fileid]){
+                                    std::cout<<"ERROR! the individual variation weight is nan or negative "<<indiv_variation_weight<<" Breakign!"<<std::endl;
                                     exit(EXIT_FAILURE);
                                 }
             //std::cout<<var<<" "<<indiv_variation_weight<<" "<<fileid<<" "<<vid<<std::endl;
