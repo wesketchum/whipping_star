@@ -33,8 +33,12 @@ int SBNcls::setMode(int input_mode){
 
 int SBNcls::CalcCLS(int numMC, std::string tag){
 
+    if(draw_pseudo_from_collapsed){
+        chi_h0.pseudo_from_collapsed = true;
+        chi_h1.pseudo_from_collapsed = true;
+    }
     
-        if(which_sample == 0){
+    if(which_sample == 0){
         std::cout<<"SBNcls::CalcCLS\t|| Running in Poission sampling mode!"<<std::endl;
     }
     else if(which_sample ==1){ 

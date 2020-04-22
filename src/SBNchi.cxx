@@ -22,6 +22,8 @@ SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin, std::string in
     last_calculated_chi = -9999999;
     is_stat_only= false;
 
+
+    pseudo_from_collapsed = false;
     matrix_collapsed.ResizeTo(num_bins_total_compressed, num_bins_total_compressed);
     matrix_systematics.ResizeTo(num_bins_total, num_bins_total);
     matrix_fractional_covariance.ResizeTo(num_bins_total, num_bins_total);
@@ -59,6 +61,7 @@ SBNchi::SBNchi(SBNspec in, std::string newxmlname) : SBNconfig(newxmlname), core
         }
     }
 
+    pseudo_from_collapsed = false;
     max_sample_chi_val =150.0;
     matrix_fractional_covariance = FillSystematicsFromXML();
     last_calculated_chi = -9999999;
@@ -86,6 +89,7 @@ SBNchi::SBNchi(SBNspec in, bool is_is_stat_only): SBNconfig(in.xmlname), core_sp
     max_sample_chi_val =150.0;
     this->InitRandomNumberSeeds();
 
+    pseudo_from_collapsed = false;
 
     if(is_is_stat_only){
         matrix_fractional_covariance.Zero();

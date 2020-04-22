@@ -47,6 +47,7 @@ int main(int argc, char* argv[])
     opterr=1;
     int index;
     bool sample_from_covariance = true;
+    bool sample_from_collapsed = false;
     bool stats_only = false;
     int num_MC_events = 100000;
     bool use_cnp = false;
@@ -68,7 +69,7 @@ int main(int argc, char* argv[])
     {
         {"xml", 		required_argument, 	0, 'x'},
         {"covariance", 	required_argument,0,'c'},
-        {"number", 		required_argument,	0,'n'},
+        {"collapse", 	required_argument,	0,'j'},
         {"signal", 		required_argument,	0,'s'},
         {"mode", 	    	required_argument,	0,'m'},
         {"background", 	required_argument,	0,'b'},
@@ -83,12 +84,15 @@ int main(int argc, char* argv[])
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "m:a:x:n:s:b:c:f:t:r:ph", longopts, &index);
+        iarg = getopt_long(argc,argv, "m:a:x:n:s:b:c:f:t:r:pjh", longopts, &index);
 
         switch(iarg)
         {
             case 'r':
                 tester = true; 
+                break;
+            case 'j':
+                sample_from_collapsed = true;
                 break;
             case 'm':
                 which_mode = (int)strtod(optarg,NULL);
@@ -134,6 +138,7 @@ int main(int argc, char* argv[])
                 std::cout<<"\t-b\t--background\t\tInput background only SBNspec.root file"<<std::endl;
                 std::cout<<"\t-c\t--covariance\t\tInput Fractional Covariance Matrix SBNcovar.root file. If not passed, defaults to stats only!"<<std::endl;
                 std::cout<<"--- Optional arguments: ---"<<std::endl;
+                std::cout<<"\t-j\t--collapse\t\tSample from collapsed rather than full covariance matrix (default false)"<<std::endl;
                 std::cout<<"\t-n\t--number\t\tNumber of MC events for frequentist studies (default 100k)"<<std::endl;
                 std::cout<<"\t-m\t--mode\t\tMode for test statistics 0: absolute chi^2, 1: delta chi^2 (default Delta Chi)"<<std::endl;
                 std::cout<<"\t-p\t--poisson\t\tUse Poissonian draws for pseudo experiments instead of from covariance matrix"<<std::endl;
@@ -189,13 +194,16 @@ int main(int argc, char* argv[])
     }
 
     if(!stats_only){
+
         SBNcls cls_factory(&bkg, &sig,*cov);
+        if(sample_from_collapsed)  cls_factory.SetSampleFromCollapsed();
         if(sample_from_covariance) cls_factory.SetSampleCovariance();
         cls_factory.setMode(which_mode);
         if(tester){cls_factory.runConstraintTest();return 0;}
         cls_factory.CalcCLS(num_MC_events, tag);
     }else{
         SBNcls cls_factory(&bkg, &sig);
+        if(sample_from_collapsed)  cls_factory.SetSampleFromCollapsed();
         cls_factory.setMode(which_mode);
         if(tester){cls_factory.runConstraintTest();return 0;}
         cls_factory.CalcCLS(num_MC_events, tag);
