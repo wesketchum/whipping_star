@@ -34,9 +34,7 @@ int SBNcls::setMode(int input_mode){
 int SBNcls::CalcCLS(int numMC, std::string tag){
 
     
-    //runConstraintTest();
-
-    if(which_sample == 0){
+        if(which_sample == 0){
         std::cout<<"SBNcls::CalcCLS\t|| Running in Poission sampling mode!"<<std::endl;
     }
     else if(which_sample ==1){ 
@@ -116,11 +114,8 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
             makePlots( h0_results[i], h1_results[i], tag+std::to_string(i), which_mode);
     }
 
-
     //Constraint test
     
-   
-
 
     return 0 ;
 }
@@ -300,7 +295,6 @@ int SBNcls::runConstraintTest(){
     chi_h0.InitRandomNumberSeeds(10);
     chi_h1.InitRandomNumberSeeds(10);
    
-    
     //Get 3 matricies
     TMatrixD frac_cov_zerod = chi_h0.matrix_fractional_covariance;
     for(int i=0; i< h0->num_bins_total ; i++){
@@ -329,14 +323,14 @@ int SBNcls::runConstraintTest(){
     std::vector<double> c_zerod;
     std::vector<double> c_stat;
 
-    for(double s=0.001; s< 5; s+=0.1){
+    for(double s=0.00; s< 4; s+=0.01){
         sx.push_back(s);
 
         SBNspec tmp = (*h1);
-        tmp.Scale("nu_uBooNE_1g1p_ncdelta",s);
+        tmp.Scale("NCDeltaRadOverlaySM",s);
         tmp.CollapseVector();
     
-        for(int i=0; i< h0->num_bins_total_compressed; i++) {
+        for(int i=0; i< h0->num_bins_total_compressed; i++){
             h1_corein[i] = tmp.collapsed_vector[i];
         }
 
@@ -358,12 +352,109 @@ int SBNcls::runConstraintTest(){
     TGraph *g_zerod = new TGraph(sx.size(),&sx[0],&c_zerod[0]);
     TGraph *g_stat = new TGraph(sx.size(),&sx[0],&c_stat[0]);
 
+    bool bstat = true;
+    bool bnorm = true;
+    bool bzerod = true;
+    
+    double p_stat = g_stat->Eval(3.0);
+    double p_norm = g_norm->Eval(3.0);
+    double p_zerod = g_zerod->Eval(3.0);
+  
     g_stat->Draw("ac");
-    g_stat->SetLineColor(kRed);
+    g_stat->SetLineColor(kRed-7);
+    g_stat->SetLineWidth(3);
+   
+    if(bnorm){
     g_norm->Draw("c same");
-    g_norm->SetLineColor(kBlue);
+    g_norm->SetLineColor(kBlue-7);
+    g_norm->SetLineWidth(3);
+    }
+
+    if(bzerod){
     g_zerod->Draw("c same");
-    g_zerod->SetLineColor(kGreen);
+    g_zerod->SetLineColor(kGreen-3);
+    g_zerod->SetLineWidth(3);
+    }
+    g_stat->SetTitle("");
+//g_stat->GetHistogram()->SetMaximum(27.);
+
+
+    TLegend l(0.13,0.6,0.6,0.89);
+    l.AddEntry(g_stat,"Statistical Uncertainty Only","l");
+    if(bzerod)l.AddEntry(g_zerod,"Statistical + Flux + XS, No Correlations","l");
+    if(bnorm)l.AddEntry(g_norm,"Statistical + Flux + XS, Full Correlations","l");
+    l.SetLineWidth(0);
+    l.SetLineColor(kWhite);
+    l.Draw();
+
+    TLine lstat1(3.0,0,3.0,p_stat);
+    TLine lstat2(3.0,p_stat,0.0,p_stat);
+    lstat1.SetLineStyle(9);
+    lstat1.SetLineColor(kRed-7);
+    lstat2.SetLineStyle(9);
+    lstat2.SetLineColor(kRed-7);
+    lstat1.SetLineWidth(2);
+    lstat2.SetLineWidth(2);
+    lstat1.Draw();
+    lstat2.Draw();
+
+    TLine lnorm1(3.0,0,3.0,p_norm);
+    TLine lnorm2(3.0,p_norm,0.0,p_norm);
+    lnorm1.SetLineStyle(9);
+    lnorm1.SetLineColor(kBlue-7);
+    lnorm2.SetLineStyle(9);
+    lnorm2.SetLineColor(kBlue-7);
+    lnorm1.SetLineWidth(2);
+    lnorm2.SetLineWidth(2);
+    
+    if(bnorm){
+    lnorm1.Draw();
+    lnorm2.Draw();
+    }
+
+    TLine lzerod1(3.0,0,3.0,p_zerod);
+    TLine lzerod2(3.0,p_zerod,0.0,p_zerod);
+    lzerod1.SetLineStyle(9);
+    lzerod1.SetLineColor(kGreen-3);
+    lzerod2.SetLineStyle(9);
+    lzerod2.SetLineColor(kGreen-3);
+    lzerod2.SetLineWidth(2);
+    lzerod1.SetLineWidth(2);
+    
+    if(bzerod){
+    lzerod1.Draw();
+    lzerod2.Draw();
+    }
+
+    double mm =1.06;
+   TLatex latex_stat;
+   latex_stat.SetTextSize(0.03);
+   latex_stat.SetTextColor(kRed-7);
+   latex_stat.SetTextAlign(11);  //align at top
+   latex_stat.DrawLatex(0.1,p_stat*mm, ("#sqrt{#Delta #chi^{2}} = "+to_string_prec(sqrt(p_stat),2)).c_str());
+
+   if(bnorm){
+   TLatex latex_norm;
+   latex_norm.SetTextSize(0.03);
+   latex_norm.SetTextColor(kBlue-7);
+   latex_norm.SetTextAlign(11);  //align at top
+   latex_norm.DrawLatex(0.1,p_norm*mm, ("#sqrt{#Delta #chi^{2}} = "+to_string_prec(sqrt(p_norm),2)).c_str());
+    }
+   if(bzerod){
+   TLatex latex_zerod;
+   latex_zerod.SetTextSize(0.03);
+   latex_zerod.SetTextColor(kGreen-3);
+   latex_zerod.SetTextAlign(11);  //align at top
+   latex_zerod.DrawLatex(0.1,p_zerod*mm, ("#sqrt{#Delta #chi^{2}} = "+to_string_prec(sqrt(p_zerod),2)).c_str());
+    }
+   
+   
+
+   
+   
+   
+   g_stat->GetXaxis()->SetTitle("Signal Scaling x SM #Delta Radiative Cross-Section");
+   g_stat->GetYaxis()->SetTitle("#Delta #chi^{2} CNP");
 
     c->Draw();
     c->SaveAs("cons_test.pdf","pdf");

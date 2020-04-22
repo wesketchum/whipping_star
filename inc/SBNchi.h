@@ -199,6 +199,7 @@ class SBNchi : public SBNconfig{
 
     int SingleValueDecomposition(double ** matrix, double ** U, double**V, double *single_values );
 
+    bool pseudo_from_collapsed;
     std::vector<float> GeneratePseudoExperiment();
 
 

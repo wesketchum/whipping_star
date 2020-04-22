@@ -58,6 +58,12 @@ int main(int argc, char* argv[])
     std::string background_file = "EMPTY";
     std::string covariance_file = "EMPTY";
 
+    bool bool_flat_det_sys = false;
+    double flat_det_sys_percent = 0.0;
+
+
+    bool tester=false;
+
     const struct option longopts[] =
     {
         {"xml", 		required_argument, 	0, 'x'},
@@ -68,17 +74,22 @@ int main(int argc, char* argv[])
         {"background", 	required_argument,	0,'b'},
         {"tag", 	    required_argument,	0,'t'},
         {"cnp",no_argument,0,'a'},
+        {"tester",no_argument,0,'r'},
         {"poisson", no_argument,0,'p'},
+        {"flat", required_argument,0,'f'},
         {"help",no_argument,0,'h'},
         {0,			no_argument, 		0,  0},
     };
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "m:a:x:n:s:b:c:t:ph", longopts, &index);
+        iarg = getopt_long(argc,argv, "m:a:x:n:s:b:c:f:t:r:ph", longopts, &index);
 
         switch(iarg)
         {
+            case 'r':
+                tester = true; 
+                break;
             case 'm':
                 which_mode = (int)strtod(optarg,NULL);
                 break;
@@ -91,6 +102,11 @@ int main(int argc, char* argv[])
             case 'b':
                 background_file = optarg;
                 break;
+            case 'f':
+                bool_flat_det_sys = true;
+                flat_det_sys_percent = (double)strtod(optarg,NULL);
+                break;
+
             case 't':
                 tag = optarg;
                 break;
@@ -158,14 +174,30 @@ int main(int argc, char* argv[])
         cov = (TMatrixD*)fsys->Get("frac_covariance");
     }
 
+
+    TMatrixD frac_flat_matrix(bkg.num_bins_total, bkg.num_bins_total);
+
+    if(bool_flat_det_sys){
+	    std::cout << "RUNNING with flat systematics: " << flat_det_sys_percent << "%!" << std::endl;
+	    frac_flat_matrix.ResizeTo(bkg.num_bins_total,bkg.num_bins_total);
+	    frac_flat_matrix.Zero();//(bkg.num_bins_total,bkg.num_bins_total);
+	    for(int i=0 ; i< bkg.num_bins_total; i++){
+               frac_flat_matrix(i,i)=flat_det_sys_percent*flat_det_sys_percent/10000.;
+        }
+        std::cout<<"Just Before"<<std::endl;
+        (*cov) = (*cov)+(frac_flat_matrix);
+    }
+
     if(!stats_only){
         SBNcls cls_factory(&bkg, &sig,*cov);
         if(sample_from_covariance) cls_factory.SetSampleCovariance();
         cls_factory.setMode(which_mode);
+        if(tester){cls_factory.runConstraintTest();return 0;}
         cls_factory.CalcCLS(num_MC_events, tag);
     }else{
         SBNcls cls_factory(&bkg, &sig);
         cls_factory.setMode(which_mode);
+        if(tester){cls_factory.runConstraintTest();return 0;}
         cls_factory.CalcCLS(num_MC_events, tag);
     }
 
