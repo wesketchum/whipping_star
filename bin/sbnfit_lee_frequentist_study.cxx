@@ -48,6 +48,7 @@ int main(int argc, char* argv[])
     int index;
     bool sample_from_covariance = true;
     bool sample_from_collapsed = false;
+    bool remove_correlations = false;
     bool stats_only = false;
     int num_MC_events = 100000;
     bool use_cnp = false;
@@ -62,8 +63,9 @@ int main(int argc, char* argv[])
     bool bool_flat_det_sys = false;
     double flat_det_sys_percent = 0.0;
 
-
+    bool zero_off_diag = false;
     bool tester=false;
+    double epsilon = 1e-12;
 
     const struct option longopts[] =
     {
@@ -74,8 +76,10 @@ int main(int argc, char* argv[])
         {"mode", 	    	required_argument,	0,'m'},
         {"background", 	required_argument,	0,'b'},
         {"tag", 	    required_argument,	0,'t'},
+        {"epsilon", required_argument,0,'e'},
         {"cnp",no_argument,0,'a'},
-        {"tester",no_argument,0,'r'},
+        {"zero",no_argument,0,'z'},
+        {"tester",no_argument,0,'k'},
         {"poisson", no_argument,0,'p'},
         {"flat", required_argument,0,'f'},
         {"help",no_argument,0,'h'},
@@ -84,12 +88,15 @@ int main(int argc, char* argv[])
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "m:a:x:n:s:b:c:f:t:r:pjh", longopts, &index);
+        iarg = getopt_long(argc,argv, "m:a:x:n:s:e:b:c:f:t:pjkzh", longopts, &index);
 
         switch(iarg)
         {
-            case 'r':
+            case 'k':
                 tester = true; 
+                break;
+            case 'z':
+                remove_correlations = true; 
                 break;
             case 'j':
                 sample_from_collapsed = true;
@@ -110,7 +117,9 @@ int main(int argc, char* argv[])
                 bool_flat_det_sys = true;
                 flat_det_sys_percent = (double)strtod(optarg,NULL);
                 break;
-
+            case 'e':
+                epsilon = (double)strtod(optarg,NULL);
+                break;
             case 't':
                 tag = optarg;
                 break;
@@ -138,9 +147,12 @@ int main(int argc, char* argv[])
                 std::cout<<"\t-b\t--background\t\tInput background only SBNspec.root file"<<std::endl;
                 std::cout<<"\t-c\t--covariance\t\tInput Fractional Covariance Matrix SBNcovar.root file. If not passed, defaults to stats only!"<<std::endl;
                 std::cout<<"--- Optional arguments: ---"<<std::endl;
-                std::cout<<"\t-j\t--collapse\t\tSample from collapsed rather than full covariance matrix (default false)"<<std::endl;
+                std::cout<<"\t-j\t--collapse\t\tSample from collapsed rather than full covariance matrix (default false, experimental!)"<<std::endl;
+                std::cout<<"\t-f\t--flat\t\tAdd a flat percent systematic to fractional covariance matrix (all channels) (default false, pass in percent, i.e 5.0 for 5\% experimental)"<<std::endl;
+                std::cout<<"\t-z\t--zero\t\tZero out all off diagonal elements of the systematics covariance matrix (default false, experimental!)"<<std::endl;
+                std::cout<<"\t-e\t--epsilon\t\tEpsilon tolerance by which to add back to diagonal of covariance matrix if determinant is 0 (default 1e-12)"<<std::endl;
                 std::cout<<"\t-n\t--number\t\tNumber of MC events for frequentist studies (default 100k)"<<std::endl;
-                std::cout<<"\t-m\t--mode\t\tMode for test statistics 0: absolute chi^2, 1: delta chi^2 (default Delta Chi)"<<std::endl;
+                std::cout<<"\t-m\t--mode\t\tMode for test statistics 0: absolute chi^2, 1: delta chi^2 (default Delta Chi| obsolete, runs all concurrently)"<<std::endl;
                 std::cout<<"\t-p\t--poisson\t\tUse Poissonian draws for pseudo experiments instead of from covariance matrix"<<std::endl;
                 std::cout<<"\t-h\t--help\t\t\tThis help menu."<<std::endl;
                 std::cout<<"---------------------------------------------------"<<std::endl;
@@ -162,6 +174,7 @@ int main(int argc, char* argv[])
         stats_only = true;
         sample_from_covariance = false;
     }
+
 
     std::cout<<"Loading signal file : "<<signal_file<<" with xml "<<xml<<std::endl;
     SBNspec sig(signal_file,xml);
@@ -193,9 +206,20 @@ int main(int argc, char* argv[])
         (*cov) = (*cov)+(frac_flat_matrix);
     }
 
+    if(remove_correlations){
+        std::cout<<"WARNING! We are running in   `Remove All Off Diagional Covariances/Correlations Mode` make sure this is what you want. "<<std::endl;
+        for(int i=0; i<bkg.num_bins_total;i++){ 
+            for(int j=0; j<bkg.num_bins_total;j++){ 
+                if(i==j)continue;
+                (*cov)(i,j) =0.0;
+            }
+        }
+    }
+
     if(!stats_only){
 
         SBNcls cls_factory(&bkg, &sig,*cov);
+        cls_factory.SetTolerance(epsilon);
         if(sample_from_collapsed)  cls_factory.SetSampleFromCollapsed();
         if(sample_from_covariance) cls_factory.SetSampleCovariance();
         cls_factory.setMode(which_mode);
@@ -203,6 +227,7 @@ int main(int argc, char* argv[])
         cls_factory.CalcCLS(num_MC_events, tag);
     }else{
         SBNcls cls_factory(&bkg, &sig);
+        cls_factory.SetTolerance(epsilon);
         if(sample_from_collapsed)  cls_factory.SetSampleFromCollapsed();
         cls_factory.setMode(which_mode);
         if(tester){cls_factory.runConstraintTest();return 0;}

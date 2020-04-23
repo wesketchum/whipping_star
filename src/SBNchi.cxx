@@ -37,6 +37,7 @@ SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin, std::string in
     matrix_fractional_covariance = m;
     matrix_systematics.Zero();
     max_sample_chi_val =150.0;
+    m_tolerance = 1e-12;
 
     this->InitRandomNumberSeeds(random_seed);
     this->ReloadCoreSpectrum(&core_spectrum);
@@ -61,6 +62,7 @@ SBNchi::SBNchi(SBNspec in, std::string newxmlname) : SBNconfig(newxmlname), core
         }
     }
 
+    m_tolerance = 1e-12;
     pseudo_from_collapsed = false;
     max_sample_chi_val =150.0;
     matrix_fractional_covariance = FillSystematicsFromXML();
@@ -85,7 +87,7 @@ SBNchi::SBNchi(SBNspec in, bool is_is_stat_only): SBNconfig(in.xmlname), core_sp
     matrix_systematics.ResizeTo(num_bins_total, num_bins_total);
     matrix_fractional_covariance.ResizeTo(num_bins_total, num_bins_total);
 
-
+    m_tolerance = 1e-12;
     max_sample_chi_val =150.0;
     this->InitRandomNumberSeeds();
 
@@ -237,7 +239,7 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
         if(is_verbose)	std::cout<<otag<<"Total Mstat +matrix_systematics is symmetric"<<std::endl;
     }else{
 
-        double tol = 1e-13;
+        double tol = m_tolerance;
         double biggest_deviation = 0;
         int bi=0;
         int bj=0;
@@ -319,7 +321,7 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
 
     // test for validity
     bool is_small_negative_eigenvalue = false;
-    double tolerence_positivesemi = 1e-5;
+    double tolerence_positivesemi = m_tolerance;
 
 
     //if a matrix is (a) real and (b) symmetric (checked above) then to prove positive semi-definite, we just need to check eigenvalues and >=0;
@@ -1135,7 +1137,9 @@ int SBNchi::PrintMatricies(std::string tag){
 int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
     specin->CalcFullVector();
     is_verbose=false;
-    double tol = 1e-3;
+    double tol = m_tolerance;
+
+    std::cout<<" Starting Cholosky Decomp, tolderance is "<<tol<<" and sample_collapse "<<pseudo_from_collapsed<<std::endl;
 
     TMatrixD U  = matrix_fractional_covariance;
 
@@ -1149,7 +1153,6 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
                 U(i,j)=U(i,j)*specin->full_vector.at(i)*specin->full_vector.at(j);
         }
     }
-
 
     //New bit, do we collapse and sample from collapsed or full! Debugging April2020 Collab Meeting @ Zarkos info from MiniBooNE ERA
     int n_t = (pseudo_from_collapsed ? num_bins_total_compressed : num_bins_total);
@@ -1171,7 +1174,7 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
     // }
     // }
 
-    TMatrixDEigen eigen(U);
+    TMatrixDEigen eigen(U_use);
     TVectorD eigen_values = eigen.GetEigenValuesRe();
 
     for(int i=0; i< eigen_values.GetNoElements(); i++){
@@ -1179,13 +1182,13 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
             if(fabs(eigen_values(i))< tol){
                 if(is_verbose)std::cout<<"SBNchi::SampleCovariance\t|| cov has a very small, < "<<tol<<" , negative eigenvalue. Adding it back to diagonal of : "<<eigen_values(i)<<std::endl;
 
-                for(int a =0; a<U.GetNcols(); a++){
-                    U(a,a) += eigen_values(i);
+                for(int a =0; a<U_use.GetNcols(); a++){
+                    U_use(a,a) += eigen_values(i);
                 }
 
             }else{
                 std::cout<<"SBNchi::SampleCovariance\t|| 0 or negative eigenvalues! error: Value "<<eigen_values(i)<<" Tolerence "<<tol<<std::endl;
-                U.Print();
+                U_use.Print();
                 std::cout<<"Hmm"<<std::endl;
                 exit(EXIT_FAILURE);
             }
@@ -1194,37 +1197,37 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
         if(fabs(eigen_values(i))< tol){
             std::cout<<"WARNING: U has a very small, < "<<tol<<", eigenvalue "<<fabs(eigen_values(i))<<" which will fail to decompose. Adding "<<tol<<" to diagonal of U"<<std::endl;
 
-            for(int a =0; a<U.GetNcols(); a++){
-                U(a,a) += tol;
+            for(int a =0; a<U_use.GetNcols(); a++){
+                U_use(a,a) += tol;
             }
 
         }	
     }
 
     //Get a Determinant, check things.
-    double det = U.Determinant(); 
+    double det = U_use.Determinant(); 
     std::cout<<"Determinants U "<<det<<std::endl; 
-    U.Print();
+    //U_use.Print();
 
     if(det < tol){
         std::cout<<"Determinants are basically zero "<<det<<" "<<" tol "<<std::endl;
         std::cout<<"Adding on "<<tol<<std::endl;
 
-        for(int a =0; a<U.GetNcols(); a++){
-            U(a,a) += tol;
+        for(int a =0; a<U_use.GetNcols(); a++){
+            U_use(a,a) += tol;
         }
 
-        det = U.Determinant(); 
+        det = U_use.Determinant(); 
         std::cout<<"Determinant now "<<det<<std::endl;
     }
 
     //Seconndly attempt a Cholosky Decomposition
-    TDecompChol * chol = new TDecompChol(U,tol);
+    TDecompChol * chol = new TDecompChol(U_use,tol);
     bool worked = chol->Decompose();
 
     if(!worked){
         std::cout<<"SBNchi::SampleCovariance\t|| Cholosky Decomposition Failed: due to a tol "<<tol<<std::endl;
-        U.Print();
+        U_use.Print();
         std::cout<<"Wieth eigens"<<std::endl;
 
         for(int i=0; i< eigen_values.GetNoElements(); i++){
@@ -1240,10 +1243,9 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
     matrix_lower_triangular = upper_trian;
     matrix_lower_triangular.T();
 
-
     vec_matrix_lower_triangular.resize(n_t, std::vector<float>(n_t));
-    for(int i=0; i< num_bins_total; i++){
-        for(int j=0; j< num_bins_total; j++){
+    for(int i=0; i< n_t; i++){
+        for(int j=0; j< n_t; j++){
             vec_matrix_lower_triangular[i][j] = matrix_lower_triangular[i][j];
         }
     }
@@ -1534,11 +1536,9 @@ int SBNchi::CollapseVectorStandAlone(double* full_vector, double *collapsed_vect
     return 0;
 }
 
-
-
-
 std::vector<float> SBNchi::GeneratePseudoExperiment(){
 
+    core_spectrum.CollapseVector();
     if(!cholosky_performed || is_stat_only) PerformCholoskyDecomposition(&core_spectrum); 
 
     int n_t =  (pseudo_from_collapsed ? num_bins_total_compressed : num_bins_total); 
@@ -2133,4 +2133,6 @@ TH1D SBNchi::SamplePoissonVaryCore(SBNspec *specin, int num_MC){
     is_verbose = true;
     return ans;
 }
+
+
 

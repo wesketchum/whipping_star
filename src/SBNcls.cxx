@@ -36,6 +36,7 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
     if(draw_pseudo_from_collapsed){
         chi_h0.pseudo_from_collapsed = true;
         chi_h1.pseudo_from_collapsed = true;
+        std::cout<<"SBNcls::CalcCLS || Setting it so we sample from collapsed matrix"<<std::endl;
     }
     
     if(which_sample == 0){
