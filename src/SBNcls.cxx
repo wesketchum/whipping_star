@@ -113,13 +113,17 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 
     std::cout<<"We have "<<h1_results[i].m_pdf.Integral()<<" integral of H1 and "<<h0_results[i].m_pdf.Integral()<<" integral of H0 for metric "<<h1_results[i].m_tag<<std::endl;
     }
+
+
     std::cout << "Total wall time: " << difftime(time(0), start_time)/1.0 << " Secs.\n";
         
-    for(int i=0;i< h0_results.size();i++){
+    for(int i=0;i< 3;i++){
+    //for(int i=0;i< h0_results.size();i++){
             makePlots( h0_results[i], h1_results[i], tag+std::to_string(i), which_mode);
     }
 
-    //Constraint test
+    makePlots( h0_results[3], h0_results[4], tag+std::to_string(3)+"_Simple_true_H0", 0);
+    makePlots( h1_results[3], h1_results[4], tag+std::to_string(4)+"_Simple_true_H1", 0);
     
 
     return 0 ;
@@ -149,11 +153,12 @@ int SBNcls::makePlots(CLSresult &h0_result, CLSresult & h1_result, std::string t
     std::vector<double> quantiles(prob_values.size());	
     quantiles = h1_result.m_quantiles;
 
+    if(which_mode==1){
     //lets do CLs
     for(int p=0; p<pval.size();p++){
         vec_CLs.push_back(pval.at(p)/(1-prob_values.at(p)) );
     }
-
+    }
     TFile * fp = new TFile(("SBNfit_CLs_"+tag+".root").c_str(),"recreate");
     fp->cd();
     TCanvas *cp=new TCanvas();
@@ -191,7 +196,7 @@ int SBNcls::makePlots(CLSresult &h0_result, CLSresult & h1_result, std::string t
     std::vector<std::string> quantile_names = {"-2#sigma","-1#sigma","Median","+1#sigma","+2#sigma"};
     std::vector<int> cols ={kYellow-7, kGreen+1, kBlack,kGreen+1, kYellow-7};	
 
-    if(draw_both){
+    if(draw_both && which_mode==1){
         for(int i=0; i< quantiles.size(); i++){
             if(quantiles.size()!=pval.size() || quantiles.size() != prob_values.size() || quantiles.size() != vec_CLs.size()){
              //   std::cout<<quantiles.size()<<" "<<pval.size()<<" "<<prob_values.size()<<" "<<vec_CLs.size()<<std::endl;

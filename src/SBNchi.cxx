@@ -1177,16 +1177,20 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
     // }
     // }
 
+    bool was_modified = false;
+
     TMatrixDEigen eigen(U_use);
     TVectorD eigen_values = eigen.GetEigenValuesRe();
 
     for(int i=0; i< eigen_values.GetNoElements(); i++){
+        std::cout<<"SBNchi::CholeskyDecomposition\t||\t Eigenvalue "<<i<<" is "<<eigen_values(i)<<std::endl;
         if(eigen_values(i)<=0){
             if(fabs(eigen_values(i))< tol){
-                if(is_verbose)std::cout<<"SBNchi::SampleCovariance\t|| cov has a very small, < "<<tol<<" , negative eigenvalue. Adding it back to diagonal of : "<<eigen_values(i)<<std::endl;
+                if(is_verbose)std::cout<<"SBNchi::CholeskyDecomposition\t|| cov has a very small, < "<<tol<<" , negative eigenvalue. Adding it back to diagonal of : "<<eigen_values(i)<<std::endl;
 
                 for(int a =0; a<U_use.GetNcols(); a++){
                     U_use(a,a) += eigen_values(i);
+                    was_modified = true;
                 }
 
             }else{
@@ -1196,42 +1200,45 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
                 exit(EXIT_FAILURE);
             }
         }
-
-        if(fabs(eigen_values(i))< tol){
-            std::cout<<"WARNING: U has a very small, < "<<tol<<", eigenvalue "<<fabs(eigen_values(i))<<" which will fail to decompose. Adding "<<tol<<" to diagonal of U"<<std::endl;
-
-            for(int a =0; a<U_use.GetNcols(); a++){
-                U_use(a,a) += tol;
-            }
-
-        }	
     }
 
     //Get a Determinant, check things.
     double det = U_use.Determinant(); 
-    std::cout<<"Determinants U "<<det<<std::endl; 
-    //U_use.Print();
+    std::cout<<"SBNchi::CholeskyDecomposition\t||\t Checking determinant of Covariance Matrix: U "<<det<<std::endl; 
 
     if(det < tol){
-        std::cout<<"Determinants are basically zero "<<det<<" "<<" tol "<<std::endl;
-        std::cout<<"Adding on "<<tol<<std::endl;
-
+        std::cout<<"SBNchi::CholeskyDecomposition\t||\t This determinant is below tolerance of : "<<m_tolerance<<std::endl;
+        std::cout<<"SBNchi::CholeskyDecomposition\t||\t Going to add this back to diagonal of full covariance matrix : "<<tol<<std::endl;
         for(int a =0; a<U_use.GetNcols(); a++){
             U_use(a,a) += tol;
+            was_modified = true;
         }
-
         det = U_use.Determinant(); 
-        std::cout<<"Determinant now "<<det<<std::endl;
+        std::cout<<"SBNchi::CholeskyDecomposition\t||\t The modified determinant is now: "<<det<<std::endl;
     }
+
+    
+    //If everything is OK, lets pass this matrix back to SBNchi for use.
+    if(was_modified){
+
+        for(int i=0; i< n_t; i++){
+        for(int j=0; j< n_t; j++){
+                double mi = specin->full_vector.at(i)*specin->full_vector.at(j);
+                matrix_fractional_covariance(i,j) = (mi==0 ? 0 : U_use(i,j)/(mi));
+            }
+        }
+        this->ReloadCoreSpectrum(specin);
+    }
+
 
     //Seconndly attempt a Cholosky Decomposition
     TDecompChol * chol = new TDecompChol(U_use,tol);
     bool worked = chol->Decompose();
 
     if(!worked){
-        std::cout<<"SBNchi::SampleCovariance\t|| Cholosky Decomposition Failed: due to a tol "<<tol<<std::endl;
-        U_use.Print();
-        std::cout<<"Wieth eigens"<<std::endl;
+        std::cout<<"SBNchi::SampleCovariance\t|| Cholosky Decomposition Failed. Tolerance is set at "<<tol<<std::endl;
+        //U_use.Print();
+        std::cout<<"With eigens"<<std::endl;
 
         for(int i=0; i< eigen_values.GetNoElements(); i++){
             std::cout<<eigen_values(i)<<std::endl;
@@ -1250,8 +1257,25 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
     for(int i=0; i< n_t; i++){
         for(int j=0; j< n_t; j++){
             vec_matrix_lower_triangular[i][j] = matrix_lower_triangular[i][j];
+            std::cout<<"Flormph "<<i<<" "<<j<<" "<<vec_matrix_lower_triangular[i][j]<<" "<<U_use(i,j)<<std::endl;
         }
     }
+
+
+    //New Check, rebuild matrix and compare
+    TMatrixDSym rebuild = chol->GetMatrix();
+    for(int i=0; i< n_t; i++){
+        for(int j=0; j< n_t; j++){
+            if(fabs(rebuild(i,j)-U_use(i,j))>m_tolerance){
+                std::cout<<"ERROR the rebuilt matrix after Cholesky Decomp is not the same as the original."<<std::endl;
+                std::cout<<i<<" "<<j<<" Original: "<<U_use(i,j)<<" , Rebuild: "<<rebuild(i,j)<<" , Diff "<<U_use(i,j)-rebuild(i,j)<<std::endl;
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
+    std::cout<<"Rebuilt matrix is the same as input after Cholesky Decomp"<<std::endl;
+
+
 
     cholosky_performed = true;	
     delete chol;
@@ -1548,13 +1572,17 @@ std::vector<float> SBNchi::GeneratePseudoExperiment(){
     std::vector<float> sampled(n_t);
     is_verbose = false;
 
+
+    std::vector<double> v_gaus(n_t,0.0);
+    for(int i=0; i< n_t; ++i){
+                v_gaus[i] = (*m_dist_normal)(*rangen_twister); 
+    }
+
     for(int i=0; i< n_t; ++i){
         sampled[i] = (pseudo_from_collapsed ? core_spectrum.collapsed_vector[i] : core_spectrum.full_vector[i]); 
-
         if(!is_stat_only){
             for(int j=0; j<n_t; ++j){
-                float gaus = (*m_dist_normal)(*rangen_twister);
-                sampled[i] += vec_matrix_lower_triangular[i][j]*gaus;
+                sampled[i] += vec_matrix_lower_triangular[i][j]*v_gaus[j];
             }
         }
     }
@@ -1874,7 +1902,7 @@ TH1D SBNchi::SamplePoisson_NP(SBNspec *specin, SBNchi &chi_h0, SBNchi & chi_h1, 
 
 std::vector<CLSresult> SBNchi::Mike_NP(SBNspec *specin, SBNchi &chi_h0, SBNchi & chi_h1, int num_MC, int which_sample, int id){
 
-    std::vector<CLSresult> v_results(3);
+    std::vector<CLSresult> v_results(5);
 
     float** h0_vec_matrix_inverted = new float*[num_bins_total_compressed];
     float** h1_vec_matrix_inverted = new float*[num_bins_total_compressed];
@@ -1908,10 +1936,14 @@ std::vector<CLSresult> SBNchi::Mike_NP(SBNspec *specin, SBNchi &chi_h0, SBNchi &
     std::vector<float> vec_chis (num_MC, 0.0);
     std::vector<float> vec_pois (num_MC, 0.0);
     std::vector<float> vec_cnp (num_MC, 0.0);
+    std::vector<float> vec_h0 (num_MC, 0.0);
+    std::vector<float> vec_h1 (num_MC, 0.0);
 
     float* a_vec_chis  = (float*)vec_chis.data();
     float* a_vec_pois  = (float*)vec_pois.data();
     float* a_vec_cnp  = (float*)vec_cnp.data();
+    float* a_vec_h0  = (float*)vec_h0.data();
+    float* a_vec_h1  = (float*)vec_h1.data();
 
 
     float* sampled_fullvector = new float[num_bins_total] ;
@@ -1920,6 +1952,7 @@ std::vector<CLSresult> SBNchi::Mike_NP(SBNspec *specin, SBNchi &chi_h0, SBNchi &
 
     is_verbose = false;
     this->CollapseVectorStandAlone(a_specin, cv_collapsed);
+
 
     std::cout<<otag<<" Starting to generate "<<num_MC<<" Pseduo-Experiments."<<std::endl;
     for(int i=0; i < num_MC;i++){
@@ -1952,16 +1985,22 @@ std::vector<CLSresult> SBNchi::Mike_NP(SBNspec *specin, SBNchi &chi_h0, SBNchi &
         a_vec_chis[i] = val_chi_h0 - val_chi_h1;
         a_vec_pois[i] = val_pois_h0 - val_pois_h1;
         a_vec_cnp[i]  = val_cnp_h0 - val_cnp_h1;
+        a_vec_h0[i] = val_chi_h0;
+        a_vec_h1[i] = val_chi_h1;
 
         if(i%1000==0) std::cout<<"Pseudo-Experiment: "<<i<<"/"<<num_MC<<" DeltaChi: "<<a_vec_chis[i]<<" PoisLogLiki: "<<a_vec_pois[i]<<" CNP_chi: "<<a_vec_cnp[i]<<std::endl;
 
         if(a_vec_chis[i] < v_results[0].m_min_value) v_results[0].m_min_value = a_vec_chis[i];
         if(a_vec_pois[i] < v_results[1].m_min_value) v_results[1].m_min_value = a_vec_pois[i];
         if(a_vec_cnp[i]  < v_results[2].m_min_value) v_results[2].m_min_value = a_vec_cnp[i];
+        if(val_chi_h0  < v_results[3].m_min_value) v_results[3].m_min_value = val_chi_h0;
+        if(val_chi_h1  < v_results[4].m_min_value) v_results[4].m_min_value = val_chi_h1;
 
         if(a_vec_chis[i] > v_results[0].m_max_value) v_results[0].m_max_value = a_vec_chis[i];
         if(a_vec_pois[i] > v_results[1].m_max_value) v_results[1].m_max_value = a_vec_pois[i];
         if(a_vec_cnp[i]  > v_results[2].m_max_value) v_results[2].m_max_value = a_vec_cnp[i];
+        if(val_chi_h0  > v_results[3].m_max_value) v_results[3].m_max_value = val_chi_h0;
+        if(val_chi_h1  > v_results[4].m_max_value) v_results[4].m_max_value = val_chi_h1;
 
     }
 
@@ -1972,19 +2011,27 @@ std::vector<CLSresult> SBNchi::Mike_NP(SBNspec *specin, SBNchi &chi_h0, SBNchi &
     TH1D ans0(("0"+std::to_string(id)).c_str(),("0"+std::to_string(id)).c_str(),std::max(200,(int)v_results[0].m_max_value),v_results[0].m_min_value,v_results[0].m_max_value);
     TH1D ans1(("1"+std::to_string(id)).c_str(),("1"+std::to_string(id)).c_str(),std::max(200,(int)v_results[1].m_max_value),v_results[1].m_min_value,v_results[1].m_max_value);
     TH1D ans2(("2"+std::to_string(id)).c_str(),("2"+std::to_string(id)).c_str(),std::max(200,(int)v_results[2].m_max_value),v_results[2].m_min_value,v_results[2].m_max_value);
+    TH1D ans3(("3"+std::to_string(id)).c_str(),("3"+std::to_string(id)).c_str(),std::max(200,(int)v_results[3].m_max_value),v_results[3].m_min_value,v_results[3].m_max_value);
+    TH1D ans4(("4"+std::to_string(id)).c_str(),("4"+std::to_string(id)).c_str(),std::max(200,(int)v_results[4].m_max_value),v_results[4].m_min_value,v_results[4].m_max_value);
 
     for(int i=0; i<num_MC; i++){
         ans0.Fill(a_vec_chis[i]);
         ans1.Fill(a_vec_pois[i]);
         ans2.Fill(a_vec_cnp[i]);
+        ans3.Fill(a_vec_h0[i]);
+        ans4.Fill(a_vec_h1[i]);
     }
     v_results[0].m_pdf = ans0;
     v_results[1].m_pdf = ans1;
     v_results[2].m_pdf = ans2;
+    v_results[3].m_pdf = ans3;
+    v_results[4].m_pdf = ans4;
 
     v_results[0].m_values = vec_chis;
     v_results[1].m_values = vec_pois;
     v_results[2].m_values = vec_cnp;
+    v_results[3].m_values = vec_h0;
+    v_results[4].m_values = vec_h1;
 
     is_verbose = true;
 

@@ -206,6 +206,7 @@ int main(int argc, char* argv[])
         (*cov) = (*cov)+(frac_flat_matrix);
     }
 
+
     if(remove_correlations){
         std::cout<<"WARNING! We are running in   `Remove All Off Diagional Covariances/Correlations Mode` make sure this is what you want. "<<std::endl;
         for(int i=0; i<bkg.num_bins_total;i++){ 
@@ -216,8 +217,9 @@ int main(int argc, char* argv[])
         }
     }
 
-    if(!stats_only){
 
+    if(!stats_only){
+        std::cout<<"Not running in stats only mode"<<std::endl;
         SBNcls cls_factory(&bkg, &sig,*cov);
         cls_factory.SetTolerance(epsilon);
         if(sample_from_collapsed)  cls_factory.SetSampleFromCollapsed();
