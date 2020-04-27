@@ -1572,10 +1572,11 @@ std::vector<float> SBNchi::GeneratePseudoExperiment(){
     std::vector<float> sampled(n_t);
     is_verbose = false;
 
-
     std::vector<double> v_gaus(n_t,0.0);
     for(int i=0; i< n_t; ++i){
-                v_gaus[i] = (*m_dist_normal)(*rangen_twister); 
+        //v_gaus[i] = rangen->Gaus(0,1);
+        //v_gaus[i] = rangen->Uniform(-1,1); 
+        v_gaus[i] = (*m_dist_normal)(*rangen_twister); 
     }
 
     for(int i=0; i< n_t; ++i){

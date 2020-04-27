@@ -116,14 +116,16 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
 
 
     std::cout << "Total wall time: " << difftime(time(0), start_time)/1.0 << " Secs.\n";
-        
+    
+    std::vector<std::string> nice_names = {"Pearson_Chi","Poisson_Log_Likelihood","CNP_Chi"};
+
     for(int i=0;i< 3;i++){
     //for(int i=0;i< h0_results.size();i++){
-            makePlots( h0_results[i], h1_results[i], tag+std::to_string(i), which_mode);
+            makePlots( h0_results[i], h1_results[i], tag+nice_names[i], which_mode);
     }
 
-    makePlots( h0_results[3], h0_results[4], tag+std::to_string(3)+"_Simple_true_H0", 0);
-    makePlots( h1_results[3], h1_results[4], tag+std::to_string(4)+"_Simple_true_H1", 0);
+    makePlots( h0_results[3], h0_results[4], tag+"_Base_PearsonChi_true_H0", 0);
+    makePlots( h1_results[3], h1_results[4], tag+"_Base_PearsonChi_true_H1", 0);
     
 
     return 0 ;
@@ -177,6 +179,8 @@ int SBNcls::makePlots(CLSresult &h0_result, CLSresult & h1_result, std::string t
     h1_pdf.SetFillStyle(3454);
 
     h0_pdf.Draw("hist");
+
+    h0_pdf.SetTitle(tag.c_str());
 
     double maxval =std::max(  h0_pdf.GetMaximum(),h1_pdf.GetMaximum());
     double minval = 0;
