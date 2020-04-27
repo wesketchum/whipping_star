@@ -223,7 +223,8 @@ int SBNcls::makePlots(CLSresult &h0_result, CLSresult & h1_result, std::string t
                 a_string = "10^{"+to_string_prec(log10(pval[i]),2)+"}";
             }
 
-            std::string details =  ("#splitline{"+quantile_names.at(i)+"}{1-#beta(" +to_string_prec(1-prob_values.at(i),3) + ") #alpha("+ a_string +" | "+whatsigma+ ") CL_{s}("+to_string_prec(vec_CLs.at(i),3)+")}");
+            std::string details =  ("#splitline{"+quantile_names.at(i)+"}{1-#beta(" +to_string_prec(1-prob_values.at(i),3) + ") #alpha("+ a_string +" | "+whatsigma+ ")}");
+//          std::string details =  ("#splitline{"+quantile_names.at(i)+"}{1-#beta(" +to_string_prec(1-prob_values.at(i),3) + ") #alpha("+ a_string +" | "+whatsigma+ ") CL_{s}("+to_string_prec(vec_CLs.at(i),3)+")}");
             std::string details2 =  ("#splitline{"+quantile_names.at(i)+"}{1-#beta(" +to_string_prec(1-prob_values.at(i),10) + ") #alpha("+ to_string_prec(pval.at(i),10) +" | "+to_string_prec(pval2sig(pval.at(i)),1)+ "#sigma) CL_{s}("+to_string_prec(vec_CLs.at(i),10)+")}");
             std::cout<<details2<<std::endl;
             qvals->DrawLatexNDC(0.875, 0.2+i*0.1,details.c_str()  );

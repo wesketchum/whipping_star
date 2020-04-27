@@ -80,8 +80,9 @@ class SBNcls{
         /****************** Member Functions *************/
     int SetTolerance(double epsilon){
         m_tolerance = epsilon;
-        chi_h0.m_tolerance = m_tolerance;            
-        chi_h1.m_tolerance = m_tolerance;            
+        std::cout<<"SBNcls::SetTolerance || Set Tolerance of SBNchi's to "<<epsilon<<std::endl;
+        chi_h0.setTolerance(epsilon);            
+        chi_h1.setTolerance(epsilon);            
     };
     int SetSampleFromCollapsed(){draw_pseudo_from_collapsed = true;};
     int CalcCLS(int,std::string);

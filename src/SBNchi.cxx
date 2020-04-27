@@ -1151,6 +1151,9 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
                 U(i,j) = 0;
             else
                 U(i,j)=U(i,j)*specin->full_vector.at(i)*specin->full_vector.at(j);
+        
+            //Comment this in if you want to sample from full gaussian
+            //if(i==j)U(i,i)+=specin->full_vector.at(i);
         }
     }
 

@@ -166,6 +166,7 @@ namespace sbn{
 
             std::vector<std::vector<double >> TMatrixDToVector(TMatrixT <double> McI);
 
+            double setTolerance(double ep){m_tolerance = ep;};
 
             //Cholosky related
             int PerformCholoskyDecomposition(SBNspec *specin);
