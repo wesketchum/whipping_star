@@ -1220,7 +1220,8 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
     
     //If everything is OK, lets pass this matrix back to SBNchi for use.
     if(was_modified){
-
+        std::cout<<"We had to add on small diagonal terms to covariance matrix to Decompose it. Adding back to primary fractional covariance for consistency"<<std::endl;
+        std::cout<<"This potentially causes an infinite loop. Check"<<std::endl;
         for(int i=0; i< n_t; i++){
         for(int j=0; j< n_t; j++){
                 double mi = specin->full_vector.at(i)*specin->full_vector.at(j);
@@ -1257,7 +1258,7 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
     for(int i=0; i< n_t; i++){
         for(int j=0; j< n_t; j++){
             vec_matrix_lower_triangular[i][j] = matrix_lower_triangular[i][j];
-            std::cout<<"Flormph "<<i<<" "<<j<<" "<<vec_matrix_lower_triangular[i][j]<<" "<<U_use(i,j)<<std::endl;
+//            std::cout<<"Flormph "<<i<<" "<<j<<" "<<vec_matrix_lower_triangular[i][j]<<" "<<U_use(i,j)<<std::endl;
         }
     }
 
