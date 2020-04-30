@@ -190,6 +190,7 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
     }
 
 
+    /*
     TMatrixD Mcorr = matrix_systematics;
     //TEMP
     TFile *f = new TFile("gloop.root","recreate");
@@ -206,8 +207,7 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
     Hcorr.Write("corr");
     Hsys.Write("total");
     f->Close();
-
-
+    */
 
 
 
