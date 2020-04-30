@@ -67,6 +67,8 @@ int main(int argc, char* argv[])
     bool tester=false;
     double epsilon = 1e-12;
 
+    std::string legends;
+
     const struct option longopts[] =
     {
         {"xml", 		required_argument, 	0, 'x'},
@@ -77,6 +79,7 @@ int main(int argc, char* argv[])
         {"background", 	required_argument,	0,'b'},
         {"tag", 	    required_argument,	0,'t'},
         {"epsilon", required_argument,0,'e'},
+        {"legend",required_argument,0,'l'},
         {"cnp",no_argument,0,'a'},
         {"zero",no_argument,0,'z'},
         {"tester",no_argument,0,'k'},
@@ -88,7 +91,7 @@ int main(int argc, char* argv[])
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "m:a:x:n:s:e:b:c:f:t:pjkzh", longopts, &index);
+        iarg = getopt_long(argc,argv, "m:a:x:n:s:e:b:c:l:f:t:pjkzh", longopts, &index);
 
         switch(iarg)
         {
@@ -103,6 +106,9 @@ int main(int argc, char* argv[])
                 break;
             case 'm':
                 which_mode = (int)strtod(optarg,NULL);
+                break;
+            case 'l':
+                legends = optarg;
                 break;
             case 'x':
                 xml = optarg;
@@ -181,6 +187,8 @@ int main(int argc, char* argv[])
 
     std::cout<<"Loading background file : "<<background_file<<" with xml "<<xml<<std::endl;
     SBNspec bkg(background_file,xml);
+
+    std::cout<<"Legends are being set to "<<legends.size()<<std::endl;
 
     std::cout<<"Loading fractional covariance matrix from "<<covariance_file<<std::endl;
 

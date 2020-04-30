@@ -12,17 +12,17 @@ int SBNcls::SetSampleCovariance(){
 }
 
 
-double SBNcls::pval2sig1sided(double pval){
+double SBNcls::pval2sig2sided(double pval){
     return sqrt(2)*TMath::ErfInverse(1-pval);
 }
 
-double SBNcls::pval2sig2sided(double pval){
+double SBNcls::pval2sig1sided(double pval){
     return sqrt(2)*TMath::ErfInverse(1-pval*2.0);
 }
 
 double SBNcls::pval2sig(double pval){
     //for backward compatability, work
-    return pval2sig2sided(pval);
+    return pval2sig1sided(pval);
 }
 
 int SBNcls::setMode(int input_mode){
