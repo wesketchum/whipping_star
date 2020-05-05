@@ -1569,7 +1569,7 @@ int SBNcovariance::PrintMatricies(std::string tag) {
         }
     }
     c_coll_full->Write();
-    c_coll_full->SaveAs(("SBNfit_Collapsed_Fractional_Covariance_"+tag+".pdf").c_str(),"pdf");
+    c_coll_full->SaveAs(("SBNfit_Collapsed_Covariance_"+tag+".pdf").c_str(),"pdf");
 
         if (access("matrix_plots",F_OK) == -1){
             mkdir("matrix_plots",0777);//Create a folder for pdf.
@@ -1680,7 +1680,7 @@ int SBNcovariance::PrintMatricies(std::string tag) {
             }
         }
         c_coll_full->Write();
-        c_coll_full->SaveAs(("matrix_plots/SBNfit_Collapsed_Fractional_Covariance_"+tag+"_"+variations[m]+".pdf").c_str(),"pdf");
+        c_coll_full->SaveAs(("matrix_plots/SBNfit_Collapsed_Covariance_"+tag+"_"+variations[m]+".pdf").c_str(),"pdf");
 
 
     }
