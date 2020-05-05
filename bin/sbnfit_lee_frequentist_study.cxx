@@ -46,6 +46,7 @@ int main(int argc, char* argv[])
     int iarg = 0;
     opterr=1;
     int index;
+    bool sample_with_gaussian = false;
     bool sample_from_covariance = true;
     bool sample_from_collapsed = false;
     bool remove_correlations = false;
@@ -82,6 +83,7 @@ int main(int argc, char* argv[])
         {"legend",required_argument,0,'l'},
         {"cnp",no_argument,0,'a'},
         {"zero",no_argument,0,'z'},
+        {"gaussian",no_argument,0,'g'},
         {"tester",no_argument,0,'k'},
         {"poisson", no_argument,0,'p'},
         {"flat", required_argument,0,'f'},
@@ -91,7 +93,7 @@ int main(int argc, char* argv[])
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "m:a:x:n:s:e:b:c:l:f:t:pjkzh", longopts, &index);
+        iarg = getopt_long(argc,argv, "m:a:x:n:s:e:b:c:l:f:t:pjgkzh", longopts, &index);
 
         switch(iarg)
         {
@@ -135,6 +137,9 @@ int main(int argc, char* argv[])
             case 'c':
                 covariance_file = optarg;
                 break;
+            case 'g':
+                sample_with_gaussian  = true;
+                break;
             case 'n':
                 num_MC_events = (int)strtod(optarg,NULL);
                 break;
@@ -158,6 +163,7 @@ int main(int argc, char* argv[])
                 std::cout<<"\t-z\t--zero\t\tZero out all off diagonal elements of the systematics covariance matrix (default false, experimental!)"<<std::endl;
                 std::cout<<"\t-e\t--epsilon\t\tEpsilon tolerance by which to add back to diagonal of covariance matrix if determinant is 0 (default 1e-12)"<<std::endl;
                 std::cout<<"\t-n\t--number\t\tNumber of MC events for frequentist studies (default 100k)"<<std::endl;
+                std::cout<<"\t-g\t--gaussian\t\tSample by adding sqrt(N) to covariance rather than 2-step Poisson sampling (default: false)"<<std::endl;
                 std::cout<<"\t-m\t--mode\t\tMode for test statistics 0: absolute chi^2, 1: delta chi^2 (default Delta Chi| obsolete, runs all concurrently)"<<std::endl;
                 std::cout<<"\t-p\t--poisson\t\tUse Poissonian draws for pseudo experiments instead of from covariance matrix"<<std::endl;
                 std::cout<<"\t-h\t--help\t\t\tThis help menu."<<std::endl;
@@ -232,6 +238,8 @@ int main(int argc, char* argv[])
         cls_factory.SetTolerance(epsilon);
         if(sample_from_collapsed)  cls_factory.SetSampleFromCollapsed();
         if(sample_from_covariance) cls_factory.SetSampleCovariance();
+        if(sample_with_gaussian) cls_factory.SetGaussianSampling();
+
         cls_factory.setMode(which_mode);
         if(tester){cls_factory.runConstraintTest();return 0;}
         cls_factory.CalcCLS(num_MC_events, tag);
@@ -239,6 +247,7 @@ int main(int argc, char* argv[])
         SBNcls cls_factory(&bkg, &sig);
         cls_factory.SetTolerance(epsilon);
         if(sample_from_collapsed)  cls_factory.SetSampleFromCollapsed();
+        if(sample_with_gaussian) cls_factory.SetGaussianSampling();
         cls_factory.setMode(which_mode);
         if(tester){cls_factory.runConstraintTest();return 0;}
         cls_factory.CalcCLS(num_MC_events, tag);

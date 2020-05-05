@@ -48,6 +48,7 @@ class SBNcls{
 		rangen= new TRandom3(0);
         draw_pseudo_from_collapsed = false;
         m_tolerance = 1e-12;
+        sample_with_gaussian = false;
 	}
 	SBNcls(SBNspec *inh0, SBNspec * inh1) : h0(inh0), h1(inh1), chi_h0(*inh0),chi_h1(*inh1){
 		which_sample = 0; //default Poisson
@@ -57,6 +58,7 @@ class SBNcls{
 		rangen= new TRandom3(0);
         draw_pseudo_from_collapsed = false;
         m_tolerance = 1e-12;
+        sample_with_gaussian = false;
 	}
 
 
@@ -77,6 +79,7 @@ class SBNcls{
 	int which_sample;
     double maxchival;
 	bool draw_pseudo_from_collapsed;
+    bool sample_with_gaussian;
         /****************** Member Functions *************/
     int SetTolerance(double epsilon){
         m_tolerance = epsilon;
@@ -88,6 +91,8 @@ class SBNcls{
     int CalcCLS(int,std::string);
 	int SetSampleCovariance();
 	int SetSamplePoisson();
+
+    int SetGaussianSampling(){sample_with_gaussian = true;};
     double pval2sig(double p);
     double pval2sig1sided(double p);
     double pval2sig2sided(double p);
