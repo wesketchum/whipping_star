@@ -63,9 +63,10 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
 
         montecarlo_scale[fid] = montecarlo_scale[fid]*pot_scale;
 
+
         std::cout << otag<<"" << std::endl;
         std::cout << otag<<" TFile::Open() file=" << files[fid]->GetName() << " @" << files[fid] << std::endl;
-        std::cout << otag<<" Has POT " <<montecarlo_pot[fid] <<" and "<<nentries[fid] <<" entries "<<std::endl;
+        std::cout << otag<<" Has POT " <<montecarlo_pot[fid] <<" and "<<nentries[fid] <<" entries "<<". It has pot_scale "<<pot_scale<<" and montecarloe_scale "<<montecarlo_scale[fid]<<std::endl;
 
         auto montecarlo_file_friend_treename_iter = montecarlo_file_friend_treename_map.find(fn);
         if (montecarlo_file_friend_treename_iter != montecarlo_file_friend_treename_map.end()) {
