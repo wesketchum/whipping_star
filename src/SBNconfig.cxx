@@ -1,6 +1,7 @@
 #include "SBNconfig.h"
 using namespace sbn;
 
+
 //standard constructor given an .xml
 SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xmlname(whichxml) {
     otag = "SBNconfig::SBNconfig\t||\t";

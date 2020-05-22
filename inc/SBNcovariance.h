@@ -61,8 +61,10 @@ namespace sbn{
     int FormCovarianceMatrix(std::string tag);
     int WriteOut();
     int PrintMatricies(std::string tag);
+    int PrintMatricies(std::string tag,bool);
 
     int plot_one(TMatrixD matrix, std::string tag, TFile *fin,bool,bool);
+    int plot_one(TMatrixD matrix, std::string tag, TFile *fin,bool,bool,bool);
     int qualityTesting();
     virtual bool EventSelection(int file);
     virtual int FillHistograms(int file, int uni, double wei);

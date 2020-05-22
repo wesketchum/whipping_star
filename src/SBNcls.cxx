@@ -171,10 +171,11 @@ int SBNcls::makePlots(CLSresult &h0_result, CLSresult & h1_result, std::string t
     h0_pdf.Scale(1.0/h0_pdf.Integral("width"));
     h1_pdf.Scale(1.0/h1_pdf.Integral("width"));
 
-    h0_pdf.SetLineColor(kRed-7);
-    h1_pdf.SetLineColor(kBlue-4);
-    h0_pdf.SetFillColor(kRed-7);
-    h1_pdf.SetFillColor(kBlue-4);
+    h0_pdf.SetLineColor(colH0);
+    h1_pdf.SetLineColor(colH1);
+    h0_pdf.SetFillColor(colH0); //h0 kRed-7
+    h1_pdf.SetFillColor(colH1); //h1 kBlue-4
+
     h0_pdf.SetFillStyle(3445);
     h1_pdf.SetFillStyle(3454);
 
@@ -279,15 +280,15 @@ int SBNcls::makePlots(CLSresult &h0_result, CLSresult & h1_result, std::string t
     TLegend *leg = new TLegend(0.7,0.7,0.89,0.89);
     leg->SetLineWidth(0);
     leg->SetFillStyle(0);
-    leg->AddEntry(&h0_pdf,"H_{0}","lf");
-    if(draw_both)leg->AddEntry(&h1_pdf,"H_{1}","lf");
+    leg->AddEntry(&h0_pdf,legends[0].c_str(),"lf");
+    if(draw_both)leg->AddEntry(&h1_pdf,legends[1].c_str(),"lf");
     if(which_mode==0)leg->AddEntry(analytical_graph,("#chi^{2} PDF "+std::to_string(h0->num_bins_total_compressed)+" dof").c_str(),"l");
     leg->Draw();
 
     if(which_mode==0){
         h0_pdf.GetXaxis()->SetTitle("#chi^{2}");
     }else if(which_mode==1){
-        h0_pdf.GetXaxis()->SetTitle("#Delta #chi^{2} = #chi^{2}_{H0} - #chi^{2}_{H1} ");
+        h0_pdf.GetXaxis()->SetTitle(("#Delta #chi^{2} = #chi^{2}_{"+legends[0]+"} - #chi^{2}_{"+legends[1]+"} ").c_str());
     }
     h0_pdf.GetYaxis()->SetTitle("PDF");
 

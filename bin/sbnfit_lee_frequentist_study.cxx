@@ -68,7 +68,8 @@ int main(int argc, char* argv[])
     bool tester=false;
     double epsilon = 1e-12;
 
-    std::string legends;
+    bool reverse_colors = false;
+    std::string legends = "H_{0}|H_{1}";
 
     const struct option longopts[] =
     {
@@ -85,6 +86,7 @@ int main(int argc, char* argv[])
         {"zero",no_argument,0,'z'},
         {"gaussian",no_argument,0,'g'},
         {"tester",no_argument,0,'k'},
+        {"reverse",no_argument,0,'r'},
         {"poisson", no_argument,0,'p'},
         {"flat", required_argument,0,'f'},
         {"help",no_argument,0,'h'},
@@ -93,7 +95,7 @@ int main(int argc, char* argv[])
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "m:a:x:n:s:e:b:c:l:f:t:pjgkzh", longopts, &index);
+        iarg = getopt_long(argc,argv, "m:a:x:n:s:e:b:c:l:f:t:u:q:pjgrkzh", longopts, &index);
 
         switch(iarg)
         {
@@ -111,6 +113,9 @@ int main(int argc, char* argv[])
                 break;
             case 'l':
                 legends = optarg;
+                break;
+            case 'r':
+                reverse_colors = true;
                 break;
             case 'x':
                 xml = optarg;
@@ -194,7 +199,7 @@ int main(int argc, char* argv[])
     std::cout<<"Loading background file : "<<background_file<<" with xml "<<xml<<std::endl;
     SBNspec bkg(background_file,xml);
 
-    std::cout<<"Legends are being set to "<<legends.size()<<std::endl;
+    std::cout<<"Legends are being set to "<<legends<<std::endl;
 
     std::cout<<"Loading fractional covariance matrix from "<<covariance_file<<std::endl;
 
@@ -239,6 +244,8 @@ int main(int argc, char* argv[])
         if(sample_from_collapsed)  cls_factory.SetSampleFromCollapsed();
         if(sample_from_covariance) cls_factory.SetSampleCovariance();
         if(sample_with_gaussian) cls_factory.SetGaussianSampling();
+        if(reverse_colors)cls_factory.ReverseColours();
+        cls_factory.SetLegends(legends);
 
         cls_factory.setMode(which_mode);
         if(tester){cls_factory.runConstraintTest();return 0;}
@@ -248,8 +255,12 @@ int main(int argc, char* argv[])
         cls_factory.SetTolerance(epsilon);
         if(sample_from_collapsed)  cls_factory.SetSampleFromCollapsed();
         if(sample_with_gaussian) cls_factory.SetGaussianSampling();
+        if(reverse_colors)cls_factory.ReverseColours();
         cls_factory.setMode(which_mode);
+        
         if(tester){cls_factory.runConstraintTest();return 0;}
+
+        cls_factory.SetLegends(legends);
         cls_factory.CalcCLS(num_MC_events, tag);
     }
 

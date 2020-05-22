@@ -18,6 +18,7 @@
 #include "TRandom3.h"
 #include "TFile.h"
 #include "TStyle.h"
+#include "TText.h"
 #include "TLine.h"
 
 #include "params.h"
@@ -107,6 +108,7 @@ namespace sbn{
 
             /*********************************** Member Functions ********************************/	
 
+            int plot_one(TMatrixD matrix, std::string tag, TFile *fin,bool,bool,bool);
 
 
 
@@ -142,6 +144,11 @@ namespace sbn{
             int FillCollapsedCovarianceMatrix(TMatrixT<double>*);
             int FillCollapsedCorrelationMatrix(TMatrixT<double>*);
             int FillCollapsedFractionalMatrix(TMatrixT<double>*);
+
+            int FillCovarianceMatrix(TMatrixT<double>*);
+            int FillCorrelationMatrix(TMatrixT<double>*);
+            int FillFractionalMatrix(TMatrixT<double>*);
+
 
             //Return chi^2 from eith a SBnspec (RECCOMENDED as it checks to make sure xml compatable)
             //double CalcChi(SBNspec sigSpec);

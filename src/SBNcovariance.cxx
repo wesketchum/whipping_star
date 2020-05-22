@@ -1459,6 +1459,10 @@ int SBNcovariance::PrintVariations_2D(std::string tag){
 
 
 int SBNcovariance::PrintMatricies(std::string tag) {
+    this->PrintMatricies(tag, true);
+}
+
+int SBNcovariance::PrintMatricies(std::string tag, bool print_indiv) {
     std::cout << "SBNcovariance::PrintMatricies\t||\tStart" << std::endl;
 
     TFile* fout = new TFile(("SBNfit_covariance_plots_"+tag+".root").c_str(),"recreate");
@@ -1466,9 +1470,9 @@ int SBNcovariance::PrintMatricies(std::string tag) {
 
     gStyle->SetOptStat(0);
 
-    this->plot_one(full_correlation, "SBNfit_correlation_matrix_"+tag, fout, true,false);
     this->plot_one(full_covariance,  "SBNfit_covariance_matrix_"+tag, fout, true,false);
     this->plot_one(frac_covariance,  "SBNfit_fractional_covariance_matrix_"+tag, fout, true,false);
+    this->plot_one(full_correlation, "SBNfit_correlation_matrix_"+tag, fout, true,false,true);
 
     SBNchi collapse_chi(xmlname);
 
@@ -1513,7 +1517,7 @@ int SBNcovariance::PrintMatricies(std::string tag) {
     c_coll_corr->Write();
     c_coll_corr->SaveAs(("SBNfit_Collapsed_Correlation_"+tag+".pdf").c_str(),"pdf");
 
-        TH2D h2_coll_frac(coll_frac_covariance);
+    TH2D h2_coll_frac(coll_frac_covariance);
     h2_coll_frac.SetName("coll_frac");
     TCanvas *c_coll_frac = new TCanvas("collapsed fractional covariance matrix");
     c_coll_frac->cd();
@@ -1543,7 +1547,7 @@ int SBNcovariance::PrintMatricies(std::string tag) {
     c_coll_frac->SaveAs(("SBNfit_Collapsed_Fractional_Covariance_"+tag+".pdf").c_str(),"pdf");
 
 
-        TH2D h2_coll_full(coll_covariance);
+    TH2D h2_coll_full(coll_covariance);
     h2_coll_full.SetName("coll_full");
     TCanvas *c_coll_full = new TCanvas("collapsed covariance matrix");
     c_coll_full->cd();
@@ -1572,118 +1576,122 @@ int SBNcovariance::PrintMatricies(std::string tag) {
     c_coll_full->Write();
     c_coll_full->SaveAs(("SBNfit_Collapsed_Covariance_"+tag+".pdf").c_str(),"pdf");
 
-        if (access("matrix_plots",F_OK) == -1){
-            mkdir("matrix_plots",0777);//Create a folder for pdf.
-        }
+    if (access("matrix_plots",F_OK) == -1){
+        mkdir("matrix_plots",0777);//Create a folder for pdf.
+    }
 
 
-    for(int m=0; m< variations.size();m++){
-        this->plot_one(vec_full_correlation.at(m), "matrix_plots/varplot_Correlation_"+tag+"_"+variations.at(m), fout,true,true);
-        this->plot_one(vec_frac_covariance.at(m), "matrix_plots/varplot_Fractional_Covariance_"+tag+"_"+variations.at(m), fout,true,true);
-        this->plot_one(vec_full_covariance.at(m), "matrix_plots/varplot_Full_Covariance_"+tag+"_"+variations.at(m), fout,true,true);
+    if(print_indiv){
+        std::cout<<"Printing All Variations"<<std::endl;
 
-        //And collapsed
+        for(int m=0; m< variations.size();m++){
+            this->plot_one(vec_full_correlation.at(m), "matrix_plots/varplot_Correlation_"+tag+"_"+variations.at(m), fout,true,true);
+            this->plot_one(vec_frac_covariance.at(m), "matrix_plots/varplot_Fractional_Covariance_"+tag+"_"+variations.at(m), fout,true,true);
+            this->plot_one(vec_full_covariance.at(m), "matrix_plots/varplot_Full_Covariance_"+tag+"_"+variations.at(m), fout,true,true);
 
-        TMatrixT<double > coll_correlation(num_bins_total_compressed,num_bins_total_compressed);
-        TMatrixT<double > coll_frac_covariance(num_bins_total_compressed,num_bins_total_compressed);
-        TMatrixT<double > coll_covariance(num_bins_total_compressed,num_bins_total_compressed);
+            //And collapsed
 
-        collapse_chi.CollapseModes(vec_full_covariance.at(m), coll_covariance);
+            TMatrixT<double > coll_correlation(num_bins_total_compressed,num_bins_total_compressed);
+            TMatrixT<double > coll_frac_covariance(num_bins_total_compressed,num_bins_total_compressed);
+            TMatrixT<double > coll_covariance(num_bins_total_compressed,num_bins_total_compressed);
 
-        for(int i=0; i<num_bins_total_compressed; i++){
-            for(int j=0; j<num_bins_total_compressed; j++){
-                coll_frac_covariance(i,j) = coll_covariance(i,j)/(spec_central_value.collapsed_vector.at(i)*spec_central_value.collapsed_vector.at(j)) ;
-                coll_correlation(i,j)= coll_covariance(i,j)/(sqrt(coll_covariance(i,i))*sqrt(coll_covariance(j,j)));
-            }
-        }
+            collapse_chi.CollapseModes(vec_full_covariance.at(m), coll_covariance);
 
-        TH2D h2_coll_corr(coll_correlation);
-        h2_coll_corr.SetName(("coll_corr"+variations[m]).c_str());
-        TCanvas *c_coll_corr = new TCanvas(("collapsed correlation matrix"+ variations[m]).c_str());
-        c_coll_corr->cd();
-        c_coll_corr->SetFixedAspectRatio();
-        h2_coll_corr.Draw("colz");
-        h2_coll_corr.SetTitle(("Collapsed Correlation matrix | "+variations[m]).c_str());
-        h2_coll_corr.GetXaxis()->SetTitle("Reco Bin i");
-        h2_coll_corr.GetYaxis()->SetTitle("Reco Bin j");
-        c_coll_corr->SetRightMargin(0.150);
-
-        int use_coll_corr =0;
-        for(int im =0; im<num_modes; im++){
-            for(int id =0; id<num_detectors; id++){
-                for(int ic = 0; ic < num_channels; ic++){
-                    TLine *lv = new TLine(0, num_bins.at(ic)+use_coll_corr, num_bins_total_compressed, num_bins.at(ic)+use_coll_corr);
-                    TLine *lh = new TLine(num_bins.at(ic)+use_coll_corr,0, num_bins.at(ic)+use_coll_corr, num_bins_total_compressed);
-                    lv->SetLineWidth(1.5);
-                    lh->SetLineWidth(1.5);
-                    use_coll_corr+=num_bins.at(ic);
-                    lv->Draw();
-                    lh->Draw();
+            for(int i=0; i<num_bins_total_compressed; i++){
+                for(int j=0; j<num_bins_total_compressed; j++){
+                    coll_frac_covariance(i,j) = coll_covariance(i,j)/(spec_central_value.collapsed_vector.at(i)*spec_central_value.collapsed_vector.at(j)) ;
+                    coll_correlation(i,j)= coll_covariance(i,j)/(sqrt(coll_covariance(i,i))*sqrt(coll_covariance(j,j)));
                 }
             }
-        }
-        c_coll_corr->SaveAs(("matrix_plots/SBNfit_Collapsed_Correlation_"+tag+"_"+variations[m]+".pdf").c_str(),"pdf");
 
-        TH2D h2_coll_frac(coll_frac_covariance);
-        h2_coll_frac.SetName(("coll_frac"+variations[m]).c_str());
-        TCanvas *c_coll_frac = new TCanvas(("collapsed fractional covariance matrix"+variations[m]).c_str());
-        c_coll_frac->cd();
-        c_coll_frac->SetFixedAspectRatio();
-        h2_coll_frac.Draw("colz");
-        h2_coll_frac.SetTitle(("Collapsed fractional covariance matrix | "+ variations[m]).c_str());
-        h2_coll_frac.GetXaxis()->SetTitle("Reco Bin i");
-        h2_coll_frac.GetYaxis()->SetTitle("Reco Bin j");
+            TH2D h2_coll_corr(coll_correlation);
+            h2_coll_corr.SetName(("coll_corr"+variations[m]).c_str());
+            TCanvas *c_coll_corr = new TCanvas(("collapsed correlation matrix"+ variations[m]).c_str());
+            c_coll_corr->cd();
+            c_coll_corr->SetFixedAspectRatio();
+            h2_coll_corr.Draw("colz");
+            h2_coll_corr.SetTitle(("Collapsed Correlation matrix | "+variations[m]).c_str());
+            h2_coll_corr.GetXaxis()->SetTitle("Reco Bin i");
+            h2_coll_corr.GetYaxis()->SetTitle("Reco Bin j");
+            c_coll_corr->SetRightMargin(0.150);
 
-        c_coll_frac->SetRightMargin(0.150);
-
-        int use_coll_frac =0;
-        for(int im =0; im<num_modes; im++){
-            for(int id =0; id<num_detectors; id++){
-                for(int ic = 0; ic < num_channels; ic++){
-                    TLine *lv = new TLine(0, num_bins.at(ic)+use_coll_frac, num_bins_total_compressed, num_bins.at(ic)+use_coll_frac);
-                    TLine *lh = new TLine(num_bins.at(ic)+use_coll_frac,0, num_bins.at(ic)+use_coll_frac, num_bins_total_compressed);
-                    lv->SetLineWidth(1.5);
-                    lh->SetLineWidth(1.5);
-                    use_coll_frac+=num_bins.at(ic);
-                    lv->Draw();
-                    lh->Draw();
+            int use_coll_corr =0;
+            for(int im =0; im<num_modes; im++){
+                for(int id =0; id<num_detectors; id++){
+                    for(int ic = 0; ic < num_channels; ic++){
+                        TLine *lv = new TLine(0, num_bins.at(ic)+use_coll_corr, num_bins_total_compressed, num_bins.at(ic)+use_coll_corr);
+                        TLine *lh = new TLine(num_bins.at(ic)+use_coll_corr,0, num_bins.at(ic)+use_coll_corr, num_bins_total_compressed);
+                        lv->SetLineWidth(1.5);
+                        lh->SetLineWidth(1.5);
+                        use_coll_corr+=num_bins.at(ic);
+                        lv->Draw();
+                        lh->Draw();
+                    }
                 }
             }
-        }
-        c_coll_frac->Write();
-        c_coll_frac->SaveAs(("matrix_plots/SBNfit_Collapsed_Fractional_Covariance_"+tag+"_"+variations[m]+".pdf").c_str(),"pdf");
+            c_coll_corr->SaveAs(("matrix_plots/SBNfit_Collapsed_Correlation_"+tag+"_"+variations[m]+".pdf").c_str(),"pdf");
 
+            TH2D h2_coll_frac(coll_frac_covariance);
+            h2_coll_frac.SetName(("coll_frac"+variations[m]).c_str());
+            TCanvas *c_coll_frac = new TCanvas(("collapsed fractional covariance matrix"+variations[m]).c_str());
+            c_coll_frac->cd();
+            c_coll_frac->SetFixedAspectRatio();
+            h2_coll_frac.Draw("colz");
+            h2_coll_frac.SetTitle(("Collapsed fractional covariance matrix | "+ variations[m]).c_str());
+            h2_coll_frac.GetXaxis()->SetTitle("Reco Bin i");
+            h2_coll_frac.GetYaxis()->SetTitle("Reco Bin j");
 
-        TH2D h2_coll_full(coll_covariance);
-        h2_coll_full.SetName(("coll_full"+variations[m]).c_str());
-        TCanvas *c_coll_full = new TCanvas(("collapsed covariance matrix"+variations[m]).c_str());
-        c_coll_full->cd();
-        c_coll_full->SetFixedAspectRatio();
-        h2_coll_full.Draw("colz");
-        h2_coll_full.SetTitle(("Collapsed covariance matrix | "+variations[m]).c_str());
-        h2_coll_full.GetXaxis()->SetTitle("Reco Bin i");
-        h2_coll_full.GetYaxis()->SetTitle("Reco Bin j");
+            c_coll_frac->SetRightMargin(0.150);
 
-        c_coll_full->SetRightMargin(0.150);
-
-        int use_coll_full =0;
-        for(int im =0; im<num_modes; im++){
-            for(int id =0; id<num_detectors; id++){
-                for(int ic = 0; ic < num_channels; ic++){
-                    TLine *lv = new TLine(0, num_bins.at(ic)+use_coll_full, num_bins_total_compressed, num_bins.at(ic)+use_coll_full);
-                    TLine *lh = new TLine(num_bins.at(ic)+use_coll_full,0, num_bins.at(ic)+use_coll_full, num_bins_total_compressed);
-                    lv->SetLineWidth(1.5);
-                    lh->SetLineWidth(1.5);
-                    use_coll_full+=num_bins.at(ic);
-                    lv->Draw();
-                    lh->Draw();
+            int use_coll_frac =0;
+            for(int im =0; im<num_modes; im++){
+                for(int id =0; id<num_detectors; id++){
+                    for(int ic = 0; ic < num_channels; ic++){
+                        TLine *lv = new TLine(0, num_bins.at(ic)+use_coll_frac, num_bins_total_compressed, num_bins.at(ic)+use_coll_frac);
+                        TLine *lh = new TLine(num_bins.at(ic)+use_coll_frac,0, num_bins.at(ic)+use_coll_frac, num_bins_total_compressed);
+                        lv->SetLineWidth(1.5);
+                        lh->SetLineWidth(1.5);
+                        use_coll_frac+=num_bins.at(ic);
+                        lv->Draw();
+                        lh->Draw();
+                    }
                 }
             }
+            c_coll_frac->Write();
+            c_coll_frac->SaveAs(("matrix_plots/SBNfit_Collapsed_Fractional_Covariance_"+tag+"_"+variations[m]+".pdf").c_str(),"pdf");
+
+
+            TH2D h2_coll_full(coll_covariance);
+            h2_coll_full.SetName(("coll_full"+variations[m]).c_str());
+            TCanvas *c_coll_full = new TCanvas(("collapsed covariance matrix"+variations[m]).c_str());
+            c_coll_full->cd();
+            c_coll_full->SetFixedAspectRatio();
+            h2_coll_full.Draw("colz");
+            h2_coll_full.SetTitle(("Collapsed covariance matrix | "+variations[m]).c_str());
+            h2_coll_full.GetXaxis()->SetTitle("Reco Bin i");
+            h2_coll_full.GetYaxis()->SetTitle("Reco Bin j");
+
+            c_coll_full->SetRightMargin(0.150);
+
+            int use_coll_full =0;
+            for(int im =0; im<num_modes; im++){
+                for(int id =0; id<num_detectors; id++){
+                    for(int ic = 0; ic < num_channels; ic++){
+                        TLine *lv = new TLine(0, num_bins.at(ic)+use_coll_full, num_bins_total_compressed, num_bins.at(ic)+use_coll_full);
+                        TLine *lh = new TLine(num_bins.at(ic)+use_coll_full,0, num_bins.at(ic)+use_coll_full, num_bins_total_compressed);
+                        lv->SetLineWidth(1.5);
+                        lh->SetLineWidth(1.5);
+                        use_coll_full+=num_bins.at(ic);
+                        lv->Draw();
+                        lh->Draw();
+                    }
+                }
+            }
+            c_coll_full->Write();
+            c_coll_full->SaveAs(("matrix_plots/SBNfit_Collapsed_Covariance_"+tag+"_"+variations[m]+".pdf").c_str(),"pdf");
+
+
         }
-        c_coll_full->Write();
-        c_coll_full->SaveAs(("matrix_plots/SBNfit_Collapsed_Covariance_"+tag+"_"+variations[m]+".pdf").c_str(),"pdf");
-
-
     }
 
     fout->cd();
@@ -1693,8 +1701,11 @@ int SBNcovariance::PrintMatricies(std::string tag) {
     return 0;
 }
 
-
 int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool plot_pdf, bool indiv){
+return        plot_one(matrix,tag, fin, plot_pdf, indiv,false);
+}
+
+int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool plot_pdf, bool indiv, bool is_corr){
     fin->cd();
     if(indiv){
         TDirectory *individualDir = fin->GetDirectory("individualDir"); 
@@ -1704,6 +1715,8 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool p
         fin->cd(); 
         individualDir->cd();
     }
+    if(is_corr) gStyle->SetPalette(kLightTemperature);
+
     TH2D h2_full(matrix);
     h2_full.SetName((tag+"_th2d").c_str());
     TCanvas *c_full = new TCanvas((tag+"_canvas").c_str());
@@ -1715,6 +1728,7 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool p
     h2_full.GetYaxis()->SetTitle(" ");
     h2_full.GetYaxis()->SetLabelSize(0);
     //p_full->SetLogz();
+    if(is_corr)h2_full.GetZaxis()->SetRangeUser(-1,1);
 
     c_full->SetFrameFillColor(kWhite);
     c_full->SetFillColor(kWhite);
@@ -1775,8 +1789,9 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool p
                         lscv->SetLineStyle(9);
                         lsch->SetLineStyle(9);
 
-                        lscv->Draw();
-                        lsch->Draw();
+                        //Going to drop the little ones for now
+                        //lscv->Draw();
+                        //lsch->Draw();
 
                         use_full+=num_bins.at(ic);
 
@@ -1784,8 +1799,8 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool p
                 }
                 TLine *lv = new TLine(-num_bins_total*percent_left, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
                 TLine *lh = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total*1.045);
-                lv->SetLineWidth(3);
-                lh->SetLineWidth(3);
+                lv->SetLineWidth(2);
+                lh->SetLineWidth(2);
                 lv->SetLineColor(kRed);
                 lh->SetLineColor(kRed);
                 use_full+=num_bins.at(ic);

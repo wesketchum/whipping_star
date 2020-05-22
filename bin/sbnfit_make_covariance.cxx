@@ -60,6 +60,7 @@ int main(int argc, char* argv[])
         {"detsys",        no_argument,            0, 'd'},
         {"printall", 		no_argument, 		0, 'p'},
         {"tag", 		required_argument,	0, 't'},
+        {"minimal",     no_argument,    0, 'm'},
         {"help", 		no_argument,	0, 'h'},
 	{"constrain",		no_argument,    0, 'c'},
 
@@ -71,13 +72,14 @@ int main(int argc, char* argv[])
     int index;
     bool bool_use_universe = true;
     bool constrain_mode=false;
+    bool minimal_matrix_plots = false;
 
     //a tag to identify outputs and this specific run. defaults to EXAMPLE1
     std::string tag = "TEST";
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "x:t:dph", longopts, &index);
+        iarg = getopt_long(argc,argv, "x:t:mdph", longopts, &index);
 
         switch(iarg)
         {
@@ -93,6 +95,9 @@ int main(int argc, char* argv[])
             case 't':
                 tag = optarg;
                 break;
+            case 'm':
+                minimal_matrix_plots = true;
+                break;
 	    case 'c':
 	      constrain_mode=true;
 	      break;
@@ -107,6 +112,7 @@ int main(int argc, char* argv[])
                 std::cout<<"--- Optional arguments: ---"<<std::endl;
                 std::cout<<"\t-d\t--detsys\t use root files with systematically varied histograms (detsys) to build the covariance matrix" << std::endl;
                 std::cout<<"\t-p\t--printall\tRuns in BONUS print mode, making individual spectra plots for ALLVariations. (warning can take a while!) "<<std::endl;
+                std::cout<<"\t-m\t--minimal\tDoesn't print individual variations in matrix_plots"<<std::endl;
                 std::cout<<"\t-h\t--help\t\tThis help menu."<<std::endl;
                 std::cout<<"---------------------------------------------------"<<std::endl;
 
@@ -144,7 +150,7 @@ int main(int argc, char* argv[])
 
         //and make some plots of the resulting things
         //Will be outputted in the form: SBNfit_covariance_plots_TAG.root
-        example_covar.PrintMatricies(tag);
+        example_covar.PrintMatricies(tag,minimal_matrix_plots);
 
         //Constraint will be patched in shortly: mark
 	std::ofstream ratio_con;
@@ -173,7 +179,7 @@ int main(int argc, char* argv[])
 
         //and make some plots of the resulting things
         //Will be outputted in the form: SBNfit_covariance_plots_TAG.root
-        example_covar.PrintMatricies(tag);
+        example_covar.PrintMatricies(tag,minimal_matrix_plots);
 
         //Constraint will be patched in shortly: mark
         //example_covar.DoConstraint(0,1);

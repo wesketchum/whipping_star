@@ -41,6 +41,11 @@
 
 using namespace sbn;
 
+double lin_interp(double x0, double x1, double y0, double y1, double x){
+
+    return (y0*(x1-x)+y1*(x-x0))/(x1-x0);
+
+}
 /*************************************************************
  *************************************************************
  *		BEGIN sbnfit_make_covariance.cxx
@@ -227,8 +232,8 @@ int main(int argc, char* argv[])
         TFile *fin = new TFile(("SBNfeld_output_"+tag+".root").c_str(),"read");
 
         int plotting_true_gridpoint = 5;
-        std::vector<double> plotting_pvals = {0.6827, 0.90, 0.9545, 0.9973};
-        std::vector<std::string> plotting_strs = {"1#sigma","90%","2#sigma","3#sigma"};
+        std::vector<double> plotting_pvals = {0.68, 0.90, 0.95, 0.99};
+        std::vector<std::string> plotting_strs = {"68%","90%","95%","99%"};
 
         std::vector<double> v_median;
         std::vector<double> v_true;
@@ -253,14 +258,16 @@ int main(int argc, char* argv[])
 
                 //First lets find a critical chi^2 for this confidence level
                 double critical_delta_chi2 = 0;
+                double critical_delta_chi2_mid = 0;
                 for(int c = cumul->GetNbinsX()-1;  c>0 ; --c){
                     if(cumul->GetBinContent(c+1) >= plotting_pval && cumul->GetBinContent(c)< plotting_pval){
-                        critical_delta_chi2 = cumul->GetBinCenter(c);
+                        critical_delta_chi2_mid = cumul->GetBinCenter(c);
+                        critical_delta_chi2 = lin_interp(cumul->GetBinContent(c+1), cumul->GetBinContent(c), cumul->GetBinLowEdge(c+1), cumul->GetBinLowEdge(c)+cumul->GetBinWidth(c), plotting_pval);
                         break;
                     }
                 }
 
-                std::cout<<"Grid point "<<i<<" has a critical delta chi of "<<critical_delta_chi2<<" for a pval of "<<plotting_pval<<std::endl; 
+                std::cout<<"Grid point "<<i<<" has a critical delta chi of "<<critical_delta_chi2<<"("<<critical_delta_chi2_mid<<") for a pval of "<<plotting_pval<<std::endl; 
 
                 std::string nam = std::to_string(i)+"bfhist";
                 int Nentries = t->GetEntries(); 
@@ -290,11 +297,11 @@ int main(int argc, char* argv[])
         std::vector<TGraph*> gmins;
         std::vector<TGraph*> grshades;
 
-        std::vector<int> gcols = {kGreen+3,kGreen+2,kGreen-3,kGreen-6};
-        TLegend * l_probs = new TLegend(0.11,0.11,0.89,0.89);
+        std::vector<int> gcols = {kGreen+3,kGreen+2,kGreen-3,kGreen-9};
+        TLegend * l_probs = new TLegend(0.11,0.29,0.89,0.89);
 
         TMultiGraph *mg = new TMultiGraph();
-        mg->SetTitle("Feldman Cousins Corrected Confidence Belts");
+        mg->SetTitle("Feldman Cousins Corrected Confidence Belt");
 
         for(int p=plotting_pvals.size()-1; p>=0;--p){
             pad->cd();
@@ -302,6 +309,7 @@ int main(int argc, char* argv[])
             gmins.push_back(new TGraph(v_true.size(),&(v_min[p])[0], &v_true[0]));
             gmaxs.push_back(new TGraph(v_true.size(),&(v_max[p])[0], &v_true[0]));
             grshades.push_back( new TGraph(2*v_true.size()));
+
             for (int i=0;i<v_true.size();i++) {
                 int n = v_true.size();
                 grshades.back()->SetPoint(i,v_min[p][i],v_true[i]);
@@ -315,22 +323,41 @@ int main(int argc, char* argv[])
 
             l_probs->AddEntry(grshades.back(), plotting_strs[p].c_str() ,"f");
         }
+        l_probs->SetHeader("#splitline{#splitline{Classical}{Confidence}}{#splitline{Level of}{Interval}}");
 
         for(auto &g:grshades)mg->Add(g);
         pad->cd();
         mg->Draw("ALF");
         
-        mg->GetXaxis()->SetTitle("Measured signal strength (#hat{#mu})");
-        mg->GetYaxis()->SetTitle("True signal strength (#mu)");
+        mg->GetXaxis()->SetTitle("Measured #Delta Radiative Rate (#hat{x}_{#Delta})");
+        mg->GetYaxis()->SetTitle("True #Delta Radiative Rate (x_{#Delta})");
         mg->SetMinimum(v_true.front());
         mg->SetMinimum(v_true.front());
 
-        mg->GetXaxis()->SetLimits(v_true.front(),v_true.back());      
-        mg->GetHistogram()->SetMaximum(v_true.back());          
+        double mplot = 7.0;
+
+        mg->GetXaxis()->SetLimits(v_true.front(),mplot);      
+        mg->GetHistogram()->SetMaximum(mplot);//v_true.back());          
         mg->GetHistogram()->SetMinimum(v_true.front());     
  
         for(auto &g:gmins)g->Draw("l same");
         for(auto &g:gmaxs)g->Draw("l same");
+
+        
+        TLine lcross(v_true.front(),v_true.front(),mplot, mplot);
+        lcross.SetLineStyle(9);
+        lcross.SetLineWidth(1);
+        lcross.SetLineColor(kBlack);
+        lcross.Draw("same");
+
+
+        pad->Update();
+        pad->RedrawAxis();
+        // TLine l;
+          //  l.DrawLine(gPad->GetUxmin(), gPad->GetUymax(), gPad->GetUxmax(), gPad->GetUymax());
+            //   l.DrawLine(gPad->GetUxmax(), gPad->GetUymin(), gPad->GetUxmax(), gPad->GetUymax());
+
+
 
         c3->cd();
         TPad *padl = new TPad("padl", "padl", 0.8, 0, 1, 1);
@@ -341,7 +368,9 @@ int main(int argc, char* argv[])
         l_probs->Draw();
         l_probs->SetLineColor(kWhite);
         l_probs->SetLineWidth(0);
-        
+       
+
+
         c3->SaveAs(("FC_confidence_belt_"+tag+".pdf").c_str(),"pdf");
 
         std::cout<<"**************** Feldman Cousins 1D Confidence Intervals  **********************"<<std::endl;

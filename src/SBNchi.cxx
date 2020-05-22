@@ -831,35 +831,75 @@ TMatrixT<double> SBNchi::InvertMatrix(TMatrixT<double> &M){
  *			Misc
  * ************************************************************************/
 
+int SBNchi::FillCovarianceMatrix(TMatrixT<double>*in){
+    in->ResizeTo(num_bins_total,num_bins_total);
+    for(int i=0; i<num_bins_total;i++){
+        for(int j=0; j<num_bins_total;j++){
+            (*in)(i,j) = matrix_systematics(i,j);
+        }
+    }
+
+    return 0;
+}
+
 
 int SBNchi::FillCollapsedCovarianceMatrix(TMatrixT<double>*in){
     in->ResizeTo(num_bins_total_compressed,num_bins_total_compressed) ;
     for(int i=0; i<num_bins_total_compressed;i++){
         for(int j=0; j<num_bins_total_compressed;j++){
-            (*in)(i,j) = vec_matrix_collapsed.at(i).at(j);
+            (*in)(i,j) = vec_matrix_collapsed.at(i).at(j) - (i==j? core_spectrum.collapsed_vector.at(i) : 0.0 );
         }
     }
 
     return 0;
 }
 
+
+int SBNchi::FillCorrelationMatrix(TMatrixT<double>*in){
+    in->ResizeTo(num_bins_total,num_bins_total) ;
+    for(int i=0; i<num_bins_total;i++){
+        for(int j=0; j<num_bins_total;j++){
+                double val = matrix_systematics(i,j);
+                double p1 = sqrt(matrix_systematics(j,j)); 
+                double p2 = sqrt(matrix_systematics(i,i)); 
+                (*in)(i,j) = val/(p1*p2);
+        }
+    }
+    return 0;
+}
 
 int SBNchi::FillCollapsedCorrelationMatrix(TMatrixT<double>*in){
     in->ResizeTo(num_bins_total_compressed,num_bins_total_compressed) ;
     for(int i=0; i<num_bins_total_compressed;i++){
         for(int j=0; j<num_bins_total_compressed;j++){
-            (*in)(i,j) = vec_matrix_collapsed.at(i).at(j)/(sqrt(vec_matrix_collapsed.at(j).at(j))*sqrt(vec_matrix_collapsed.at(i).at(i)));
+                double val = vec_matrix_collapsed.at(i).at(j) - (i==j? core_spectrum.collapsed_vector.at(i) : 0.0 ); 
+                double p1 = sqrt(vec_matrix_collapsed.at(j).at(j)- core_spectrum.collapsed_vector.at(j)); 
+                double p2 = sqrt(vec_matrix_collapsed.at(i).at(i)- core_spectrum.collapsed_vector.at(i)); 
+                (*in)(i,j) = val/(p1*p2);
         }
     }
 
     return 0;
 }
 
+
+int SBNchi::FillFractionalMatrix(TMatrixT<double>*in){
+    in->ResizeTo(num_bins_total,num_bins_total) ;
+    for(int i=0; i<num_bins_total;i++){
+        for(int j=0; j<num_bins_total;j++){
+            (*in)(i,j) = ( matrix_systematics(i,j))/(core_spectrum.full_vector.at(i)*core_spectrum.full_vector.at(j));
+        }
+    }
+
+    return 0;
+}
+
+
 int SBNchi::FillCollapsedFractionalMatrix(TMatrixT<double>*in){
     in->ResizeTo(num_bins_total_compressed,num_bins_total_compressed) ;
     for(int i=0; i<num_bins_total_compressed;i++){
         for(int j=0; j<num_bins_total_compressed;j++){
-            (*in)(i,j) = vec_matrix_collapsed.at(i).at(j)/(core_spectrum.collapsed_vector.at(i)*core_spectrum.collapsed_vector.at(j));
+            (*in)(i,j) = ( vec_matrix_collapsed.at(i).at(j) - (i==j? core_spectrum.collapsed_vector.at(i) : 0.0 ) )/(core_spectrum.collapsed_vector.at(i)*core_spectrum.collapsed_vector.at(j));
         }
     }
 
@@ -1003,7 +1043,6 @@ int SBNchi::PrintMatricies(std::string tag){
     TFile* fout = new TFile(("SBNfit_collapsed_matrix_plots_"+tag+".root").c_str(),"recreate");
     fout->cd();
 
-
     gStyle->SetOptStat(0);
 
     TMatrixD full, frac, corr;
@@ -1012,51 +1051,25 @@ int SBNchi::PrintMatricies(std::string tag){
     this->FillCollapsedCorrelationMatrix(&corr);
 
     corr.Write();
-    TH2D h2_corr(corr);
-    h2_corr.SetName("corr");
-    //h2_corr.Write();
-    TCanvas *c_corr = new TCanvas("collapsed correlation matrix");
-    c_corr->cd();
-    c_corr->SetFixedAspectRatio();
-    h2_corr.Draw("colz");
-    h2_corr.SetTitle("Collapsed correlation matrix");
-    h2_corr.GetXaxis()->SetTitle("Reco Bin i");
-    h2_corr.GetYaxis()->SetTitle("Reco Bin j");
-
-    c_corr->SetRightMargin(0.150);
-
-    int use_corr =0;
-    for(int im =0; im<num_modes; im++){
-        for(int id =0; id<num_detectors; id++){
-            for(int ic = 0; ic < num_channels; ic++){
-                TLine *lv = new TLine(0, num_bins.at(ic)+use_corr, num_bins_total_compressed, num_bins.at(ic)+use_corr);
-                TLine *lh = new TLine(num_bins.at(ic)+use_corr,0, num_bins.at(ic)+use_corr, num_bins_total_compressed);
-                lv->SetLineWidth(1.5);
-                lh->SetLineWidth(1.5);
-                use_corr+=num_bins.at(ic);
-                lv->Draw();
-                lh->Draw();
-            }
-        }
-    }
-    c_corr->Write();
-
-
+    
     frac.Write();
     TH2D h2_frac(frac);
     //h2_frac.Write();
     h2_frac.SetName("frac");
     TCanvas *c_frac = new TCanvas("collapsed fractional covariance matrix");
-    c_frac->cd();
+    TPad* p_frac = (TPad*)c_frac->cd();
+    //p_frac->SetLogz();
     c_frac->SetFixedAspectRatio();
     h2_frac.Draw("colz");
     h2_frac.SetTitle("Collapsed fractional covariance matrix");
     h2_frac.GetXaxis()->SetTitle("Reco Bin i");
     h2_frac.GetYaxis()->SetTitle("Reco Bin j");
+//    h2_frac.GetZaxis()->SetRangeUser(-0.25,0.25);
 
     c_frac->SetRightMargin(0.150);
 
     int use_frac =0;
+    
     for(int im =0; im<num_modes; im++){
         for(int id =0; id<num_detectors; id++){
             for(int ic = 0; ic < num_channels; ic++){
@@ -1071,12 +1084,20 @@ int SBNchi::PrintMatricies(std::string tag){
         }
     }
     c_frac->Write();
+    c_frac->SaveAs(("SBNfit_collapsed_fractional_covariance_"+tag+".SBNplot.pdf").c_str(),"pdf");
+    
+    for(int i=0; i<h2_frac.GetNbinsX(); i++){
+            std::cout<<"Collapsed Frac "<<i<<" "<<sqrt(h2_frac.GetBinContent(i+1,i+1))*100.0<<std::endl;
+    }
+
+    for(int i=0; i<core_spectrum.collapsed_vector.size(); i++){
+        std::cout<<sqrt(core_spectrum.collapsed_vector.at(i))/core_spectrum.collapsed_vector.at(i)*100.0<<" ";
+            }std::cout<<std::endl;
 
 
     full.Write();
     TH2D h2_full(full);
-    //h2_full.Write();
-    h2_corr.SetName("full");
+    h2_full.SetName("full");
     TCanvas *c_full = new TCanvas("collapsed covariance matrix");
     c_full->cd();
     c_full->SetFixedAspectRatio();
@@ -1102,6 +1123,39 @@ int SBNchi::PrintMatricies(std::string tag){
         }
     }
     c_full->Write();
+    c_full->SaveAs(("SBNfit_collapsed_covariance_"+tag+".SBNplot.pdf").c_str(),"pdf");
+
+    gStyle->SetPalette(kLightTemperature);
+    TH2D h2_corr(corr);
+    h2_corr.SetName("corr");
+    //h2_corr.Write();
+    TCanvas *c_corr = new TCanvas("collapsed correlation matrix");
+    c_corr->cd();
+    c_corr->SetFixedAspectRatio();
+    h2_corr.Draw("colz");
+    h2_corr.SetTitle("Collapsed correlation matrix");
+    h2_corr.GetXaxis()->SetTitle("Reco Bin i");
+    h2_corr.GetYaxis()->SetTitle("Reco Bin j");
+    h2_corr.GetZaxis()->SetRangeUser(-1,1);
+    c_corr->SetRightMargin(0.150);
+
+    int use_corr =0;
+    for(int im =0; im<num_modes; im++){
+        for(int id =0; id<num_detectors; id++){
+            for(int ic = 0; ic < num_channels; ic++){
+                TLine *lv = new TLine(0, num_bins.at(ic)+use_corr, num_bins_total_compressed, num_bins.at(ic)+use_corr);
+                TLine *lh = new TLine(num_bins.at(ic)+use_corr,0, num_bins.at(ic)+use_corr, num_bins_total_compressed);
+                lv->SetLineWidth(1.5);
+                lh->SetLineWidth(1.5);
+                use_corr+=num_bins.at(ic);
+                lv->Draw();
+                lh->Draw();
+            }
+        }
+    }
+    c_corr->Write();
+    c_corr->SaveAs(("SBNfit_collapsed_correlation_"+tag+".SBNplot.pdf").c_str(),"pdf");
+
 
 
     TCanvas *chiogram = new TCanvas("Chi-o-gram","Chi-o-gram");
@@ -1129,7 +1183,155 @@ int SBNchi::PrintMatricies(std::string tag){
     }
     chiogram->Write();
 
+    gStyle->SetPalette(kBird);
+
+    TMatrixD ufull, ufrac, ucorr;
+    this->FillCovarianceMatrix(&ufull);
+    this->FillFractionalMatrix(&ufrac);
+    this->FillCorrelationMatrix(&ucorr);
+
+    plot_one(ufull,"SBNfit_uncollapsed_covariance_matrix_"+tag,fout,true,false,false);
+    plot_one(ufrac,"SBNfit_uncollapsed_fractional_covariance_matrix"+tag,fout,true,false,false);
+    plot_one(ucorr,"SBNfit_uncollapsed_correlation_matrix"+tag,fout,true,false,true);
+
     fout->Close();
+    return 0;
+}
+int SBNchi::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool plot_pdf, bool indiv, bool is_corr){
+    fin->cd();
+    if(indiv){
+        TDirectory *individualDir = fin->GetDirectory("individualDir"); 
+        if (!individualDir) { 
+            individualDir = fin->mkdir("individualDir");       
+        }
+        fin->cd(); 
+        individualDir->cd();
+    }
+    if(is_corr) gStyle->SetPalette(kLightTemperature);
+
+
+    if(is_corr){
+        for(int i=0; i<matrix.GetNrows();i++){
+            for(int j=0; j<matrix.GetNrows();j++){
+                double val = matrix(i,j);
+                if(val!=val || isinf(val) || std::isnan(val)){
+                    matrix(i,j)=0.0;
+                    matrix(i,i)=1.0;
+                    matrix(j,j)=1.0;
+                }
+               }
+
+        }
+    }
+
+    TH2D h2_full(matrix);
+    h2_full.SetName((tag+"_th2d").c_str());
+    TCanvas *c_full = new TCanvas((tag+"_canvas").c_str());
+    TPad *p_full = (TPad*)c_full->cd();
+    c_full->SetFixedAspectRatio();
+    h2_full.Draw("colz");
+    h2_full.SetTitle(tag.c_str());
+    h2_full.GetXaxis()->SetTitle("Global Bin Number");
+    h2_full.GetYaxis()->SetTitle(" ");
+    h2_full.GetYaxis()->SetLabelSize(0);
+    //p_full->SetLogz();
+    if(is_corr){
+        h2_full.GetZaxis()->SetRangeUser(-1,1);
+    }
+    else{
+        h2_full.GetZaxis()->SetRangeUser(-0.25,0.25);
+    }    
+
+    c_full->SetFrameFillColor(kWhite);
+    c_full->SetFillColor(kWhite);
+    p_full->SetFillColor(kWhite);
+
+
+    c_full->SetRightMargin(0.150);
+    c_full->SetLeftMargin(0.10);//0.250
+    c_full->SetTopMargin(0.10);
+    int use_full =0;
+
+    double percent_left = 0.05;//0.15
+    double nice_shift = num_bins_total*0.02;
+
+    for(int im =0; im<num_modes; im++){
+        for(int id =0; id<num_detectors; id++){
+            for(int ic = 0; ic < num_channels; ic++){
+                for(int isc = 0; isc < num_subchannels.at(ic); isc++){
+
+
+                    std::string mode_det = mode_names[im] +" " +detector_names[id];
+                    std::string chan_sub = channel_names[ic]+" "+subchannel_names[ic][isc];
+
+
+                    TText * tmd = new TText(-num_bins_total*percent_left*0.15, use_full+nice_shift*0.5, (mode_det+" "+chan_sub).c_str() );
+
+                    //TText * tmd = new TText(use_full*1.05, num_bins_total*1.015, chan_sub.c_str());
+                    //TText * tcs = new TText(use_full*1.05, num_bins_total*1.055, mode_det.c_str());
+                    tmd->SetTextColor(kBlack);
+                    //tcs->SetTextColor(kBlack);
+                    tmd->SetTextSize(0.03);
+                    tmd->SetTextAlign(31);
+                    //tcs->SetTextSize(0.03);
+                   
+                    //dont plot names ta the moment
+                    //tmd->Draw();
+                    //tcs->Draw();
+
+
+                    /*
+                       TText * tlow_bin = new TText(-num_bins_total*percent_left, use_full+nice_shift*0.5, to_string_prec(bin_edges[ic].front(),0).c_str());
+                       TText * thigh_bin = new TText(-num_bins_total*percent_left, (use_full+num_bins[ic])-nice_shift*1.4, to_string_prec(bin_edges[ic].back(),0).c_str());
+                       tlow_bin->SetTextSize(0.02);
+                       thigh_bin->SetTextSize(0.02);
+                       tlow_bin->Draw();
+                       thigh_bin->Draw();
+
+                       TText * tunit = new TText(-num_bins_total*percent_left, use_full+0.5*num_bins[ic], channel_units[ic].c_str());
+                       tunit->SetTextSize(0.03);
+                       tunit->Draw();
+                       */
+
+                    if(isc<num_subchannels[ic]-1){
+                        TLine *lscv = new TLine(-num_bins_total*percent_left, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
+                        TLine *lsch = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total*1.045);
+                        lscv->SetLineWidth(3);
+                        lsch->SetLineWidth(3);
+                        lscv->SetLineColor(kRed);
+                        lsch->SetLineColor(kRed);
+                        lscv->SetLineStyle(9);
+                        lsch->SetLineStyle(9);
+
+                        //Going to drop the little ones for now
+                        //lscv->Draw();
+                        //lsch->Draw();
+
+                        use_full+=num_bins.at(ic);
+
+                    }
+                }
+                TLine *lv = new TLine(-num_bins_total*percent_left, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
+                TLine *lh = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total*1.045);
+                lv->SetLineWidth(2);
+                lh->SetLineWidth(2);
+                lv->SetLineColor(kBlack);
+                lh->SetLineColor(kBlack);
+                use_full+=num_bins.at(ic);
+                lv->Draw();
+                lh->Draw();
+
+            }
+        }
+    }
+
+
+    c_full->Write();
+    if(plot_pdf) c_full->SaveAs((tag+".pdf").c_str(),"pdf");
+
+
+
+
     return 0;
 }
 
@@ -1167,7 +1369,6 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
     }
 
     //Stats error are NOT added back in herebut treat them as Poisson later. Seems better
-
     //TMatrixDEigen eigen (U); // This was original, but caused a lot of "Error in <MakeSchurr>: too many iterations". Move to explicit symmetric matrix
     //Is this Really the best way to construct?!?
     // TMatrixDSym U_explicit_sym(n_t);
@@ -1178,29 +1379,6 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
     // }
 
     bool was_modified = false;
-
-    TMatrixDEigen eigen(U_use);
-    TVectorD eigen_values = eigen.GetEigenValuesRe();
-
-    for(int i=0; i< eigen_values.GetNoElements(); i++){
-        std::cout<<"SBNchi::CholeskyDecomposition\t||\t Eigenvalue "<<i<<" is "<<eigen_values(i)<<std::endl;
-        if(eigen_values(i)<=0){
-            if(fabs(eigen_values(i))< tol){
-                if(is_verbose)std::cout<<"SBNchi::CholeskyDecomposition\t|| cov has a very small, < "<<tol<<" , negative eigenvalue. Adding it back to diagonal of : "<<eigen_values(i)<<std::endl;
-
-                for(int a =0; a<U_use.GetNcols(); a++){
-                    U_use(a,a) += eigen_values(i);
-                    was_modified = true;
-                }
-
-            }else{
-                std::cout<<"SBNchi::SampleCovariance\t|| 0 or negative eigenvalues! error: Value "<<eigen_values(i)<<" Tolerence "<<tol<<std::endl;
-                U_use.Print();
-                std::cout<<"Hmm"<<std::endl;
-                exit(EXIT_FAILURE);
-            }
-        }
-    }
 
     //Get a Determinant, check things.
     double det = U_use.Determinant(); 
@@ -1215,6 +1393,32 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
         }
         det = U_use.Determinant(); 
         std::cout<<"SBNchi::CholeskyDecomposition\t||\t The modified determinant is now: "<<det<<std::endl;
+    }
+
+
+    TMatrixDEigen eigen(U_use);
+    TVectorD eigen_values = eigen.GetEigenValuesRe();
+    TVectorD eigen_values_IM = eigen.GetEigenValuesIm();
+
+    int n_zeros = 0;
+    for(int i=0; i< eigen_values.GetNoElements(); i++){
+        std::cout<<"SBNchi::CholeskyDecomposition\t||\t Eigenvalue "<<i<<" is Re: "<<eigen_values(i)<<" Im: "<<eigen_values_IM(i)<<std::endl;
+        if(eigen_values(i)<tol){
+            if(fabs(eigen_values(i)) > 0){
+                if(is_verbose)std::cout<<"SBNchi::CholeskyDecomposition\t|| cov has a very small, < "<<tol<<" , negative eigenvalue. Adding it back to diagonal of : "<<eigen_values(i)<<std::endl;
+
+                for(int a =0; a<U_use.GetNcols(); a++){
+                    U_use(a,a) += eigen_values(i);
+                    was_modified = true;
+                }
+
+            }else{
+                std::cout<<"SBNchi::SampleCovariance\t|| 0 or negative eigenvalues! error: Value "<<eigen_values(i)<<" Tolerence "<<tol<<std::endl;
+                //U_use.Print();
+                //std::cout<<"Hmm"<<std::endl;
+                //exit(EXIT_FAILURE);
+            }
+        }
     }
 
     
@@ -1265,12 +1469,17 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
 
     //New Check, rebuild matrix and compare
     TMatrixDSym rebuild = chol->GetMatrix();
+    TMatrixD rebuild2 = matrix_lower_triangular*upper_trian;
+
     for(int i=0; i< n_t; i++){
         for(int j=0; j< n_t; j++){
-            if(fabs(rebuild(i,j)-U_use(i,j))>m_tolerance){
-                std::cout<<"ERROR the rebuilt matrix after Cholesky Decomp is not the same as the original."<<std::endl;
-                std::cout<<i<<" "<<j<<" Original: "<<U_use(i,j)<<" , Rebuild: "<<rebuild(i,j)<<" , Diff "<<U_use(i,j)-rebuild(i,j)<<std::endl;
-                exit(EXIT_FAILURE);
+            double fd1 = fabs(rebuild(i,j)-U_use(i,j))/fabs(rebuild(i,j)+U_use(i,j));
+            double fd2 = fabs(rebuild2(i,j)-U_use(i,j))/fabs(rebuild2(i,j)+U_use(i,j));
+            if( fd1>m_tolerance || fd2>m_tolerance){
+                //std::cout<<"ERROR the rebuilt matrix after Cholesky Decomp is not the same as the original."<<std::endl;
+                //std::cout<<i<<" "<<j<<" Original: "<<U_use(i,j)<<" , Rebuild: "<<rebuild(i,j)<<" , Diff "<<fd1<<std::endl;
+                //std::cout<<i<<" "<<j<<" Original: "<<U_use(i,j)<<" , Rebuild2: "<<rebuild2(i,j)<<" , Diff "<<fd2<<std::endl;
+                //exit(EXIT_FAILURE);
             }
         }
     }
