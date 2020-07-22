@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-
+    gSystem->Load("/uboone/app/users/markrl/Hive_v3.0/hellstroms_hive/hive/root_linkdefs/loc/SL7/denan_cxx.so");
 
     //std::string dict_location = "../libio/libEventWeight.so";
     //std::cout<<"Trying to load dictionary: "<<dict_location<<std::endl;
