@@ -35,4 +35,7 @@ target_link_libraries (sbnfit_lee_frequentist_study SBNfitlib tinyxmllib EventWe
 add_executable (sbnfit_scale_spec sbnfit_scale_spec.cxx)
 target_link_libraries (sbnfit_scale_spec SBNfitlib tinyxmllib EventWeight)
 
+add_executable (sbnfit_pi0_tests sbnfit_pi0_tests.cxx)
+target_link_libraries (sbnfit_pi0_tests SBNfitlib tinyxmllib EventWeight)
 
+ 

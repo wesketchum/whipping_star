@@ -52,17 +52,28 @@ int SBNfeld::GenerateScaledSpectra(){
     m_cv_spec_grid.resize(m_grid.f_num_total_points);
     m_core_spectrum->CalcFullVector();
 
+    std::vector<std::vector<double>> vgrid = m_grid.GetGrid();
 
     for(size_t t =0; t < m_grid.f_num_total_points; t++){
 
-        std::cout<<"SBNfeld::GenerateScaledSpectra()\t\t||\t\t On scaling point "<<t<<" which is "<<m_grid.f_dimensions[0].GetPoint(t)<<std::endl;
+        std::cout<<"SBNfeld::GenerateScaledSpectra()\t\t||\t\t On scaling point "<<t<<std::endl;
+
+        for(int i=0 ; i<m_grid.f_num_dimensions; i++){
+            std::cout<<"SBNfeld::GenerateScaledSpectra()\t\t||\t\t  which is "<<m_grid.f_dimensions[i].f_name<<" "<<vgrid[t][i]<<std::endl;
+        }
 
         m_cv_spec_grid[t] = new SBNspec(m_core_spectrum->full_vector,  m_core_spectrum->xmlname, t, false);
-        m_cv_spec_grid[t]->Scale(m_subchannel_to_scale, m_grid.f_dimensions[0].GetPoint(t));
+
+       
+        for(int i=0 ; i<m_grid.f_num_dimensions; i++){
+            m_cv_spec_grid[t]->Scale(m_grid.f_dimensions[i].f_name, vgrid[t][i]);
+        }
 
         m_cv_spec_grid[t]->CalcFullVector();
         m_cv_spec_grid[t]->CollapseVector();
+
     }
+
 }
 
 
@@ -90,10 +101,25 @@ int SBNfeld::GenerateBackgroundSpectrum(){
 
 }
 
+int SBNfeld::GenerateBackgroundScaledSpectrum(){
+
+    std::cout<<"SBNfeld::GenerateBackgroundScaledSpectrum()\t\t||\t\t Generating a background spectra"<<std::endl;
+
+    SBNspec background(m_core_spectrum->xmlname,false);
+    background.WriteOut(this->tag+"_BKG_ONLY");
+
+    std::cout<<"SBNfeld::GenerateBackgroundScaledSpectrum()\t\t||\t\t Done."<<std::endl;
+    return 0;
+
+}
+
+
 int SBNfeld::SetCoreSpectrum(std::string file){
 
+    std::cout<<"Set Core Spectrum1"<<std::endl;
     m_core_spectrum= new SBNosc(file,this->xmlname);
     m_bool_core_spectrum_set = true;
+    std::cout<<"Set Core Spectrum2"<<std::endl;
     return 0;
 }
 

@@ -480,6 +480,16 @@ int SBNcls::runConstraintTest(){
 }
 
 
+    int SBNcls::runPi0Tests(){
+
+
+
+
+
+    return 0;
+    }
+
+
 
 /*double SBNcls::NPCalculator(SBNchi * chi_H0, SBNchi *chi_H1, SBNspec * spec_H0, SBNspec * spec_H1){
   return 0;

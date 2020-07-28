@@ -131,6 +131,8 @@ colH0 = kRed-7;
     int runConstraintTest();
 
 
+    int runPi0Tests();
+
 };
 
 

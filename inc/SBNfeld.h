@@ -54,6 +54,8 @@ namespace sbn{
 
         TMatrixT<double> * m_full_fractional_covariance_matrix;
 
+
+
         SBNosc *m_core_spectrum;
         SBNosc *m_background_spectrum;
         SBNchi *m_background_chi;
@@ -119,6 +121,7 @@ namespace sbn{
 
         int SetRandomSeed(double);
 
+        int GenerateBackgroundScaledSpectrum();
         int GenerateBackgroundSpectrum(); 
         int SetBackgroundSpectrum(std::string filein, std::string scale_nam, double val);
         int LoadBackgroundSpectrum();
