@@ -13,7 +13,7 @@
 #include <TCanvas.h>
 #include <TLine.h>
 #include <TStyle.h>
-
+#include <TMatrixT.h>
 //#include <TROOT.h>
 #include <sstream>
 #include <iomanip>
@@ -135,7 +135,9 @@ namespace sbn{
 			
             std::vector<int> GetIndiciesFromSubchannel(std::string const & subchannel);
 			int CompareSBNspecs(SBNspec * compsec, std::string tag);
-			};
+	        int CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec, std::string tag);
+		
+    };
 
 
 

@@ -130,6 +130,9 @@ colH0 = kRed-7;
     int makePlots(CLSresult &h0_result, CLSresult & h1_result, std::string tag,  int which_mode=0);
     int runConstraintTest();
 
+    int compareToRealData(SBNspec * data);
+
+
 
     int runPi0Tests();
 

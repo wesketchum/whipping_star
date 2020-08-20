@@ -92,6 +92,8 @@ namespace sbn{
             TMatrixT<float> matrix_lower_triangular;
             std::vector<std::vector<float>> vec_matrix_lower_triangular;
 
+
+
             //Some reason eventually store the reuslt in vectors, I think there was memory issues.
             std::vector<std::vector<double >> vec_matrix_inverted;
             std::vector<std::vector<double >> vec_matrix_collapsed;
@@ -132,7 +134,9 @@ namespace sbn{
 
             TMatrixT<double> InvertMatrix(TMatrixT<double> &M);
             TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<double>& spec);
+            TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<double>& spec, bool);
             TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec);
+            TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec,bool);
             TMatrixT<double> CalcCovarianceMatrixCNP(TMatrixT<double> M, std::vector<double>& spec, std::vector<double>& spec_collapse, const std::vector<double>& datavec );
             TMatrixT<double> CalcCovarianceMatrixCNP(TMatrixT<double>* M, std::vector<double>& spec, const std::vector<float>& datavec );
 

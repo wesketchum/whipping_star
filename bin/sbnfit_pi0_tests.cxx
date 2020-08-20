@@ -160,8 +160,8 @@ int main(int argc, char* argv[])
 
     NGrid mygrid;
 
-    mygrid.AddDimension("NCPi0Coh", 0.13, 0.7, 0.02);
-    mygrid.AddDimension("NCPi0NotCoh",0.8, 1.2, 0.025); 
+    mygrid.AddDimension("NCPi0Coh", 0.0, 5, 0.05);
+    mygrid.AddDimension("NCPi0NotCoh",0.5, 1.0, 0.025); 
 
     //Print the grid interesting bits
     mygrid.Print();
@@ -220,6 +220,33 @@ int main(int argc, char* argv[])
                 myfeld.GlobalScan(grid_pt);
             }
             
+        }
+
+    }else if(mode_option=="genie"){
+
+        SBNspec * observed_spectrum = new SBNspec(data_filename, xml, false);
+        SBNspec * cv = new SBNspec(tag+"_CV.SBNspec.root",xml,false);
+        SBNchi * chi = new SBNchi(*cv, true);
+
+        TFile *f = new TFile("ALL.SBNcovar.root");
+        std::vector<std::string> All_Genie= {"AGKYpT1pi_UBGenie_frac_covariance","AGKYxF1pi_UBGenie_frac_covariance","AhtBY_UBGenie_frac_covariance","All_UBGenie_frac_covariance","AxFFCCQEshape_UBGenie_frac_covariance","BhtBY_UBGenie_frac_covariance","CV1uBY_UBGenie_frac_covariance","CV2uBY_UBGenie_frac_covariance","CoulombCCQE_UBGenie_frac_covariance","DecayAngMEC_UBGenie_frac_covariance","EtaNCEL_UBGenie_frac_covariance","FrAbs_N_UBGenie_frac_covariance","FrAbs_pi_UBGenie_frac_covariance","FrCEx_N_UBGenie_frac_covariance","FrCEx_pi_UBGenie_frac_covariance","FrInel_pi_UBGenie_frac_covariance","FrPiProd_N_UBGenie_frac_covariance","FrPiProd_pi_UBGenie_frac_covariance","FracDelta_CCMEC_UBGenie_frac_covariance","FracPN_CCMEC_UBGenie_frac_covariance","MFP_N_UBGenie_frac_covariance","MFP_pi_UBGenie_frac_covariance","MaCCQE_UBGenie_frac_covariance","MaCCRES_UBGenie_frac_covariance","MaNCEL_UBGenie_frac_covariance","MaNCRES_UBGenie_frac_covariance","MvCCRES_UBGenie_frac_covariance","MvNCRES_UBGenie_frac_covariance","NonRESBGvbarnCC1pi_UBGenie_frac_covariance","NonRESBGvbarnCC2pi_UBGenie_frac_covariance","NonRESBGvbarnNC1pi_UBGenie_frac_covariance","NonRESBGvbarnNC2pi_UBGenie_frac_covariance","NonRESBGvbarpCC1pi_UBGenie_frac_covariance","NonRESBGvbarpCC2pi_UBGenie_frac_covariance","NonRESBGvbarpNC1pi_UBGenie_frac_covariance","NonRESBGvbarpNC2pi_UBGenie_frac_covariance","NonRESBGvnCC1pi_UBGenie_frac_covariance","NonRESBGvnCC2pi_UBGenie_frac_covariance","NonRESBGvnNC1pi_UBGenie_frac_covariance","NonRESBGvnNC2pi_UBGenie_frac_covariance","NonRESBGvpCC1pi_UBGenie_frac_covariance","NonRESBGvpCC2pi_UBGenie_frac_covariance","NonRESBGvpNC1pi_UBGenie_frac_covariance","NonRESBGvpNC2pi_UBGenie_frac_covariance","NormCCCOH_UBGenie_frac_covariance","NormCCMEC_UBGenie_frac_covariance","NormNCCOH_UBGenie_frac_covariance","NormNCMEC_UBGenie_frac_covariance","RPA_CCQE_Reduced_UBGenie_frac_covariance","RPA_CCQE_UBGenie_frac_covariance","RootinoFix_UBGenie_frac_covariance","ThetaDelta2NRad_UBGenie_frac_covariance","Theta_Delta2Npi_UBGenie_frac_covariance","TunedCentralValue_UBGenie_frac_covariance","VecFFCCQEshape_UBGenie_frac_covariance","XSecShape_CCMEC_UBGenie_frac_covariance"};
+
+        
+        for(int i=0; i< All_Genie.size(); i++){
+            std::cout<<"Starting on "<<All_Genie[i]<<std::endl;
+            TMatrixT<double>* M = (TMatrixT<double>*)f->Get(("individualDir/"+All_Genie[i]).c_str());
+             std::cout<<"Loaded M "<<M->IsValid()<<std::endl;
+            cv->CollapseVector();
+            std::cout<<"AAGH1"<<std::endl;
+            TMatrixT<double> background_full_covariance_matrix = chi->CalcCovarianceMatrix(M, cv->full_vector);
+            std::cout<<"AAGH2"<<std::endl;
+            TMatrixT<double> background_collapsed_covariance_matrix(cv->num_bins_total_compressed, cv->num_bins_total_compressed);
+            std::cout<<"AAGH3"<<std::endl;
+            chi->CollapseModes(background_full_covariance_matrix, background_collapsed_covariance_matrix);    
+
+            std::cout<<"And WriteOut"<<std::endl;
+            cv->CompareSBNspecs(background_collapsed_covariance_matrix,observed_spectrum,All_Genie[i]);   
+
         }
 
 

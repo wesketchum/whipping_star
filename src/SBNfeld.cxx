@@ -705,6 +705,9 @@ std::vector<double> SBNfeld::GlobalScan(int which_pt){
         std::cout<<std::endl;
     }
 
+    
+    
+    
 
     return ans;
 };
@@ -749,10 +752,16 @@ std::vector<double> SBNfeld::GlobalScan(SBNspec * observed_spectrum){
     TMatrixT<double> bf_full_covariance_matrix = m_sbnchi_grid[0]->CalcCovarianceMatrix(m_full_fractional_covariance_matrix, *m_tvec_bf_spectrum);
     TMatrixT<double> bf_collapsed_covariance_matrix(bf_spec->num_bins_total_compressed, bf_spec->num_bins_total_compressed);
     m_sbnchi_grid[0]->CollapseModes(bf_full_covariance_matrix, bf_collapsed_covariance_matrix);    
+    
+    TMatrixT<double> bf_full_covariance_matrix_NOSTAT = m_sbnchi_grid[0]->CalcCovarianceMatrix(m_full_fractional_covariance_matrix, *m_tvec_bf_spectrum,false);
+    TMatrixT<double> bf_collapsed_covariance_matrix_NOSTAT(bf_spec->num_bins_total_compressed, bf_spec->num_bins_total_compressed);
+    m_sbnchi_grid[0]->CollapseModes(bf_full_covariance_matrix_NOSTAT, bf_collapsed_covariance_matrix_NOSTAT);    
+    
+    
     TMatrixT<double> inverse_bf_collapsed_covariance_matrix = m_sbnchi_grid[0]->InvertMatrix(bf_collapsed_covariance_matrix);   
 
 
-
+    std::vector<double> chis;
     for(size_t t =0; t < m_num_total_gridpoints; t++){
         std::cout<<"Starting on point "<<t<<"/"<<m_num_total_gridpoints<<std::endl;
         SBNchi *test_chi = m_sbnchi_grid.at(t); 
@@ -764,6 +773,7 @@ std::vector<double> SBNfeld::GlobalScan(SBNspec * observed_spectrum){
 
 
         double deltaChi = chiSq-chi_min;
+        chis.push_back(deltaChi);
 
         std::cout<<"ANS: "<<t<<" "<<chiSq<<" "<<deltaChi;
         for(int k=0; k<m_vec_grid[t].size();k++){
@@ -775,10 +785,34 @@ std::vector<double> SBNfeld::GlobalScan(SBNspec * observed_spectrum){
 
     }
 
+
+    std::vector<std::vector<double>> vgrid = m_grid.GetGrid();
+    TFile *f = new TFile("margin_test.root","recreate");
+    f->cd();
+        for(int i=0 ; i<m_grid.f_num_dimensions; i++){
+            std::vector<double> margin;
+            for(auto &pt: m_grid.f_dimensions[i].f_points){
+                double min_val = DBL_MAX;
+                for(size_t t =0; t < m_num_total_gridpoints; t++){
+                    if(vgrid[t][i]==pt){
+                        if(chis[t]<=min_val)min_val=chis[t];
+                    }
+                }
+                margin.push_back(min_val);
+            }
+            TGraph g(margin.size(),&(m_grid.f_dimensions[i].f_points)[0], &margin[0]);
+            g.Write();
+        }
+    f->Close();
+
     std::cout << "Check 1" << std::endl;
-    //m_cv_spec_grid[bf]->CompareSBNspecs(observed_spectrum, "Ans");
+    m_cv_spec_grid[bf]->CompareSBNspecs(bf_collapsed_covariance_matrix_NOSTAT,observed_spectrum, "Ans_"+tag);
     std::cout << "Check 2" << std::endl;
     return ans_out;
+
+
+
+
 };
 
 

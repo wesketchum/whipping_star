@@ -71,6 +71,8 @@ int main(int argc, char* argv[])
     bool reverse_colors = false;
     std::string legends = "H_{0}|H_{1}";
 
+    std::string real_data_string = "null";
+
     const struct option longopts[] =
     {
         {"xml", 		required_argument, 	0, 'x'},
@@ -85,6 +87,7 @@ int main(int argc, char* argv[])
         {"cnp",no_argument,0,'a'},
         {"zero",no_argument,0,'z'},
         {"gaussian",no_argument,0,'g'},
+        {"data",required_argument,0,'d'},
         {"tester",no_argument,0,'k'},
         {"reverse",no_argument,0,'r'},
         {"poisson", no_argument,0,'p'},
@@ -95,7 +98,7 @@ int main(int argc, char* argv[])
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "m:a:x:n:s:e:b:c:l:f:t:u:q:pjgrkzh", longopts, &index);
+        iarg = getopt_long(argc,argv, "m:d:a:x:n:s:e:b:c:l:f:t:u:q:pjgrkzh", longopts, &index);
 
         switch(iarg)
         {
@@ -151,6 +154,9 @@ int main(int argc, char* argv[])
             case 'p':
                 sample_from_covariance = false;
                 break;
+            case 'd':
+                real_data_string = optarg;
+                break;
             case '?':
             case 'h':
                 std::cout<<"---------------------------------------------------"<<std::endl;
@@ -171,6 +177,7 @@ int main(int argc, char* argv[])
                 std::cout<<"\t-g\t--gaussian\t\tSample by adding sqrt(N) to covariance rather than 2-step Poisson sampling (default: false)"<<std::endl;
                 std::cout<<"\t-m\t--mode\t\tMode for test statistics 0: absolute chi^2, 1: delta chi^2 (default Delta Chi| obsolete, runs all concurrently)"<<std::endl;
                 std::cout<<"\t-p\t--poisson\t\tUse Poissonian draws for pseudo experiments instead of from covariance matrix"<<std::endl;
+                std::cout<<"\t-d\t--data\t\tReal Data"<<std::endl;
                 std::cout<<"\t-h\t--help\t\t\tThis help menu."<<std::endl;
                 std::cout<<"---------------------------------------------------"<<std::endl;
                 return 0;	
@@ -237,6 +244,8 @@ int main(int argc, char* argv[])
     }
 
 
+
+
     if(!stats_only){
         std::cout<<"Not running in stats only mode"<<std::endl;
         SBNcls cls_factory(&bkg, &sig,*cov);
@@ -250,6 +259,15 @@ int main(int argc, char* argv[])
         cls_factory.setMode(which_mode);
         if(tester){cls_factory.runConstraintTest();return 0;}
         cls_factory.CalcCLS(num_MC_events, tag);
+
+        if(real_data_string!="null"){
+            SBNspec *data = new SBNspec(real_data_string,xml);
+            cls_factory.compareToRealData(data);
+            TMatrixD empty(data->num_bins_total_compressed,data->num_bins_total_compressed);
+            empty.Zero();
+            sig.CompareSBNspecs(empty,data,tag+"_datamc");
+        }
+
     }else{
         SBNcls cls_factory(&bkg, &sig);
         cls_factory.SetTolerance(epsilon);
@@ -263,6 +281,8 @@ int main(int argc, char* argv[])
         cls_factory.SetLegends(legends);
         cls_factory.CalcCLS(num_MC_events, tag);
     }
+
+
 
     return 0;
 }
