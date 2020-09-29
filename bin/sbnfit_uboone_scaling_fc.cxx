@@ -42,9 +42,7 @@
 using namespace sbn;
 
 double lin_interp(double x0, double x1, double y0, double y1, double x){
-
     return (y0*(x1-x)+y1*(x-x0))/(x1-x0);
-
 }
 /*************************************************************
  *************************************************************
@@ -63,11 +61,13 @@ void runHelp(){
                 std::cout<<"\t-m\t--mode\t\tWhat mode you want to run in. Arguments are:"<<std::endl;
                 std::cout<<"\t\t\t--\t feldman : Perform the pseudo universe grid scan (run first)"<<std::endl;  
                 std::cout<<"\t\t\t--\t belt: Constructs the confidence belts, must be run after'feldman'"<<std::endl;
+                std::cout<<"\t\t\t--\t data: Pass in an optional datafile, that will be compared to the grid"<<std::endl;
                 std::cout<<"--- Optional arguments: ---"<<std::endl;
                 std::cout<<"\t-s\t--stat\t\tStatistical error only mode, will ignore any covariance matrix passed in"<<std::endl;
                 std::cout<<"\t-n\t--number\t\tNumber of pseudo-experiments to simulate (default 2500)"<<std::endl; 
                 std::cout<<"\t-r\t--randomseed\t\tRandomNumber Seed (default from machine)"<<std::endl; 
                 std::cout<<"\t-c\t--cnp\t\tuse a Combined Newman Pearson chi2 (default false)"<<std::endl;
+                std::cout<<"\t-d\t--data\t\ta data SBNspec file to input, use with mode data"<<std::endl;
                 std::cout<<"\t-h\t--help\t\tThis help menu."<<std::endl;
                 std::cout<<"---------------------------------------------------"<<std::endl;
     return;
@@ -92,6 +92,7 @@ int main(int argc, char* argv[])
         {"grid", 		required_argument,	0,'g'},
         {"tag", 		required_argument,	0, 't'},
         {"mode",        required_argument, 0 ,'m'},
+        {"data",        required_argument, 0 ,'d'},
         {"input",       required_argument, 0 ,'i'},
         {"randomseed",        required_argument, 0 ,'r'},
         {"help", 		no_argument,	0, 'h'},
@@ -112,10 +113,11 @@ int main(int argc, char* argv[])
         
     std::string grid_string = "1e-4 8.0 33";
     std::string input_scale_subchannel = "unset";
+    std::string data_file_input = "null";
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "x:t:m:n:r:p:i:g:sch", longopts, &index);
+        iarg = getopt_long(argc,argv, "x:t:m:n:r:d:p:i:g:sch", longopts, &index);
 
         switch(iarg)
         {
@@ -131,6 +133,10 @@ int main(int argc, char* argv[])
             case 'g':
                 grid_string = optarg; 
                 break;
+            case 'd':
+                data_file_input = optarg; 
+                break;
+
             case 'i':
                 input_scale_subchannel = optarg;
                 break;
@@ -172,10 +178,10 @@ int main(int argc, char* argv[])
         return 0;
     }
     
-
     NGrid mygrid;
     mygrid.AddDimension("NCDeltaRadOverlaySM",grid_string);
-    
+   
+
     mygrid.Print();
     SBNfeld myfeld(mygrid,tag,xml);
 
@@ -222,8 +228,7 @@ int main(int argc, char* argv[])
         myfeld.CalcSBNchis();
         std::cout <<"DONE calculating the necessary SBNchi objects at : " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
 
-        std::cout<<"Beginning to peform FullFeldmanCousins analysis"<<std::endl;
-        SBNspec * datain = new SBNspec("datatest.root",xml);
+        SBNspec * datain = new SBNspec(data_file_input.c_str(),xml);
         myfeld.CompareToData(datain);
 
 
@@ -255,6 +260,7 @@ int main(int argc, char* argv[])
 
         TFile *fin = new TFile(("SBNfeld_output_"+tag+".root").c_str(),"read");
 
+        //Some Manual Color Changing and such
         int plotting_true_gridpoint = 5;
         //std::vector<double> plotting_pvals = {0.68, 0.90, 0.95, 0.99};
         std::vector<double> plotting_pvals = {0.68, 0.95};
@@ -314,7 +320,7 @@ int main(int argc, char* argv[])
         }
 
 
-        TCanvas *c3 = new TCanvas("hope3");
+        TCanvas *c3 = new TCanvas("h_ono_r3");
         c3->SetFillStyle(0);
 
         TPad *pad = new TPad("pad", "pad", 0, 0, 0.8, 1.0);
@@ -382,10 +388,8 @@ int main(int argc, char* argv[])
         pad->Update();
         pad->RedrawAxis();
         // TLine l;
-          //  l.DrawLine(gPad->GetUxmin(), gPad->GetUymax(), gPad->GetUxmax(), gPad->GetUymax());
-            //   l.DrawLine(gPad->GetUxmax(), gPad->GetUymin(), gPad->GetUxmax(), gPad->GetUymax());
-
-
+        //  l.DrawLine(gPad->GetUxmin(), gPad->GetUymax(), gPad->GetUxmax(), gPad->GetUymax());
+        //   l.DrawLine(gPad->GetUxmax(), gPad->GetUymin(), gPad->GetUxmax(), gPad->GetUymax());
 
         c3->cd();
         TPad *padl = new TPad("padl", "padl", 0.8, 0, 1, 1);

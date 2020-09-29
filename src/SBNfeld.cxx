@@ -501,7 +501,7 @@ int SBNfeld::CompareToData(SBNspec *datain){
     
    //Some BF 
     m_cv_spec_grid[bf_pt]->CompareSBNspecs(background_collapsed_covariance_matrix,datain, "DatFeld_"+tag);
-    std::cout<<"Delta Chi "<<delta_chi<<" Chi^Min "<<chi_min<<" BF_val "<<bf_val<<" BF_PT "<<bf_pt<<std::endl;
+    std::cout<<"DATA_Comparason_Point : Delta Chi "<<delta_chi<<" Chi^Min "<<chi_min<<" BF_val "<<bf_val<<" BF_PT "<<bf_pt<<std::endl;
     return 0;
 };
 
