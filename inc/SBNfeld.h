@@ -107,6 +107,7 @@ namespace sbn{
 
         int UseCNP(){m_use_CNP = true;};
         int FullFeldmanCousins();
+        int CompareToData(SBNspec *datain);
         int PointFeldmanCousins(size_t);
         std::vector<double> GlobalScan();
         std::vector<double> GlobalScan(int);

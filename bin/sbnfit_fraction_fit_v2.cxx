@@ -165,9 +165,9 @@ int main(int argc, char* argv[])
     NGrid mygrid;
 
     //now only available for 2 subchannels only
-    mygrid.AddDimension("NCPi0Coh", 0, 4, 0.05);   //0.1 FULL
-    mygrid.AddDimension("NCPi0NotCoh", 0., 2, 0.05);   //0.1 FULL
-    //mygrid.AddDimension("NCDeltaRadOverlaySM", 0., 4, 0.2);   //0.1 FULL
+    mygrid.AddDimension("NCPi0Coh", 1.001, 1.002, 0.001);   //0.1 FULL
+    //mygrid.AddDimension("NCPi0NotCoh", 0., 2, 0.05);   //0.1 FULL
+    mygrid.AddDimension("NCDeltaRadOverlaySM", 0., 5, 0.05);   //0.1 FULL
 
 
     std::cout << "Fraction Fit|| "<< "\tStart initializing MC and data spectrum" << std::endl;
@@ -181,7 +181,9 @@ int main(int argc, char* argv[])
 
     //compare plots before the fit
     tag = "before_fit";
-    mc_spec.CompareSBNspecs(&data_spec, tag);
+    TMatrixT<double> tt(data_spec.num_bins_total_compressed,data_spec.num_bins_total_compressed);
+    tt.Zero();
+    mc_spec.CompareSBNspecs(tt,&data_spec, tag);
     tag.clear();
 
 

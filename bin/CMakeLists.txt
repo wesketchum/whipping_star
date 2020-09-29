@@ -9,6 +9,8 @@ target_link_libraries (sbnfit_plot_covariance SBNfitlib tinyxmllib EventWeight)
 add_executable (sbnfit_fix_fractional sbnfit_fix_fractional.cxx)
 target_link_libraries (sbnfit_fix_fractional SBNfitlib tinyxmllib EventWeight)
 
+add_executable (sbnfit_merge_fractional sbnfit_merge_fractional.cxx)
+target_link_libraries (sbnfit_merge_fractional SBNfitlib tinyxmllib EventWeight)
 
 add_executable (sbnfit_make_spec sbnfit_make_spec.cxx)
 target_link_libraries (sbnfit_make_spec SBNfitlib tinyxmllib EventWeight)

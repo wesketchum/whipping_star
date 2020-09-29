@@ -138,9 +138,16 @@ int main(int argc, char* argv[])
                                if(isinf(dval) || isnan(dval) || dval!=dval) continue;
                                if(dval>max_err)max_err = dval; 
                         }
+
                         if(max_err <0){
-                            std::cout<<"There are no non-zero in subchannel, setting to 100% "<<std::endl;
-                            max_err = 1.0;
+                             //Add a check for BNBext or subchannels we do not want to set.
+                            if(core.vec_is_data[wh]==1){
+                                std::cout<<"Although 0 in subchannel, this is assigned as data so no scaling." <<std::endl;
+                                max_err = 0.0;
+                            }else{
+                                std::cout<<"There are no non-zero in subchannel, setting to 100% "<<std::endl;
+                                max_err = 1.0;
+                            }
                         }else{
                             std::cout<<"The max error in other bins is "<<max_err<<std::endl;
                         }

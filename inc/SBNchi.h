@@ -6,6 +6,7 @@
 #include <iostream>
 #include <ctime>
 #include <random>
+#include <sys/stat.h>
 
 #include "SBNspec.h"
 #include "SBNconfig.h"
@@ -31,6 +32,8 @@
 #include <Eigen/SVD>
 
 namespace sbn{
+
+    std::vector<TMatrixT<double>> splitNormShape(TMatrixT<double> & Min);
 
     struct CLSresult{
 

@@ -55,6 +55,7 @@ int main(int argc, char* argv[])
     const struct option longopts[] =
     {
         {"tag", 		required_argument,	0, 't'},
+        {"force", 		no_argument,	0, 'f'},
         {"covars", 		required_argument,	0, 'c'},
         {"help", 		no_argument,	0, 'h'},
         {0,			    no_argument, 		0,  0},
@@ -66,6 +67,7 @@ int main(int argc, char* argv[])
     std::vector<std::string> covar_files;
     bool stats_only = true;
     std::string signal_file;
+    bool force = false;
 
     bool bool_flat_det_sys = false;
     double flat_det_sys_percent = 0.0;
@@ -77,7 +79,7 @@ int main(int argc, char* argv[])
     int oi = 0;
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "f:s:c:t:zh", longopts, &index);
+        iarg = getopt_long(argc,argv, "fs:c:t:zh", longopts, &index);
         switch(iarg)
         {
             case 't':
@@ -88,7 +90,9 @@ int main(int argc, char* argv[])
                 for (int i = optind; i < argc; i++) {
                     covar_files.push_back(argv[i]);
                 }
-
+                break;
+            case 'f':
+                force = true;
                 break;
 
             case '?':
@@ -100,6 +104,7 @@ int main(int argc, char* argv[])
                 std::cout<<"\t-t\t--tag\t\tA unique tag to identify the outputs [Default to TEST]"<<std::endl;
                 std::cout<<"\t-c\t--covars\t\tWhat SBNcovars to merge"<<std::endl;
                 std::cout<<"--- Optional arguments: ---"<<std::endl;
+                std::cout<<"\t-f\t--force\t\t Forces even if nans present"<<std::endl;
                 std::cout<<"\t-h\t--help\t\tThis help menu."<<std::endl;
                 std::cout<<"---------------------------------------------------"<<std::endl;
 
@@ -140,10 +145,15 @@ int main(int argc, char* argv[])
         for(int i=0; i< fmats.back().GetNrows(); i++){
             for(int j=0; j< fmats.back().GetNrows(); j++){
                   if(isnan(fmats.back()(i,j)) || fmats.back()(i,j)!=fmats.back()(i,j) || isinf(fmats.back()(i,j))){
-                     std::cout<<"ERROR ERROR We have a NAN or INF , at "<<i<<" "<<j<<" "<<fmats.back()(i,j)<<std::endl;
+
+                      if(!force){
+                          std::cout<<"ERROR ERROR We have a NAN or INF , at "<<i<<" "<<j<<" "<<fmats.back()(i,j)<<std::endl;
                      std::cout<<"In Matrix "<<s<<std::endl;
                      std::cout<<"Shouldnt be the case, fix before merging or it will break"<<std::endl;
                     exit(EXIT_FAILURE);
+                      }else{
+                        fmats.back()(i,j)=0.0;
+                      }
                   }
             }
         }  

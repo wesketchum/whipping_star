@@ -181,7 +181,9 @@ int main(int argc, char* argv[])
     
     //compare plots before the fit
     tag = "before_fit";
-    mc_spec.CompareSBNspecs(&data_spec, tag);
+    TMatrixT<double> tt(data_spec.num_bins_total_compressed,data_spec.num_bins_total_compressed);
+    tt.Zero();
+    mc_spec.CompareSBNspecs(tt,&data_spec, tag);
     tag.clear();
 
 

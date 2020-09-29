@@ -174,7 +174,7 @@ int main(int argc, char* argv[])
     
 
     NGrid mygrid;
-    mygrid.AddDimension("scale",grid_string);
+    mygrid.AddDimension("NCDeltaRadOverlaySM",grid_string);
     
     mygrid.Print();
     SBNfeld myfeld(mygrid,tag,xml);
@@ -203,6 +203,30 @@ int main(int argc, char* argv[])
         std::cout<<"Beginning to peform FullFeldmanCousins analysis"<<std::endl;
         myfeld.FullFeldmanCousins();
 
+    }else if(mode_option=="data"){
+
+        std::cout<<"Begininning a real data analysis for tag : "<<tag<<std::endl;
+
+        myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
+        myfeld.m_subchannel_to_scale = input_scale_subchannel;
+
+        myfeld.SetCoreSpectrum(tag+"_CV.SBNspec.root");
+        myfeld.SetBackgroundSpectrum(tag+"_CV.SBNspec.root",input_scale_subchannel,1.0);
+        myfeld.GenerateScaledSpectra();
+
+        std::cout<<"Setting random seed "<<random_number_seed<<std::endl;
+        myfeld.SetRandomSeed(random_number_seed);
+        myfeld.SetNumUniverses(number);
+
+        std::cout<<"Calculating the necessary SBNchi objects"<<std::endl;
+        myfeld.CalcSBNchis();
+        std::cout <<"DONE calculating the necessary SBNchi objects at : " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
+
+        std::cout<<"Beginning to peform FullFeldmanCousins analysis"<<std::endl;
+        SBNspec * datain = new SBNspec("datatest.root",xml);
+        myfeld.CompareToData(datain);
+
+
     }else if(mode_option == "belt"){
 
         if(bool_stat_only){
@@ -217,7 +241,7 @@ int main(int argc, char* argv[])
         if(use_cnp) myfeld.UseCNP();
 
         myfeld.SetCoreSpectrum(tag+"_CV.SBNspec.root");
-        myfeld.SetBackgroundSpectrum(tag+"_CV.SBNspec.root",input_scale_subchannel,0.0);
+        myfeld.SetBackgroundSpectrum(tag+"_CV.SBNspec.root",input_scale_subchannel,1.0);
         myfeld.GenerateScaledSpectra();
 
         std::cout<<"Calculating the necessary SBNchi objects"<<std::endl;
@@ -232,8 +256,13 @@ int main(int argc, char* argv[])
         TFile *fin = new TFile(("SBNfeld_output_"+tag+".root").c_str(),"read");
 
         int plotting_true_gridpoint = 5;
-        std::vector<double> plotting_pvals = {0.68, 0.90, 0.95, 0.99};
-        std::vector<std::string> plotting_strs = {"68%","90%","95%","99%"};
+        //std::vector<double> plotting_pvals = {0.68, 0.90, 0.95, 0.99};
+        std::vector<double> plotting_pvals = {0.68, 0.95};
+        //std::vector<std::string> plotting_strs = {"68%","90%","95%","99%"};
+        std::vector<std::string> plotting_strs = {"68%","95%"};
+        //std::vector<int> gcols = {kGreen+3,kGreen+2,kGreen-3,kGreen-9};
+        std::vector<int> gcols = {kRed-9,kBlue-9,kGreen-9};
+
 
         std::vector<double> v_median;
         std::vector<double> v_true;
@@ -297,8 +326,7 @@ int main(int argc, char* argv[])
         std::vector<TGraph*> gmins;
         std::vector<TGraph*> grshades;
 
-        std::vector<int> gcols = {kGreen+3,kGreen+2,kGreen-3,kGreen-9};
-        TLegend * l_probs = new TLegend(0.11,0.29,0.89,0.89);
+        TLegend * l_probs = new TLegend(0.11,0.59,0.89,0.89);//69 was 29
 
         TMultiGraph *mg = new TMultiGraph();
         mg->SetTitle("Feldman Cousins Corrected Confidence Belt");
