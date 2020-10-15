@@ -71,9 +71,7 @@ int SBNfeld::GenerateScaledSpectra(){
 
         m_cv_spec_grid[t]->CalcFullVector();
         m_cv_spec_grid[t]->CollapseVector();
-
     }
-
 }
 
 
@@ -342,6 +340,10 @@ int SBNfeld::FullFeldmanCousins(){
         SBNspec * true_spec = m_cv_spec_grid.at(t);
         SBNchi  * true_chi = m_sbnchi_grid.at(t);          
 
+    
+        if(m_bool_stat_only)true_chi->is_stat_only = true;
+
+
         double t_val = m_grid.f_dimensions[0].GetPoint(t);
 
         std::cout<<"Starting on point "<<t<<"/"<<m_num_total_gridpoints<<std::endl;
@@ -500,12 +502,10 @@ int SBNfeld::CompareToData(SBNspec *datain){
 
     
    //Some BF 
-    m_cv_spec_grid[bf_pt]->CompareSBNspecs(background_collapsed_covariance_matrix,datain, "DatFeld_"+tag);
+    m_cv_spec_grid[bf_pt]->CompareSBNspecs(background_collapsed_covariance_matrix,datain, "Data_Comparason_Feld_"+tag);
     std::cout<<"DATA_Comparason_Point : Delta Chi "<<delta_chi<<" Chi^Min "<<chi_min<<" BF_val "<<bf_val<<" BF_PT "<<bf_pt<<std::endl;
     return 0;
 };
-
-
 
 
 
@@ -545,7 +545,6 @@ std::vector<double> SBNfeld::PerformIterativeGridFit(const std::vector<float> &d
             //Calculate current full covariance matrix, collase it, then Invert. 
             if(m_use_CNP){
                 UpdateInverseCovarianceMatrixCNP(best_grid_point, datavec, inverse_current_collapsed_covariance_matrix ,grid_chi);
-
             }else{
                 UpdateInverseCovarianceMatrix(best_grid_point, inverse_current_collapsed_covariance_matrix ,grid_chi);
             }
@@ -675,7 +674,6 @@ int SBNfeld::PointFeldmanCousins(size_t grid_pt){
 
 
 
-
 float SBNfeld::CalcChi(const std::vector<float>& data, const std::vector<double>& prediction,const TMatrixT<double> & inverse_covariance_matrix ){
     float tchi = 0;
 
@@ -736,8 +734,6 @@ std::vector<double> SBNfeld::GlobalScan(int which_pt){
 
         std::cout<<std::endl;
     }
-
-
 
 
 
@@ -940,8 +936,6 @@ std::vector<TGraph*> SBNfeld::LoadFCMaps(std::string filein){
 
     f->Close();
     return ans;
-
-
 
 }
 

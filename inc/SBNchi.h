@@ -113,6 +113,8 @@ namespace sbn{
 
             /*********************************** Member Functions ********************************/	
 
+            double m_cmin;
+            double m_cmax;
             int plot_one(TMatrixD matrix, std::string tag, TFile *fin,bool,bool,bool);
 
 
@@ -202,7 +204,11 @@ namespace sbn{
             TH1D SamplePoisson_NP(SBNspec *specin, SBNchi &chi_h0, SBNchi & chi_h1, int num_MC, std::vector<double> *chival,int which_sample);
             TH1D SamplePoisson_NP(SBNspec *specin, SBNchi &chi_h0, SBNchi & chi_h1, int num_MC, double,int which_sample);
 
-
+            int SetFracPlotBounds(double cmin,double cmax){
+                     m_cmin=cmin;
+                     m_cmax=cmax;
+                     return 0;
+            }
 
             double max_sample_chi_val;
 

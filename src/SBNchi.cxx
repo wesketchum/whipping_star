@@ -70,6 +70,9 @@ SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin, std::string in
         m.ResizeTo(used_bins.size(),matrix_systematicsin.GetNcols());
     }
 
+    m_cmin = -999;
+    m_cmax = -999;
+
     matrix_fractional_covariance = m;
     matrix_systematics.Zero();
     max_sample_chi_val =150.0;
@@ -97,6 +100,9 @@ SBNchi::SBNchi(SBNspec in, std::string newxmlname) : SBNconfig(newxmlname), core
             }
         }
     }
+m_cmin = -999;
+    m_cmax = -999;
+
 
     m_tolerance = 1e-12;
     pseudo_from_collapsed = false;
@@ -122,6 +128,9 @@ SBNchi::SBNchi(SBNspec in, bool is_is_stat_only): SBNconfig(in.xmlname), core_sp
     matrix_collapsed.ResizeTo(num_bins_total_compressed, num_bins_total_compressed);
     matrix_systematics.ResizeTo(num_bins_total, num_bins_total);
     matrix_fractional_covariance.ResizeTo(num_bins_total, num_bins_total);
+m_cmin = -999;
+    m_cmax = -999;
+
 
     m_tolerance = 1e-12;
     max_sample_chi_val =150.0;
@@ -1127,9 +1136,11 @@ int SBNchi::PrintMatricies(std::string tag){
     this->FillCollapsedFractionalMatrix(&frac);
     this->FillCollapsedCorrelationMatrix(&corr);
 
-    corr.Write();
+    corr.Write("collapsed_correlation");
 
-    frac.Write();
+    gStyle->SetPalette(kLightTemperature);
+
+    frac.Write("collapsed_fractional_covariance");
     TH2D h2_frac(frac);
     //h2_frac.Write();
     h2_frac.SetName("frac");
@@ -1141,7 +1152,7 @@ int SBNchi::PrintMatricies(std::string tag){
     h2_frac.SetTitle("Collapsed fractional covariance matrix");
     h2_frac.GetXaxis()->SetTitle("Reco Bin i");
     h2_frac.GetYaxis()->SetTitle("Reco Bin j");
-    //    h2_frac.GetZaxis()->SetRangeUser(-0.25,0.25);
+    if(m_cmin !=-999 || m_cmax !=-999)   h2_frac.GetZaxis()->SetRangeUser(m_cmin,m_cmax);
 
     c_frac->SetRightMargin(0.150);
 
@@ -1172,7 +1183,9 @@ int SBNchi::PrintMatricies(std::string tag){
     }std::cout<<std::endl;
 
 
-    full.Write();
+    gStyle->SetPalette(kLightTemperature);
+
+    full.Write("collapsed_covariance");
     TH2D h2_full(full);
     h2_full.SetName("full");
     TCanvas *c_full = new TCanvas("collapsed covariance matrix");
@@ -1213,7 +1226,7 @@ int SBNchi::PrintMatricies(std::string tag){
     h2_corr.SetTitle("Collapsed correlation matrix");
     h2_corr.GetXaxis()->SetTitle("Reco Bin i");
     h2_corr.GetYaxis()->SetTitle("Reco Bin j");
-    h2_corr.GetZaxis()->SetRangeUser(-1,1);
+    h2_corr.GetZaxis()->SetRangeUser(0.0,1);
     c_corr->SetRightMargin(0.150);
 
     int use_corr =0;
@@ -1313,7 +1326,7 @@ int SBNchi::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool plot_pdf
     h2_full.GetYaxis()->SetLabelSize(0);
     //p_full->SetLogz();
     if(is_corr){
-        h2_full.GetZaxis()->SetRangeUser(-1,1);
+        h2_full.GetZaxis()->SetRangeUser(0.0,1);
     }
     else{
         h2_full.GetZaxis()->SetRangeUser(-0.25,0.25);

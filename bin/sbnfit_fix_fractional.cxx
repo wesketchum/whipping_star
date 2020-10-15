@@ -58,6 +58,7 @@ int main(int argc, char* argv[])
         {"xml", 		required_argument, 	0, 'x'},
         {"tag", 		required_argument,	0, 't'},
         {"help", 		no_argument,	0, 'h'},
+        {"zero", 		no_argument,	0, 'z'},
     	{"covar",		required_argument,    0, 'c'},
         {0,			    no_argument, 		0,  0},
     };
@@ -71,6 +72,7 @@ int main(int argc, char* argv[])
 
     bool bool_flat_det_sys = false;
     double flat_det_sys_percent = 0.0;
+    bool run_in_silly = false;
 
     bool remove_correlations = false;
 
@@ -86,6 +88,10 @@ int main(int argc, char* argv[])
             case 'x':
                 xml = optarg;
                 break;
+            case 'z':
+                run_in_silly = true;
+                    break;
+
             case 't':
                 tag = optarg;
                 break;
@@ -103,6 +109,7 @@ int main(int argc, char* argv[])
                 std::cout<<"\t-c\t--covarance\t use this root file for a covariance matrix" << std::endl;
                 std::cout<<"--- Optional arguments: ---"<<std::endl;
                 std::cout<<"\t-h\t--help\t\tThis help menu."<<std::endl;
+                std::cout<<"\t-z\t--zero\t\t insead of doign anything clever, zero instead"<<std::endl;
                 std::cout<<"---------------------------------------------------"<<std::endl;
 
                 return 0;
@@ -131,7 +138,8 @@ int main(int argc, char* argv[])
                         int wh = core.GetHistNumber(i);
                         std::cout<<val<<" @ "<<i<<" in hist "<<wh<<" and subchannel "<<core.hist[wh].GetName()<<std::endl;
                         std::vector<int> bins = core.map_tag_to_covariance_index[core.hist[wh].GetName()];
-                            
+                           
+                        //Calculate the max number in the bins. 
                         double max_err = -999;
                         for(int j=bins[0]; j<=bins[1];j++){
                                double dval = cov(j,j);
@@ -160,7 +168,11 @@ int main(int argc, char* argv[])
                             cov(j,i) = 0.0;
                         }
                         
-                        cov(i,i) = max_err;
+                        if(!run_in_silly){
+                            cov(i,i) =  max_err;
+                        }else{
+                            cov(i,i) = 0.0;
+                        }
                     }
     }
     

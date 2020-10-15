@@ -62,6 +62,8 @@ int main(int argc, char* argv[])
     	{"covar",		required_argument,    0, 'c'},
         {"flat", required_argument,0,'f'},
         {"zero",no_argument,0,'z'},
+        {"cmin",required_argument,0,'k'},
+        {"cmax",required_argument,0,'p'},
         {0,			    no_argument, 		0,  0},
     };
 
@@ -77,12 +79,15 @@ int main(int argc, char* argv[])
 
     bool remove_correlations = false;
 
+    double cmin = 0;
+    double cmax = -9;
+
     //a tag to identify outputs and this specific run. defaults to EXAMPLE1
     std::string tag = "TEST";
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "f:x:s:t:c:zh", longopts, &index);
+        iarg = getopt_long(argc,argv, "f:x:s:t:c:k:p:zh", longopts, &index);
 
         switch(iarg)
         {
@@ -90,7 +95,12 @@ int main(int argc, char* argv[])
                 bool_flat_det_sys = true;
                 flat_det_sys_percent = (double)strtod(optarg,NULL);
                 break;
-
+              case 'p':
+                cmax = (double)strtod(optarg,NULL);
+                break;
+              case 'k':
+                cmin = (double)strtod(optarg,NULL);
+                break;
             case 'x':
                 xml = optarg;
                 break;
@@ -121,7 +131,8 @@ int main(int argc, char* argv[])
                 std::cout<<"--- Optional arguments: ---"<<std::endl;
                 std::cout<<"\t-f\t--flat\t\tAdd a flat percent systematic to fractional covariance matrix (all channels) (default false, pass in percent, i.e 5.0 for 5\% experimental)"<<std::endl;
                 std::cout<<"\t-z\t--zero\t\tZero out all off diagonal elements of the systematics covariance matrix (default false, experimental!)"<<std::endl;
-                std::cout<<"\t-c\t--covarance\t use this root file for a covariance matrix" << std::endl;
+                std::cout<<"\t--cmax\t max for fractional covariance plot" << std::endl;
+                std::cout<<"\t--cmin\t min for fractional covariance plot" << std::endl;
                 std::cout<<"\t-h\t--help\t\tThis help menu."<<std::endl;
                 std::cout<<"---------------------------------------------------"<<std::endl;
 
@@ -184,9 +195,9 @@ int main(int argc, char* argv[])
     }
 
     SBNchi SigChi(sig, *cov);
+    SigChi.SetFracPlotBounds(cmin,cmax);
     SigChi.PrintMatricies(tag);
     sig.WriteOut(tag);
-
 
     
     std::cout << "Total wall time: " << difftime(time(0), start_time)/60.0 << " Minutes.\n";

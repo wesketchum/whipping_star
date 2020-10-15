@@ -189,10 +189,17 @@ int main(int argc, char* argv[])
 
         std::cout<<"Begininning a full Feldman-Cousins analysis for tag : "<<tag<<std::endl;
 
-        myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
-        //myfeld.SetFractionalCovarianceMatrix(Msys);
-        //myfeld.SetStatOnly();
+        if(bool_stat_only){
+            myfeld.SetEmptyFractionalCovarianceMatrix();
+            myfeld.SetStatOnly();
+            std::cout<<"RUNNING Statistics uncertainty only!"<<std::endl;
+        }else{
+            myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
+        }
         myfeld.m_subchannel_to_scale = input_scale_subchannel;
+
+        if(use_cnp) myfeld.UseCNP();
+
 
         myfeld.SetCoreSpectrum(tag+"_CV.SBNspec.root");
         myfeld.SetBackgroundSpectrum(tag+"_CV.SBNspec.root",input_scale_subchannel,0.0);
@@ -228,7 +235,7 @@ int main(int argc, char* argv[])
         myfeld.CalcSBNchis();
         std::cout <<"DONE calculating the necessary SBNchi objects at : " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
 
-        SBNspec * datain = new SBNspec(data_file_input.c_str(),xml);
+        SBNspec * datain = new SBNspec(data_file_input.c_str(), xml);
         myfeld.CompareToData(datain);
 
 
