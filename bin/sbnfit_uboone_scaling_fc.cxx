@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <cstring>
+#include <algorithm>
 
 #include "TFile.h"
 #include "TTree.h"
@@ -40,6 +41,25 @@
 #define optional_argument 2
 
 using namespace sbn;
+
+
+double Median(const TH1D * h1) { 
+
+       int n = h1->GetXaxis()->GetNbins();  
+          std::vector<double>  x(n);
+             h1->GetXaxis()->GetCenter( &x[0] );
+                const double * y = h1->GetArray(); 
+                   // exclude underflow/overflows from bin content array yG
+                       return TMath::Median(n, &x[0], &y[1]); 
+                       }
+                   
+
+double quick_median(std::vector<double> &v)
+{
+        size_t n = v.size() / 2;
+        std::nth_element(v.begin(), v.begin()+n, v.end());
+                return v[n];
+}
 
 double lin_interp(double x0, double x1, double y0, double y1, double x){
     return (y0*(x1-x)+y1*(x-x0))/(x1-x0);
@@ -181,7 +201,6 @@ int main(int argc, char* argv[])
     NGrid mygrid;
     mygrid.AddDimension("NCDeltaRadOverlaySM",grid_string);
    
-
     mygrid.Print();
     SBNfeld myfeld(mygrid,tag,xml);
 
@@ -189,17 +208,10 @@ int main(int argc, char* argv[])
 
         std::cout<<"Begininning a full Feldman-Cousins analysis for tag : "<<tag<<std::endl;
 
-        if(bool_stat_only){
-            myfeld.SetEmptyFractionalCovarianceMatrix();
-            myfeld.SetStatOnly();
-            std::cout<<"RUNNING Statistics uncertainty only!"<<std::endl;
-        }else{
-            myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
-        }
+        myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
+        //myfeld.SetFractionalCovarianceMatrix(Msys);
+        //myfeld.SetStatOnly();
         myfeld.m_subchannel_to_scale = input_scale_subchannel;
-
-        if(use_cnp) myfeld.UseCNP();
-
 
         myfeld.SetCoreSpectrum(tag+"_CV.SBNspec.root");
         myfeld.SetBackgroundSpectrum(tag+"_CV.SBNspec.root",input_scale_subchannel,0.0);
@@ -235,7 +247,7 @@ int main(int argc, char* argv[])
         myfeld.CalcSBNchis();
         std::cout <<"DONE calculating the necessary SBNchi objects at : " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
 
-        SBNspec * datain = new SBNspec(data_file_input.c_str(), xml);
+        SBNspec * datain = new SBNspec(data_file_input.c_str(),xml);
         myfeld.CompareToData(datain);
 
 
@@ -270,9 +282,9 @@ int main(int argc, char* argv[])
         //Some Manual Color Changing and such
         int plotting_true_gridpoint = 5;
         //std::vector<double> plotting_pvals = {0.68, 0.90, 0.95, 0.99};
-        std::vector<double> plotting_pvals = {0.68, 0.95};
+        std::vector<double> plotting_pvals = {0.68, 0.90, 0.99};
         //std::vector<std::string> plotting_strs = {"68%","90%","95%","99%"};
-        std::vector<std::string> plotting_strs = {"68%","95%"};
+        std::vector<std::string> plotting_strs = {"68%","90%","99%"};
         //std::vector<int> gcols = {kGreen+3,kGreen+2,kGreen-3,kGreen-9};
         std::vector<int> gcols = {kRed-9,kBlue-9,kGreen-9};
 
@@ -287,6 +299,8 @@ int main(int argc, char* argv[])
         std::cout<<"MPrinting stuff"<<std::endl;
         TH2D * f_FC = new TH2D("f_FC","f_FC",vec_grid.size(),vec_grid.front()[0],vec_grid.back()[0],vec_grid.size(),vec_grid.front()[0],vec_grid.back()[0]);
 
+        double bfval_v[vec_grid.size()];
+
         for(int i=0; i< vec_grid.size(); i++){
 
             v_true.push_back(vec_grid[i][0]);
@@ -294,6 +308,7 @@ int main(int argc, char* argv[])
             //Whats the critical value?
             TTree *t =  (TTree*)fin->Get(("ttree_"+std::to_string(i)).c_str());
             TH1D * cumul = (TH1D*)fin->Get(("delta_chi2_"+std::to_string(i)+"_cumulative").c_str());
+            TH1D * h_bfval = (TH1D*)fin->Get(("bf_value_"+std::to_string(i)).c_str());//Added by Ivan
 
             for(int p =0; p< plotting_pvals.size(); ++p){
                 double plotting_pval = plotting_pvals[p];
@@ -323,6 +338,32 @@ int main(int argc, char* argv[])
                     v_max[p].push_back( *(std::max_element(x, x+nentries)) );
                 }
             }//end pval loop
+
+       
+            std::vector<double> whatsmedian(t->GetEntries(),-9);
+            double f_bfval = 0;
+            double whatsmean = 0;
+            t->SetBranchAddress("bf_gridvalue",&f_bfval);
+            for(int k=0; k<t->GetEntries(); k++){
+                    t->GetEntry(k);               
+                    whatsmedian[k]=f_bfval;
+                    whatsmean+=f_bfval;
+            }
+            whatsmean=whatsmean/(double)t->GetEntries();
+    
+            
+            //Get median of BF value
+            h_bfval->ComputeIntegral();
+            std::vector<double> pvalues = { 0.5 };
+            std::vector<double> bf_val_quantiles(pvalues.size());
+            h_bfval->GetQuantiles(pvalues.size(),&bf_val_quantiles[0], &pvalues[0]);
+            double bfval = bf_val_quantiles[0];
+            bfval_v[i] = bfval;
+            
+            bfval_v[i] = quick_median(whatsmedian);
+            //bfval_v[i] = Median(h_bfval);
+            //bfval_v[i] = whatsmean;
+            
             delete cumul;
         }
 
@@ -339,7 +380,7 @@ int main(int argc, char* argv[])
         std::vector<TGraph*> gmins;
         std::vector<TGraph*> grshades;
 
-        TLegend * l_probs = new TLegend(0.11,0.59,0.89,0.89);//69 was 29
+        TLegend * l_probs = new TLegend(0.11,0.52,0.89,0.89);//69 was 29
 
         TMultiGraph *mg = new TMultiGraph();
         mg->SetTitle("Feldman Cousins Corrected Confidence Belt");
@@ -364,7 +405,8 @@ int main(int argc, char* argv[])
 
             l_probs->AddEntry(grshades.back(), plotting_strs[p].c_str() ,"f");
         }
-        l_probs->SetHeader("#splitline{#splitline{Classical}{Confidence}}{#splitline{Level of}{Interval}}");
+       // l_probs->SetHeader("#splitline{#splitline{Classical}{Confidence}}{#splitline{Level of}{Interval}}");
+        l_probs->SetHeader("#splitline{Confidence}{#splitline{Level of}{Interval}}");
 
         for(auto &g:grshades)mg->Add(g);
         pad->cd();
@@ -384,7 +426,15 @@ int main(int argc, char* argv[])
         for(auto &g:gmins)g->Draw("l same");
         for(auto &g:gmaxs)g->Draw("l same");
 
-        
+        //also draw median
+        double npoints = vec_grid.size();
+        double maxpt = vec_grid.back()[0];
+        double scale = (npoints-1)/maxpt;
+
+        mg->GetXaxis()->SetLimits(v_true.front(),maxpt);
+        mg->GetHistogram()->SetMaximum(maxpt);//v_true.back());          
+        mg->GetHistogram()->SetMinimum(v_true.front());
+
         TLine lcross(v_true.front(),v_true.front(),mplot, mplot);
         lcross.SetLineStyle(9);
         lcross.SetLineWidth(1);
@@ -392,6 +442,32 @@ int main(int argc, char* argv[])
         lcross.Draw("same");
 
 
+            TLine lv1(1.0,0.0,1.0,maxpt);
+            lv1.SetLineStyle(2);
+            lv1.SetLineWidth(1);
+            lv1.SetLineColor(kBlack);
+            //lv1.Draw("same");
+
+            TLine lh3(0.0,3.1, 1.0,3.1);
+            lh3.SetLineStyle(2);
+            lh3.SetLineWidth(1);
+            lh3.SetLineColor(kBlack);
+            //lh3.Draw("same");
+
+
+        double u_measured[vec_grid.size()];
+        double uexp = 0;
+
+        std::cout << "//////////HERE!!!!!!!! vec_grid.size() = " << vec_grid.size() << std::endl;
+        for(int k = 0; k < npoints; k++){
+            uexp = ((double) k)/scale;
+            std::cout << "//////////HERE!!!!!!!! k, uexp, median = " << k << ", " << uexp << ", " << bfval_v[k] << std::endl;
+            u_measured[k] = uexp;
+        }
+
+        TGraph *bf_vals_g = new TGraph(vec_grid.size(), bfval_v, &v_true[0]);
+        //bf_vals_g->Draw("same *");
+        
         pad->Update();
         pad->RedrawAxis();
         // TLine l;
@@ -415,6 +491,7 @@ int main(int argc, char* argv[])
         std::cout<<"**************** Feldman Cousins 1D Confidence Intervals  **********************"<<std::endl;
         for(int i=0; i<v_true.size(); i++){
             std::cout<<"Grid Pt: "<<i<<", ScaleFactor: "<<vec_grid[i][0]<<std::endl;
+            std::cout<<"- Median: "<<bfval_v[i]<<std::endl;
             for(int p=0; p< plotting_pvals.size();++p){
                 double measured_val = vec_grid[i][0];
                 std::vector<double> reg = myfeld.getConfidenceRegion(gmins[plotting_pvals.size()-p-1],gmaxs[plotting_pvals.size()-p-1],measured_val);

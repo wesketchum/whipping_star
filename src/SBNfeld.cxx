@@ -374,7 +374,6 @@ int SBNfeld::FullFeldmanCousins(){
 
 
             const std::vector<float>  fake_data = true_chi->GeneratePseudoExperiment();
-
             std::vector<double> ans = this->PerformIterativeGridFit(fake_data,t,inverse_background_collapsed_covariance_matrix);
 
             vec_delta_chi[i] = ans[1]-ans[2];
@@ -410,7 +409,7 @@ int SBNfeld::FullFeldmanCousins(){
         std::cout<<"For this point, minimum  bf scale value is "<<bf_value_min<<" max is "<<bf_value_max<<std::endl;
         std::cout<<"For this point, minimum  bf grid pt is "<<bf_pt_min<<" max is "<<bf_pt_max<<std::endl;
 
-        int nbins_plot = num_universes/2;
+        int nbins_plot = num_universes/4;
         std::string identifier = "_"+std::to_string(t);
 
         TH1D h_delta_chi(("delta_chi2"+identifier).c_str(),("delta_chi2"+identifier).c_str(),nbins_plot,0.0,delta_chi_max*1.01);  // This will store all the delta_chi's from each universe for this g_true point
@@ -558,7 +557,7 @@ std::vector<double> SBNfeld::PerformIterativeGridFit(const std::vector<float> &d
 
 //            std::cout<<"Iter: "<<n_iter<<" "<<r<<" "<<chi_tmp<<std::endl;
 
-            if(chi_tmp < chi_min){
+            if(chi_tmp <= chi_min){
                 best_grid_point = r;
                 chi_min = chi_tmp;
             }
@@ -578,7 +577,7 @@ std::vector<double> SBNfeld::PerformIterativeGridFit(const std::vector<float> &d
     }
 
     //Now use the curent_iteration_covariance matrix to also calc this_chi here for the delta.
-    double this_chi   = this->CalcChi(datavec, m_cv_spec_grid[grid_pt]->collapsed_vector, inverse_current_collapsed_covariance_matrix);
+    double this_chi = this->CalcChi(datavec, m_cv_spec_grid[grid_pt]->collapsed_vector, inverse_current_collapsed_covariance_matrix);
 
     //returns the BF grid, the chi^2 and the minimum_chi at the BF. 
     return {(double)best_grid_point, this_chi, last_chi_min};

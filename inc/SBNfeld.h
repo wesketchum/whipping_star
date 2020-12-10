@@ -94,7 +94,7 @@ namespace sbn{
             global_scale = 1;//5.81731e19/6.6e20;
             //global_scale = 4.51931e+19/6.6e20;
 
-            m_chi_min_convergance_tolerance = 0.001;
+            m_chi_min_convergance_tolerance = 0.0001;
         }
 
 

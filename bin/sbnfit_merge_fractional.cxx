@@ -56,6 +56,7 @@ int main(int argc, char* argv[])
     {
         {"tag", 		required_argument,	0, 't'},
         {"force", 		no_argument,	0, 'f'},
+        {"zero", 		no_argument,	0, 'z'},
         {"covars", 		required_argument,	0, 'c'},
         {"help", 		no_argument,	0, 'h'},
         {0,			    no_argument, 		0,  0},
@@ -94,7 +95,9 @@ int main(int argc, char* argv[])
             case 'f':
                 force = true;
                 break;
-
+            case 'z':
+                remove_correlations=true;
+                break;
             case '?':
             case 'h':
                 std::cout<<"---------------------------------------------------"<<std::endl;
@@ -105,6 +108,7 @@ int main(int argc, char* argv[])
                 std::cout<<"\t-c\t--covars\t\tWhat SBNcovars to merge"<<std::endl;
                 std::cout<<"--- Optional arguments: ---"<<std::endl;
                 std::cout<<"\t-f\t--force\t\t Forces even if nans present"<<std::endl;
+                std::cout<<"\t-f\t--zero\t\t Zeros out off diag"<<std::endl;
                 std::cout<<"\t-h\t--help\t\tThis help menu."<<std::endl;
                 std::cout<<"---------------------------------------------------"<<std::endl;
 
@@ -139,22 +143,22 @@ int main(int argc, char* argv[])
         TMatrixD fm = *(TMatrixD*)files.back()->Get("frac_covariance");
         std::cout<<s<<" has Dimensions: "<<fm.GetNrows()<<" "<<fm.GetNcols()<<std::endl;
         fmats.push_back(fm);
-    
+
         files.back()->Close();
         int mnans = 0;
         for(int i=0; i< fmats.back().GetNrows(); i++){
             for(int j=0; j< fmats.back().GetNrows(); j++){
-                  if(isnan(fmats.back()(i,j)) || fmats.back()(i,j)!=fmats.back()(i,j) || isinf(fmats.back()(i,j))){
+                if(isnan(fmats.back()(i,j)) || fmats.back()(i,j)!=fmats.back()(i,j) || isinf(fmats.back()(i,j))){
 
-                      if(!force){
-                          std::cout<<"ERROR ERROR We have a NAN or INF , at "<<i<<" "<<j<<" "<<fmats.back()(i,j)<<std::endl;
-                     std::cout<<"In Matrix "<<s<<std::endl;
-                     std::cout<<"Shouldnt be the case, fix before merging or it will break"<<std::endl;
-                    exit(EXIT_FAILURE);
-                      }else{
+                    if(!force){
+                        std::cout<<"ERROR ERROR We have a NAN or INF , at "<<i<<" "<<j<<" "<<fmats.back()(i,j)<<std::endl;
+                        std::cout<<"In Matrix "<<s<<std::endl;
+                        std::cout<<"Shouldnt be the case, fix before merging or it will break"<<std::endl;
+                        exit(EXIT_FAILURE);
+                    }else{
                         fmats.back()(i,j)=0.0;
-                      }
-                  }
+                    }
+                }
             }
         }  
     }
@@ -167,6 +171,16 @@ int main(int argc, char* argv[])
         m_fsum = m_fsum + fmats[i];
         std::cout<<"Now adding : "<<i<<std::endl;
     }
+
+    if(remove_correlations){
+        std::cout<<"Removing Correlation, i.e off diagonals"<<std::endl;
+        for(int i=0; i< fmats.back().GetNrows(); i++){
+            for(int j=0; j< fmats.back().GetNrows(); j++){
+                if(i!=j) m_fsum(i,j)=0.0;
+            }
+        }
+    }
+
     f->cd();
     m_fsum.Write("frac_covariance",TObject::kWriteDelete);
     //m_fsum.Write("frac_covariance");

@@ -1226,7 +1226,7 @@ int SBNchi::PrintMatricies(std::string tag){
     h2_corr.SetTitle("Collapsed correlation matrix");
     h2_corr.GetXaxis()->SetTitle("Reco Bin i");
     h2_corr.GetYaxis()->SetTitle("Reco Bin j");
-    h2_corr.GetZaxis()->SetRangeUser(0.0,1);
+    h2_corr.GetZaxis()->SetRangeUser(0.4,1);
     c_corr->SetRightMargin(0.150);
 
     int use_corr =0;
@@ -1326,7 +1326,7 @@ int SBNchi::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool plot_pdf
     h2_full.GetYaxis()->SetLabelSize(0);
     //p_full->SetLogz();
     if(is_corr){
-        h2_full.GetZaxis()->SetRangeUser(0.0,1);
+        h2_full.GetZaxis()->SetRangeUser(0.4,1);
     }
     else{
         h2_full.GetZaxis()->SetRangeUser(-0.25,0.25);

@@ -54,10 +54,7 @@ SBNspec::SBNspec(std::string rootfile, std::string whichxml, bool isverbose) : S
 
 	has_been_scaled=false;
 
-
 	f->Close();
-
-
 }
 
 SBNspec::SBNspec(std::vector<double> input_full_vec, std::string whichxml) : SBNspec(input_full_vec, whichxml, false){ };
@@ -76,12 +73,8 @@ SBNspec::SBNspec(std::vector<double> input_full_vec, std::string whichxml, int u
 
 	}
 
-
 	this->CalcFullVector();
 }
-
-
-
 
 
 
@@ -113,9 +106,6 @@ int SBNspec::Add(std::string which_hist, TH1 * histin){
 	this->CollapseVector();
 	return 0;
 }
-
-
-
 
 
 
