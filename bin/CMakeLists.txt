@@ -6,17 +6,17 @@ target_link_libraries (sbnfit_make_covariance SBNfitlib tinyxmllib EventWeight)
 add_executable (sbnfit_plot_covariance sbnfit_plot_covariance.cxx)
 target_link_libraries (sbnfit_plot_covariance SBNfitlib tinyxmllib EventWeight)
 
-add_executable (sbnfit_conditional_constraint sbnfit_conditional_constraint.cxx)
-target_link_libraries (sbnfit_conditional_constraint SBNfitlib tinyxmllib EventWeight)
+#add_executable (sbnfit_conditional_constraint sbnfit_conditional_constraint.cxx)
+#target_link_libraries (sbnfit_conditional_constraint SBNfitlib tinyxmllib EventWeight)
 
-
-add_executable (sbnfit_hive_plot sbnfit_hive_plot.cxx)
-target_link_libraries (sbnfit_hive_plot SBNfitlib tinyxmllib EventWeight)
+#add_executable (sbnfit_hive_plot sbnfit_hive_plot.cxx)
+#target_link_libraries (sbnfit_hive_plot SBNfitlib tinyxmllib EventWeight)
 
 add_executable (sbnfit_fix_fractional sbnfit_fix_fractional.cxx)
 target_link_libraries (sbnfit_fix_fractional SBNfitlib tinyxmllib EventWeight)
-add_executable (sbnfit_flat_fractional sbnfit_flat_fractional.cxx)
-target_link_libraries (sbnfit_flat_fractional SBNfitlib tinyxmllib EventWeight)
+
+#add_executable (sbnfit_flat_fractional sbnfit_flat_fractional.cxx)
+#target_link_libraries (sbnfit_flat_fractional SBNfitlib tinyxmllib EventWeight)
 
 
 

@@ -1144,3 +1144,14 @@ int SBNspec::GetGlobalBinNumber(double invar, int which_hist)
 	if(localbin==0 || localbin > hist.at(which_hist).GetNbinsX() ){bin = -99;}
 	return bin;
 }
+int SBNspec::GetGlobalBinNumber(int local_bin, std::string histname){
+	
+	int which_hist = map_hist[histname];
+	int bin = local_bin -1;
+
+	for(int i=0; i<which_hist; i++){
+                bin += hist.at(i).GetNbinsX();
+        }
+
+	return bin;
+}

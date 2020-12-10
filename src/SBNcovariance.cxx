@@ -797,6 +797,54 @@ int SBNcovariance::FillHistograms(int file, int uni, double wei){
 
 int SBNcovariance::FormCovarianceMatrix(std::string tag){
 
+	//std::map<bool, std::string> map_shape_only{{true, "NCDeltaRadOverlaySM"}};
+	std::map<bool, std::string> map_shape_only{{false, "NCDeltaRadOverlayLEE"}};
+	//std::map<bool, std::string> map_shape_only{{false, "NCPi0NotCoh"}};
+	//std::map<bool, std::string> map_shape_only{{true, "NCPi0NotCoh"}};
+
+	for(auto const& imap : map_shape_only){
+		bool lshape_only = imap.first;
+		if(lshape_only == false) continue;
+		std::string lname_subchannel = imap.second;
+		if(is_verbose) std::cout << "SBNcovariance::FormCovariancematrix\t||\tSubchannel " << lname_subchannel << " will be constructed as shape-only matrix ? " << lshape_only << std::endl;	
+
+
+
+		//save the toal number of events of CV for specific subchannels, and their global bin indices.
+	        spec_central_value.CalcFullVector();
+		std::vector<double> CV_tot_count;
+		std::map<int, std::vector<double>> map_index_global_bin;
+		for(auto const& lh:spec_central_value.hist){
+			std::string lname = lh.GetName();
+			if(lname.find(lname_subchannel) != std::string::npos){
+				//store the max/min global bin index for histogram
+				std::vector<double> lglobal_bin{spec_central_value.GetGlobalBinNumber(1, lname), spec_central_value.GetGlobalBinNumber(lh.GetNbinsX(), lname)};
+				map_index_global_bin.insert( std::pair<int, std::vector<double>>( (int)CV_tot_count.size(), lglobal_bin)  );
+
+				CV_tot_count.push_back(lh.Integral());
+				
+			}
+		}
+			
+		//start modify 'multi_vecspec'
+		for(int l=0; l< universes_used; l++){
+		    //now, multi_vecspec[l] is a spectra vector of 1 universe
+			std::string var_l = map_universe_to_var.at(l);
+			if(var_l.find("UBGenie") == std::string::npos) continue;
+
+			// loop over each histogram that has certain names		    
+			for(auto const& lmap:map_index_global_bin){
+				std::vector<double> lglobal_bin = lmap.second;
+
+				// total # of events of a subchannel of this universe
+				double uni_temp_count = std::accumulate(multi_vecspec[l].begin()+ lglobal_bin[0], multi_vecspec[l].begin()+lglobal_bin[1]+1, 0.0);
+				for(int k=lglobal_bin[0]; k <= lglobal_bin[1]; k++)
+					multi_vecspec[l][k] *= CV_tot_count[lmap.first]/uni_temp_count;
+			}
+
+		}
+	}
+
     std::cout<<"SBNcovariance::FormCovariancematrix\t||\tStart" << std::endl;
     full_covariance.ResizeTo(num_bins_total, num_bins_total);
     frac_covariance.ResizeTo(num_bins_total, num_bins_total);
