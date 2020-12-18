@@ -70,8 +70,8 @@ SBNspec::SBNspec(std::vector<double> input_full_vec, std::string whichxml, int u
 			exact_bin -= hist.at(b).GetNbinsX();
 		}
 		hist.at(which_hist).SetBinContent(exact_bin+1, input_full_vec.at(i));
-
-	}
+	
+    }
 
 	this->CalcFullVector();
 }
@@ -255,14 +255,17 @@ int SBNspec::Norm(std::string name, double val){
 
 int SBNspec::CalcFullVector(){
   full_vector.clear();
+  full_error.clear();
   
   full_vector.resize(num_bins_total);
+  full_error.resize(num_bins_total);
 
   int hoffset = 0;
   for(size_t hid=0; hid<hist.size(); ++hid) {
     const auto& h =  hist[hid];
     for(int i = 1; i < (h.GetSize()-1); ++i){
       full_vector[hoffset + i - 1] = h.GetBinContent(i);
+      full_error[hoffset + i - 1] = h.GetBinError(i);
     }
     hoffset += (h.GetSize()-2);
   }

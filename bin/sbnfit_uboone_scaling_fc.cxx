@@ -235,6 +235,8 @@ int main(int argc, char* argv[])
         myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
         myfeld.m_subchannel_to_scale = input_scale_subchannel;
 
+        if(use_cnp) myfeld.UseCNP();
+
         myfeld.SetCoreSpectrum(tag+"_CV.SBNspec.root");
         myfeld.SetBackgroundSpectrum(tag+"_CV.SBNspec.root",input_scale_subchannel,1.0);
         myfeld.GenerateScaledSpectra();

@@ -60,6 +60,7 @@ namespace sbn{
         SBNosc *m_background_spectrum;
         SBNchi *m_background_chi;
         TVectorT<double> *m_tvec_background_spectrum;
+        TVectorT<double> *m_tvec_background_mcerr;
 
         bool m_bool_core_spectrum_set;
         bool m_bool_background_spectrum_set;
@@ -94,7 +95,7 @@ namespace sbn{
             global_scale = 1;//5.81731e19/6.6e20;
             //global_scale = 4.51931e+19/6.6e20;
 
-            m_chi_min_convergance_tolerance = 0.0001;
+            m_chi_min_convergance_tolerance = 0.00001;
         }
 
 
@@ -103,6 +104,7 @@ namespace sbn{
          int UpdateInverseCovarianceMatrixCNP(size_t best_grid_point, const std::vector<float> &datavec, TMatrixT<double>& inverse_collapsed, SBNchi * helper);
          int UpdateInverseCovarianceMatrix(size_t best_grid_point, TMatrixT<double>& inverse_collapsed, SBNchi * helper);
          std::vector<double> PerformIterativeGridFit(const std::vector<float> &datavec, const size_t grid_pt, const TMatrixT<double>& inverse_background_collapsed_covariance_matrix);
+         std::vector<double> PerformIterativeGridFit(const std::vector<float> &datavec, const size_t grid_pt, const TMatrixT<double>& inverse_background_collapsed_covariance_matrix,bool);
 
 
         int UseCNP(){m_use_CNP = true;};

@@ -62,8 +62,8 @@ int SBNfeld::GenerateScaledSpectra(){
             std::cout<<"SBNfeld::GenerateScaledSpectra()\t\t||\t\t  which is "<<m_grid.f_dimensions[i].f_name<<" "<<vgrid[t][i]<<std::endl;
         }
 
-        m_cv_spec_grid[t] = new SBNspec(m_core_spectrum->full_vector,  m_core_spectrum->xmlname, t, false);
-
+        m_cv_spec_grid[t] = new SBNspec(m_core_spectrum->xmlname,t); //m_core_spectrum->full_vector, m_core_spectrum->xmlname, t, false);
+        (*m_cv_spec_grid[t]) = (*m_core_spectrum);
 
         for(int i=0 ; i<m_grid.f_num_dimensions; i++){
             m_cv_spec_grid[t]->Scale(m_grid.f_dimensions[i].f_name, vgrid[t][i]);
@@ -251,6 +251,7 @@ int SBNfeld::LoadBackgroundSpectrum(){
 
     m_background_spectrum->CollapseVector();
     m_tvec_background_spectrum = new TVectorT<double>(m_background_spectrum->full_vector.size(), &(m_background_spectrum->full_vector)[0]);
+    m_tvec_background_mcerr = new TVectorT<double>(m_background_spectrum->full_error.size(), &(m_background_spectrum->full_error)[0]);
 
     if(m_background_spectrum->full_vector.size() !=  m_full_fractional_covariance_matrix->GetNcols()){
 
@@ -272,6 +273,7 @@ int SBNfeld::SetBackgroundSpectrum(std::string filein, std::string scale_nam, do
 
     m_background_spectrum->CollapseVector();
     m_tvec_background_spectrum = new TVectorT<double>(m_background_spectrum->full_vector.size(), &(m_background_spectrum->full_vector)[0]);
+    m_tvec_background_mcerr = new TVectorT<double>(m_background_spectrum->full_error.size(), &(m_background_spectrum->full_error)[0]);
 
     if(m_background_spectrum->full_vector.size() !=  m_full_fractional_covariance_matrix->GetNcols()){
 
@@ -292,6 +294,8 @@ int SBNfeld::LoadBackgroundSpectrum(std::string filein){
 
     m_background_spectrum->CollapseVector();
     m_tvec_background_spectrum = new TVectorT<double>(m_background_spectrum->full_vector.size(), &(m_background_spectrum->full_vector)[0]);
+    m_tvec_background_mcerr = new TVectorT<double>(m_background_spectrum->full_error.size(), &(m_background_spectrum->full_error)[0]);
+
     m_background_chi = new SBNchi(*m_background_spectrum, *m_full_fractional_covariance_matrix, this->xmlname, false);
     return 0;
 }
@@ -340,7 +344,7 @@ int SBNfeld::FullFeldmanCousins(){
         SBNspec * true_spec = m_cv_spec_grid.at(t);
         SBNchi  * true_chi = m_sbnchi_grid.at(t);          
 
-    
+
         if(m_bool_stat_only)true_chi->is_stat_only = true;
 
 
@@ -492,15 +496,115 @@ int SBNfeld::CompareToData(SBNspec *datain){
 
     datain->CollapseVector();
     const std::vector<float>  fake_data = datain->f_collapsed_vector;
-    std::vector<double> ans = this->PerformIterativeGridFit(fake_data,0,inverse_background_collapsed_covariance_matrix);
+    std::vector<double> ans = this->PerformIterativeGridFit(fake_data,0,inverse_background_collapsed_covariance_matrix,true);
 
+    TFile *fin = new TFile(("SBNfeld_output_"+tag+".root").c_str(),"read");
+
+
+    std::cout<<"------ Print DeltaChi^2 ------ "<<std::endl;
+    std::vector<double> rall;
+    std::vector<double> vall;
+    std::vector<double> fcall;
+    std::vector<double> wilkscall;
+
+    for(int k=3; k<ans.size();k++){
+        int i = k-3;
+        double val = m_grid.f_dimensions[0].GetPoint(i);
+
+        TTree *t =  (TTree*)fin->Get(("ttree_"+std::to_string(i)).c_str());
+
+        double pval_fc = (1.0-t->GetEntries(("delta_chi2 > "+std::to_string(ans[k]-ans[2])).c_str())/(double)t->GetEntries())*100.0;
+        double pval_wilks = (1.0-TMath::Prob(ans[k]-ans[2],1))*100.0;
+
+        std::cout<<i<<" val: "<<val<<" dchi: "<<ans[k]-ans[2]<<" pval_wilks: "<<pval_wilks<<" pval_fc: "<<pval_fc<<std::endl;
+
+        fcall.push_back(pval_fc);
+        wilkscall.push_back(pval_wilks);
+        rall.push_back(ans[k]-ans[2]);
+        vall.push_back(val);
+    }
+
+    fin->Close();
+
+    std::cout<<"------ DONE Print DeltaChi^2 ------ "<<std::endl;
     double delta_chi = ans[1]-ans[2];
     double chi_min = ans[2];
     double bf_val = m_grid.f_dimensions[0].GetPoint((int)ans[0]);
     double bf_pt = (int)ans[0];
 
-    
-   //Some BF 
+
+    TCanvas*c = new TCanvas("c","c",1600,800);
+    c->Divide(2,1);
+    c->cd(1);
+
+    TGraph *g = new TGraph(rall.size(),&vall[0],&rall[0]);
+    g->SetLineColor(kBlack);
+    g->SetLineWidth(2);
+    g->Draw("al");
+    g->SetTitle("");
+
+    g->GetXaxis()->SetTitle("x_{#Delta} (NC #Delta Radiative Scaling)");
+    g->GetYaxis()->SetTitle("#Delta #chi^{2} (data | x_{#Delta})");
+    g->GetXaxis()->SetRangeUser(vall.front(),vall.back());
+
+    TLatex * qnam = new TLatex();
+    qnam->SetTextSize(0.045);
+    qnam->SetTextAlign(12);  //align at top
+//  qnam->SetTextAngle(-0);
+    qnam->DrawLatexNDC(0.25,0.8,("Best Fit: x_{#Delta}= " +  to_string_prec(bf_val,2) ).c_str());
+    qnam->DrawLatexNDC(0.25,0.75,("#chi^{2}_{Min} = " +  to_string_prec(chi_min,1) +  " ( "+ std::to_string(m_background_spectrum->num_bins_total_compressed-1)+" dof)" ).c_str());
+
+    c->Update();
+
+    TPad*p2 = (TPad*)c->cd(2);
+    //p2->SetLogy();
+
+    TGraph *gfc = new TGraph(rall.size(),&vall[0],&fcall[0]);
+    TGraph *gwilks = new TGraph(rall.size(),&vall[0],&wilkscall[0]);
+    gfc->SetLineColor(kRed-7);
+    gwilks->SetLineColor(kBlue-7);
+    gfc->SetLineWidth(2);
+    gwilks->SetLineWidth(2);
+    gwilks->Draw("al");
+    gfc->Draw("l same");
+
+    TLegend *leg = new TLegend(0.52,0.11,0.92,0.3);
+    leg->AddEntry(gwilks,"Wilks Theorem","l");
+    leg->AddEntry(gfc,"Feldman-Cousins","l");
+    leg->SetLineWidth(0);
+    leg->SetLineColor(kWhite);
+    leg->SetFillStyle(0);
+    leg->Draw();
+
+    gwilks->SetTitle("");
+    gwilks->GetHistogram()->SetMaximum(100.0);
+    gwilks->GetXaxis()->SetRangeUser(vall.front(),vall.back());
+    gwilks->GetXaxis()->SetTitle("x_{#Delta} (NC #Delta Radiative Scaling)");
+    gwilks->GetYaxis()->SetTitle("Confidence Level (%)");
+
+    TLine *l68 = new TLine(vall.front(),68.0,vall.back(),68.0);
+    l68->SetLineColor(kBlack);
+    l68->SetLineWidth(1);
+    l68->SetLineStyle(9);
+    l68->Draw();
+
+    TLine *l90 = new TLine(vall.front(),90.0,vall.back(),90.0);
+    l90->SetLineColor(kBlack);
+    l90->SetLineWidth(1);;
+    l90->SetLineStyle(2);
+    l90->Draw();
+
+    TLine *l95 = new TLine(vall.front(),95.0,vall.back(),95.0);
+    l95->SetLineColor(kBlack);
+    l95->SetLineWidth(1);
+    l95->SetLineStyle(3);
+    l95->Draw();
+
+    c->SaveAs(("dataFC_"+tag+".pdf").c_str(),"pdf");
+
+
+
+    //Some BF 
     m_cv_spec_grid[bf_pt]->CompareSBNspecs(background_collapsed_covariance_matrix,datain, "Data_Comparason_Feld_"+tag);
     std::cout<<"DATA_Comparason_Point : Delta Chi "<<delta_chi<<" Chi^Min "<<chi_min<<" BF_val "<<bf_val<<" BF_PT "<<bf_pt<<std::endl;
     return 0;
@@ -511,9 +615,8 @@ int SBNfeld::CompareToData(SBNspec *datain){
 
 
 int SBNfeld::UpdateInverseCovarianceMatrixCNP(size_t best_grid_point, const std::vector<float> &datavec, TMatrixT<double>& inverse_collapsed, SBNchi * helper){
-    TMatrixT<double> full = helper->CalcCovarianceMatrixCNP(m_full_fractional_covariance_matrix, m_cv_spec_grid[best_grid_point]->full_vector, datavec);
-    helper->CollapseModes(full, inverse_collapsed);    
-    inverse_collapsed = helper->InvertMatrix(inverse_collapsed);   
+    TMatrixT<double> coll = helper->CalcCovarianceMatrixCNP(m_full_fractional_covariance_matrix, m_cv_spec_grid[best_grid_point]->full_vector, m_cv_spec_grid[best_grid_point]->collapsed_vector, m_cv_spec_grid[best_grid_point]->full_error ,datavec);
+    inverse_collapsed = helper->InvertMatrix(coll);   
     return 0;
 }
 
@@ -527,6 +630,9 @@ int SBNfeld::UpdateInverseCovarianceMatrix(size_t best_grid_point, TMatrixT<doub
 
 
 std::vector<double> SBNfeld::PerformIterativeGridFit(const std::vector<float> &datavec, const size_t grid_pt, const TMatrixT<double>& inverse_background_collapsed_covariance_matrix){
+    return PerformIterativeGridFit(datavec, grid_pt, inverse_background_collapsed_covariance_matrix, false);
+}
+std::vector<double> SBNfeld::PerformIterativeGridFit(const std::vector<float> &datavec, const size_t grid_pt, const TMatrixT<double>& inverse_background_collapsed_covariance_matrix, bool returnall){
 
     double last_chi_min = DBL_MAX;
     int best_grid_point = -99;
@@ -534,9 +640,10 @@ std::vector<double> SBNfeld::PerformIterativeGridFit(const std::vector<float> &d
     TMatrixT<double> inverse_current_collapsed_covariance_matrix = inverse_background_collapsed_covariance_matrix;  
 
     SBNchi  * grid_chi = m_sbnchi_grid.at(grid_pt); 
+    std::vector<double> rall;
 
     for(size_t n_iter = 0; n_iter < m_max_number_iterations; n_iter++){
-
+        rall.clear();
         //Step 1. What covariance matrix do we use?
         //For first iteration, use the precalculated background only inverse covariance matrix.
         //For all subsequent iterations what is the full covariance matrix? Use the last best grid point.
@@ -555,12 +662,13 @@ std::vector<double> SBNfeld::PerformIterativeGridFit(const std::vector<float> &d
 
             double chi_tmp = this->CalcChi(datavec, m_cv_spec_grid[r]->collapsed_vector, inverse_current_collapsed_covariance_matrix);
 
-//            std::cout<<"Iter: "<<n_iter<<" "<<r<<" "<<chi_tmp<<std::endl;
+            //            std::cout<<"Iter: "<<n_iter<<" "<<r<<" "<<chi_tmp<<std::endl;
 
             if(chi_tmp <= chi_min){
                 best_grid_point = r;
                 chi_min = chi_tmp;
             }
+            if(returnall)rall.push_back(chi_tmp);
         }
 
         if(n_iter!=0){
@@ -580,7 +688,11 @@ std::vector<double> SBNfeld::PerformIterativeGridFit(const std::vector<float> &d
     double this_chi = this->CalcChi(datavec, m_cv_spec_grid[grid_pt]->collapsed_vector, inverse_current_collapsed_covariance_matrix);
 
     //returns the BF grid, the chi^2 and the minimum_chi at the BF. 
-    return {(double)best_grid_point, this_chi, last_chi_min};
+    std::vector<double> ans = {(double)best_grid_point, this_chi, last_chi_min};
+
+    if(returnall) ans.insert(ans.end(), rall.begin(), rall.end());
+
+    return ans;
 }
 
 int SBNfeld::PointFeldmanCousins(size_t grid_pt){

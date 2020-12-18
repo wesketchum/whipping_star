@@ -76,6 +76,7 @@ namespace sbn{
 			std::vector<double > collapsed_vector;
 			std::vector<float > f_collapsed_vector;
 
+			std::vector<double > full_error;
 
 
 			//need to store a history of the scales for oscillation purposes.  FIX THIS

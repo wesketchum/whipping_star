@@ -105,8 +105,8 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
         std::cout<<i<<" "<<h0_results[i].m_values.size()<<" "<<numMC<<std::endl;
         for(int m=0; m< numMC; m++){
             for(int p =0; p< prob_values.size();p++){
-                //if(h0_results[i].m_values[m]>=3.96){
-                if(h0_results[i].m_values[m]>=h1_results[i].m_quantiles[p]){
+                if(h0_results[i].m_values[m]>=1.82){
+//                if(h0_results[i].m_values[m]>=h1_results[i].m_quantiles[p]){
                     h0_results[i].m_nlower[p] += 1.0/(double(numMC));
                 }
             }
