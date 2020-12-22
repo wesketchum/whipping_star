@@ -734,6 +734,26 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<do
     }
     return Mout;
 }
+
+TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec, std::vector<double> &mcerr){
+
+    TMatrixT<double> Mout(M->GetNcols(), M->GetNcols() );
+
+    for(int i =0; i<M->GetNcols(); i++)
+    {
+        for(int j =0; j<M->GetNrows(); j++)
+        {
+            if(  std::isnan( (*M)(i,j) )){
+                Mout(i,j) = 0.0;
+            }else{
+
+                Mout(i,j) = (*M)(i,j)*spec[i]*spec[j];
+            }
+            if(i==j) Mout(i,i) += spec[i] + mcerr[i]*mcerr[i];   //stats part
+        }
+    }
+    return Mout;
+}
 TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec){
 
     TMatrixT<double> Mout(M->GetNcols(), M->GetNcols() );

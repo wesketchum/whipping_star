@@ -613,7 +613,6 @@ int SBNfeld::CompareToData(SBNspec *datain){
 
 
 
-
 int SBNfeld::UpdateInverseCovarianceMatrixCNP(size_t best_grid_point, const std::vector<float> &datavec, TMatrixT<double>& inverse_collapsed, SBNchi * helper){
     TMatrixT<double> coll = helper->CalcCovarianceMatrixCNP(m_full_fractional_covariance_matrix, m_cv_spec_grid[best_grid_point]->full_vector, m_cv_spec_grid[best_grid_point]->collapsed_vector, m_cv_spec_grid[best_grid_point]->full_error ,datavec);
     inverse_collapsed = helper->InvertMatrix(coll);   
@@ -622,7 +621,7 @@ int SBNfeld::UpdateInverseCovarianceMatrixCNP(size_t best_grid_point, const std:
 
 
 int SBNfeld::UpdateInverseCovarianceMatrix(size_t best_grid_point, TMatrixT<double>& inverse_collapsed, SBNchi * helper){
-    TMatrixT<double> full = helper->CalcCovarianceMatrix(m_full_fractional_covariance_matrix, m_cv_spec_grid[best_grid_point]->full_vector);
+    TMatrixT<double> full = helper->CalcCovarianceMatrix(m_full_fractional_covariance_matrix, m_cv_spec_grid[best_grid_point]->full_vector, m_cv_spec_grid[best_grid_point]->full_error);
     helper->CollapseModes(full, inverse_collapsed);    
     inverse_collapsed = helper->InvertMatrix(inverse_collapsed);   
     return 0;
