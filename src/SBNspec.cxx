@@ -31,6 +31,7 @@ SBNspec::SBNspec(std::string whichxml, int which_universe, bool isverbose, bool 
 	}
 
 	has_been_scaled = false;
+	m_bool_use_wire_bayes = false;
 	this->CollapseVector();
 
 }
@@ -53,7 +54,7 @@ SBNspec::SBNspec(std::string rootfile, std::string whichxml, bool isverbose) : S
 	}
 
 	has_been_scaled=false;
-
+	m_bool_use_wire_bayes = false;
 	f->Close();
 }
 
@@ -73,6 +74,7 @@ SBNspec::SBNspec(std::vector<double> input_full_vec, std::string whichxml, int u
 	
     }
 
+	m_bool_use_wire_bayes = false;
 	this->CalcFullVector();
 }
 
@@ -271,6 +273,21 @@ int SBNspec::CalcFullVector(){
   }
     
   assert (hoffset == num_bins_total);
+
+    
+  if(m_bool_use_wire_bayes){
+    //Loop over all channels: for each bin in this channel, get 
+    // means: vector<double> of GetBinContent()
+    // sigmas2s:  vector<double> of GetBinError() //maybe square of this
+    // pots: vector<double> of overall POT scale factor for that sample (for use when 0 bins)?
+
+    std::vector<double> means;
+    std::vector<double> sigma2s;
+    std::vector<double> pots;
+    std::vector<double> ans = LEEana::wireWrapperBayes(means, sigma2s, pots);
+
+    //the overall bin error covariance is then ans.back(), so errar is sqrt();
+  }
 
   return 0;
 }

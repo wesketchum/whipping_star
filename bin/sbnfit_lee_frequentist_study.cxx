@@ -96,6 +96,17 @@ int main(int argc, char* argv[])
         {0,			no_argument, 		0,  0},
     };
 
+         std::cout<<"Wrapper"<<std::endl;
+         double mod = 2;
+         double POT_scale = 0.05;
+         std::vector<double> v_means = {40*0.025*mod, 20.0*0.1*mod, 30.0*0.05*mod,0};
+         std::vector<double> v_sigma2s = {40*0.025*0.025*mod, 20.0*0.1*0.1*mod, 30.0*0.05*0.05*mod,0};
+         std::vector<double> v_pots = {POT_scale,POT_scale,POT_scale,POT_scale};
+         auto rans = LEEana::wireWrapperBayes(v_means,v_sigma2s,v_pots);
+         for(auto &v:rans)std::cout<<v<<std::endl;
+
+            return 0;
+
     while(iarg != -1)
     {
         iarg = getopt_long(argc,argv, "m:d:a:x:n:s:e:b:c:l:f:t:u:q:pjgrkzh", longopts, &index);

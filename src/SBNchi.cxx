@@ -883,7 +883,6 @@ float SBNchi::CalcChi_CNP(float * pred, float* data){
             tchi += (pred[i]-data[i])*inverse_collapsed(i,j)*(pred[j]-data[j]);
         }
     }
-
     return tchi;
 }
 
@@ -905,8 +904,6 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<doubl
     }
     return Mout;
 }
-
-
 
 
 TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<double>& spec){
@@ -1521,8 +1518,7 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
             else
                 U(i,j)=U(i,j)*specin->full_vector.at(i)*specin->full_vector.at(j);
 
-            //Comment this in if you want to sample from full gaussian
-            //if(i==j)U(i,i)+=specin->full_vector.at(i);
+            if(i==j) U(i,j) += pow(specin->full_error[i],2);
         }
     }
 

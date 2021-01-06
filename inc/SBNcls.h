@@ -30,6 +30,9 @@
 #include "TMatrixDSymEigen.h"
 
 #include "ngrid.h"
+
+#include "bayes.h"
+
 #include <gsl/gsl_randist.h>
 
 

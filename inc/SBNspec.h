@@ -24,7 +24,7 @@
 #include <TFile.h>
 #include "params.h"
 #include <TRandom3.h>
-
+#include "bayes.h"
 
 template <typename T> 
 std::vector<size_t> SortIndexes(const std::vector<T> &v) { 
@@ -83,7 +83,7 @@ namespace sbn{
 			std::string scale_hist_name;
 			double scale_hist_val;
 			bool has_been_scaled;
-
+            bool m_bool_use_wire_bayes;
 
 
 			/*************************** Member Functions ****************/
