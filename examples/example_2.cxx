@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
 
 	//Load up our covariance matricies we calculated in example1 (we could also load up single variation ones)
 	TFile * fsys = new TFile("EXAMPLE1.SBNcovar.root","read");
-	TMatrixD * cov = (TMatrixD*)fsys->Get("frac_covariance_EXAMPLE1");
+	TMatrixD * cov = (TMatrixD*)fsys->Get("frac_covariance");
 	
 	//Create two SBNchi objects, if you pass a TMatrixD it will set that as systematics, otherwise it will be a statonly.
 	SBNchi *chi_statonly = new SBNchi(bkg_spectra);

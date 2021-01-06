@@ -1,0 +1,37 @@
+<?xml version="1.0" ?>
+
+<mode name="nu" />
+
+<detector name="uBooNE" />
+
+<channel name="ncdelta" unit="cm">
+	<bins
+        edges="0 50 100 150 200 250" 
+		/>
+    <subchannel name="x1" />
+</channel>
+
+
+
+<plotpot value="6.6e20"/>
+
+<MultisimFile treename="singlephoton/vertex_tree" filename="/uboone/app/users/wtang/sphotonew/hellstroms_hive/hive/com_v30_am/selection/all_eff/sbnfit_pigLEEtrackV1_stage_3_NCPi0OverlayAngle.root" scale = "2.0" maxevents="5000000" pot="118884300000000000000.000000"> 
+     <branch
+         name="reco_vertex_x"
+         type="double"
+         associated_subchannel="nu_uBooNE_ncdelta_x1"
+	 associated_systematic="cross_section"
+	 central_value="true"
+         additional_weight="genie_spline_weight"
+         />
+ </MultisimFile>
+<MultisimFile treename="singlephoton/vertex_tree" filename="/uboone/app/users/wtang/sphotonew/hellstroms_hive/hive/com_v30_am/selection/all_eff/sbnfit_pigLEEtrackV1_stage_3_NCPi0OverlayAngle.root" scale = "1.0" maxevents="5000000" pot="118884300000000000000.000000"> 
+     <branch
+         name="reco_vertex_x"
+         type="double"
+         associated_subchannel="nu_uBooNE_ncdelta_x1"
+	 associated_systematic="cross_section"
+	 central_value="false"
+         additional_weight="genie_spline_weight"
+         />
+ </MultisimFile>

@@ -1,0 +1,42 @@
+<?xml version="1.0" ?>
+<!-- Very simple exampl, 1 mode, 1 detector, 1 channel -->
+<mode name="nu" />
+<detector name="uBooNE" />
+<channel name="1g1p" unit="GeV">
+    <bins
+        edges="200 312.5 425  537.5 650"
+        />
+    <!-- One subchannel, NCpi0 events -->
+    <subchannel name="ncpi0" />
+</channel>
+
+<!--What pot do you want to plot?-->
+<plotpot value="10.1e20"/>
+
+<!--  ============================================   Mod A =================================== -->
+
+<MultisimFile treename="singlephoton/simple_tree" filename="/pnfs/uboone/persistent/users/markross/single_photon_persistent_data/vertexed_mcc9_v26/DetSys/sbnfit_v26XGboost1g1pv3_stage_3_wiremod_ncpi0CV.root" scale = "1.0" pot="2.83939e+21"> 
+
+    <!-- Each subchannel should be associated to one CV and one NOT CV -->
+    <!-- Right now, each XML should represent a single systematic variation, here wiremodAngle-->
+    <branch
+        name="simple_variable"
+        type="double"
+        associated_subchannel="nu_uBooNE_1g1p_ncpi0"
+        associated_systematic="wiremodAngle"
+        central_value="true"   
+        additional_weight="simple_weight"
+        />
+</MultisimFile>
+
+<MultisimFile treename="singlephoton/simple_tree" filename="/pnfs/uboone/persistent/users/markross/single_photon_persistent_data/vertexed_mcc9_v26/DetSys/sbnfit_v26XGboost1g1pv3_stage_3_wiremod_ncpi0A.root" scale = "1.0" pot="2.81271e+21"> 
+    <branch
+        name="simple_variable"
+        type="double"
+        associated_subchannel="nu_uBooNE_1g1p_ncpi0"
+        associated_systematic="wiremodAngle"
+        central_value="false"
+        additional_weight="simple_weight"
+        />
+</MultisimFile>
+

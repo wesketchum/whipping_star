@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
     std::string tag = "TEST";
     std::string mode_option;
     bool bool_stat_only = false;
-    int number = 2500;
+    int number = -1;
     int grid_pt = 0;
     double random_number_seed = -1;
 
@@ -160,83 +160,28 @@ int main(int argc, char* argv[])
 
     NGrid mygrid;
 
-    if(tag == "NuMuDis"){	
-       //grid for numu disappearance
-       mygrid.AddDimension("m4", -1, 1.05, 0.05);//0.05 FULL
-       //mygrid.AddDimension("m4", 0.75, 1.05, 0.05);//0.05 hackein in baseline
-       mygrid.AddFixedDimension("ue4", 0);
-       //mygrid.AddDimension("um4",-1.2, -0.5, 0.01); //for NuMuAllowed
-       mygrid.AddDimension("um4",-2.0, -0.025, 0.025); //0.05
-    }else{
-      //grid for nue appearance
-
-      if(number==1){
-          mygrid.AddDimension("m4", -1.0, -0.5, 0.05);   //0.1 FULL
-      }else if(number==2){
-          mygrid.AddDimension("m4", -0.55, 0.05, 0.05);   //0.1 FULL
-      }else if(number==3){
-          mygrid.AddDimension("m4", 0.05, 0.5, 0.05);   //0.1 FULL
-      }else if(number==4){
-          mygrid.AddDimension("m4", 0.5, 1.05, 0.05);   //0.1 FULL
-      }else{
-          mygrid.AddDimension("m4", -1.0, 1.05, 0.05);   //0.1 FULL
-      }
-      mygrid.AddDimension("ue4", -2.5, 0.05, 0.05); //0.1 full exc
-      //mygrid.AddDimension("ue4", -1.5, 0.05, 0.05); //0.1 full inject
-      mygrid.AddFixedDimension("um4",0.0);         //0.05
-    }
-
+    mygrid.AddDimension("NCPi0Coh", 0.0, 5, 0.05);
+    mygrid.AddDimension("NCPi0NotCoh",0.5, 1.0, 0.025); 
 
     //Print the grid interesting bits
     mygrid.Print();
     SBNfeld myfeld(mygrid,tag,xml);
 
-    if(mode_option == "gen"){
-        myfeld.GenerateOscillatedSpectra();
+    if(mode_option == "genbkg"){
         myfeld.SetCoreSpectrum(tag+"_CV.SBNspec.root");
-        myfeld.GenerateBackgroundSpectrum();
+        myfeld.GenerateBackgroundScaledSpectrum();
+    
+    }else if(mode_option == "fit"){
 
-    }else if(mode_option == "genbkg"){
+        std::cout<<"Setting Core Spectrum"<<std::endl;
         myfeld.SetCoreSpectrum(tag+"_CV.SBNspec.root");
-        myfeld.GenerateBackgroundSpectrum();
-
-    }else if(mode_option == "feldman"){
-
-        std::cout<<"Begininning a full Feldman-Cousins analysis for tag : "<<tag<<std::endl;
-
-        myfeld.SetCoreSpectrum(tag+"_BKG_ONLY.SBNspec.root");
-        myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
-
-        std::cout<<"Setting random seed "<<random_number_seed<<std::endl;
-        myfeld.SetRandomSeed(random_number_seed);
-        std::cout<<"Loading precomputed spectra"<<std::endl;
-        myfeld.LoadPreOscillatedSpectra();
-        std::cout <<"DONE loading precomputed spectra at : " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
-        myfeld.LoadBackgroundSpectrum();
-
-        myfeld.SetNumUniverses(number);
-
-        std::cout<<"Calculating the necessary SBNchi objects"<<std::endl;
-        myfeld.CalcSBNchis();
-        std::cout <<"DONE calculating the necessary SBNchi objects at : " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
-
-        if(grid_pt ==-1){
-            std::cout<<"Beginning to peform FullFeldmanCousins analysis"<<std::endl;
-            myfeld.FullFeldmanCousins();
-        }else if(grid_pt>=0){
-             std::cout<<"Beginning to peform Single Grid PointFeldmanCousins analysis on pt: "<<grid_pt<<std::endl;
-             myfeld.PointFeldmanCousins((size_t)grid_pt);
-        }
-
-    }else if(mode_option == "test"){
-
-        myfeld.SetCoreSpectrum(tag+"_BKG_ONLY.SBNspec.root");
         if(bool_stat_only){
             myfeld.SetEmptyFractionalCovarianceMatrix();
             myfeld.SetStatOnly();
             std::cout<<"RUNNING Stat Only!"<<std::endl;
         }else{
- 
+
+          std::cout<<"Loading Covariance Matrix"<<std::endl;
           if(number >= 0) {
             myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance_"+std::to_string(number));
           }else{
@@ -250,22 +195,21 @@ int main(int argc, char* argv[])
 
         std::cout<<"Setting random seed "<<random_number_seed<<std::endl;
         myfeld.SetRandomSeed(random_number_seed);
-        std::cout<<"Loading precomputed spectra"<<std::endl;
-        myfeld.LoadPreOscillatedSpectra();
-        myfeld.LoadBackgroundSpectrum();
+
+        
+        std::cout<<"Loading Scaled Spectra"<<std::endl;
+        myfeld.GenerateScaledSpectra();
+        myfeld.SetBackgroundSpectrum(tag+"_CV.SBNspec.root","",1.0);
 
         std::cout<<"Calculating the necessary SBNchi objects"<<std::endl;
         myfeld.CalcSBNchis();
 
 
         //everything up to here settng things up.
-
-
-
         std::cout<<"Beginning to peform a globalScan analysis"<<std::endl;
-        //myfeld.GlobalScan(884);
         
         if(input_data){
+            std::cout<<"Loading Data "<<data_filename<<std::endl;
             SBNspec * observed_spectrum = new SBNspec(data_filename, xml, false);
             myfeld.GlobalScan(observed_spectrum);
         }else{
@@ -276,6 +220,33 @@ int main(int argc, char* argv[])
                 myfeld.GlobalScan(grid_pt);
             }
             
+        }
+
+    }else if(mode_option=="genie"){
+
+        SBNspec * observed_spectrum = new SBNspec(data_filename, xml, false);
+        SBNspec * cv = new SBNspec(tag+"_CV.SBNspec.root",xml,false);
+        SBNchi * chi = new SBNchi(*cv, true);
+
+        TFile *f = new TFile("ALL.SBNcovar.root");
+        std::vector<std::string> All_Genie= {"AGKYpT1pi_UBGenie_frac_covariance","AGKYxF1pi_UBGenie_frac_covariance","AhtBY_UBGenie_frac_covariance","All_UBGenie_frac_covariance","AxFFCCQEshape_UBGenie_frac_covariance","BhtBY_UBGenie_frac_covariance","CV1uBY_UBGenie_frac_covariance","CV2uBY_UBGenie_frac_covariance","CoulombCCQE_UBGenie_frac_covariance","DecayAngMEC_UBGenie_frac_covariance","EtaNCEL_UBGenie_frac_covariance","FrAbs_N_UBGenie_frac_covariance","FrAbs_pi_UBGenie_frac_covariance","FrCEx_N_UBGenie_frac_covariance","FrCEx_pi_UBGenie_frac_covariance","FrInel_pi_UBGenie_frac_covariance","FrPiProd_N_UBGenie_frac_covariance","FrPiProd_pi_UBGenie_frac_covariance","FracDelta_CCMEC_UBGenie_frac_covariance","FracPN_CCMEC_UBGenie_frac_covariance","MFP_N_UBGenie_frac_covariance","MFP_pi_UBGenie_frac_covariance","MaCCQE_UBGenie_frac_covariance","MaCCRES_UBGenie_frac_covariance","MaNCEL_UBGenie_frac_covariance","MaNCRES_UBGenie_frac_covariance","MvCCRES_UBGenie_frac_covariance","MvNCRES_UBGenie_frac_covariance","NonRESBGvbarnCC1pi_UBGenie_frac_covariance","NonRESBGvbarnCC2pi_UBGenie_frac_covariance","NonRESBGvbarnNC1pi_UBGenie_frac_covariance","NonRESBGvbarnNC2pi_UBGenie_frac_covariance","NonRESBGvbarpCC1pi_UBGenie_frac_covariance","NonRESBGvbarpCC2pi_UBGenie_frac_covariance","NonRESBGvbarpNC1pi_UBGenie_frac_covariance","NonRESBGvbarpNC2pi_UBGenie_frac_covariance","NonRESBGvnCC1pi_UBGenie_frac_covariance","NonRESBGvnCC2pi_UBGenie_frac_covariance","NonRESBGvnNC1pi_UBGenie_frac_covariance","NonRESBGvnNC2pi_UBGenie_frac_covariance","NonRESBGvpCC1pi_UBGenie_frac_covariance","NonRESBGvpCC2pi_UBGenie_frac_covariance","NonRESBGvpNC1pi_UBGenie_frac_covariance","NonRESBGvpNC2pi_UBGenie_frac_covariance","NormCCCOH_UBGenie_frac_covariance","NormCCMEC_UBGenie_frac_covariance","NormNCCOH_UBGenie_frac_covariance","NormNCMEC_UBGenie_frac_covariance","RPA_CCQE_Reduced_UBGenie_frac_covariance","RPA_CCQE_UBGenie_frac_covariance","RootinoFix_UBGenie_frac_covariance","ThetaDelta2NRad_UBGenie_frac_covariance","Theta_Delta2Npi_UBGenie_frac_covariance","TunedCentralValue_UBGenie_frac_covariance","VecFFCCQEshape_UBGenie_frac_covariance","XSecShape_CCMEC_UBGenie_frac_covariance"};
+
+        
+        for(int i=0; i< All_Genie.size(); i++){
+            std::cout<<"Starting on "<<All_Genie[i]<<std::endl;
+            TMatrixT<double>* M = (TMatrixT<double>*)f->Get(("individualDir/"+All_Genie[i]).c_str());
+             std::cout<<"Loaded M "<<M->IsValid()<<std::endl;
+            cv->CollapseVector();
+            std::cout<<"AAGH1"<<std::endl;
+            TMatrixT<double> background_full_covariance_matrix = chi->CalcCovarianceMatrix(M, cv->full_vector);
+            std::cout<<"AAGH2"<<std::endl;
+            TMatrixT<double> background_collapsed_covariance_matrix(cv->num_bins_total_compressed, cv->num_bins_total_compressed);
+            std::cout<<"AAGH3"<<std::endl;
+            chi->CollapseModes(background_full_covariance_matrix, background_collapsed_covariance_matrix);    
+
+            std::cout<<"And WriteOut"<<std::endl;
+            cv->CompareSBNspecs(background_collapsed_covariance_matrix,observed_spectrum,All_Genie[i]);   
+
         }
 
 
