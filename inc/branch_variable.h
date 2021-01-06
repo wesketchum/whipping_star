@@ -8,12 +8,16 @@
 #include <sstream>
 #include <map>
 #include <time.h>
-
+#include "TTreeFormula.h"
 
 struct BranchVariable{
 	std::string name;
 	std::string type;
 	std::string associated_hist;
+	std::string associated_systematic;
+	bool central_value;
+
+    TTreeFormula * branch_formula;
 
 	bool oscillate;
 	std::string true_param_name;
@@ -31,10 +35,15 @@ struct BranchVariable{
 	double true_value_d;
 	double true_L_d;
 
-	BranchVariable(std::string n, std::string t, std::string a) : name(n), type(t), associated_hist(a) {oscillate=false;};
+	BranchVariable(std::string n, std::string t, std::string a) : name(n), type(t), associated_hist(a) {oscillate=false; associated_systematic=""; central_value =false;};
+	BranchVariable(std::string n, std::string t, std::string a_hist, std::string a_syst, bool cv) : name(n), type(t), associated_hist(a_hist), associated_systematic(a_syst) { oscillate=false; central_value=cv;};
 	virtual void* GetValue(){};
 	virtual void* GetTrueValue(){};
 	virtual void* GetTrueL(){};
+
+    TTreeFormula* GetFormula(){
+            return branch_formula;
+    }
 
 	int SetOscillate(bool inbool){ oscillate = inbool;};
 	bool GetOscillate(){ return oscillate;};
@@ -51,6 +60,7 @@ struct BranchVariable{
 
 struct BranchVariable_d: public BranchVariable{
 	BranchVariable_d(std::string n, std::string t, std::string a) : BranchVariable(n,t,a) {value_d=0;true_value_d=0; true_L_d = 0;};
+	BranchVariable_d(std::string n, std::string t, std::string a_hist, std::string a_syst, bool cv) : BranchVariable(n,t,a_hist, a_syst, cv) {value_d=0;true_value_d=0; true_L_d = 0;};
 	void* GetValue(){ return &value_d;}
 	void* GetTrueValue(){ return &true_value_d;}
 	void* GetTrueL(){ return &true_L_d;}

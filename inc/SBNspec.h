@@ -13,7 +13,7 @@
 #include <TCanvas.h>
 #include <TLine.h>
 #include <TStyle.h>
-
+#include <TMatrixT.h>
 //#include <TROOT.h>
 #include <sstream>
 #include <iomanip>
@@ -35,7 +35,7 @@ std::vector<size_t> SortIndexes(const std::vector<T> &v) {
 
 	// sort indexes based on comparing values in v 
 	sort(idx.begin(), idx.end(), 
-			[&v](size_t i1, size_t i2) {return v[i1] < v[i2];}); 
+			[&v](size_t i1, size_t i2) {return v[i1] > v[i2];}); 
 
 	return idx; 
 }
@@ -51,11 +51,11 @@ namespace sbn{
 		public:
 
 
-
 			SBNspec() {};
 			SBNspec(std::string); //Load in config file EMPTY hists
 			SBNspec(std::string, int); //Load in config file, create EMPTY hists, with optional numbering (e.g for multisims!) 
-			SBNspec(std::string, int, bool); //Load in config file, create EMPTY hists, with optional numbering (e.g for multisims!) 
+			SBNspec(std::string, int, bool); //Load in config file, create EMPTY hists, with optional numbering (e.g for multisims!)
+			SBNspec(std::string, int, bool, bool); //Load in config file, plus the choice of using root files with systematic variations already applied (the second 'bool'). 
 
 			SBNspec(std::string, std::string);
 			SBNspec(std::string, std::string, bool);
@@ -65,17 +65,18 @@ namespace sbn{
             SBNspec(std::vector<double> input_full_vec, std::string whichxml, int universe, bool isverbose);
 
 
-
 			// this vector of hists contains all spectra used.
 			// The order of filling is the same as the order defined in xml file!
-			std::vector<TH1D > hist;
+			std::vector<TH1D> hist;
 			std::map<std::string, int> map_hist;
 
 			//This is the full concatanated vector (in xml order)	
 			std::vector<double > full_vector;
 			//This is the compessed vector, collapsing all subchannels down to a single channel
 			std::vector<double > collapsed_vector;
+			std::vector<float > f_collapsed_vector;
 
+			std::vector<double > full_error;
 
 
 			//need to store a history of the scales for oscillation purposes.  FIX THIS
@@ -122,6 +123,7 @@ namespace sbn{
 			double GetTotalEvents();
 
 			int GetGlobalBinNumber(double invar, int which_hist);
+			int GetGlobalBinNumber(int local_bin, std::string histname);
 			int GetLocalBinNumber(double invar, int which_hist);
 
 			int GetHistNumber(int f);
@@ -133,8 +135,11 @@ namespace sbn{
 			//WriteOut saves all to an externam rootfile, each individual subchannel and a stacked channel plot.
 			int WriteOut(std::string);
 			
+            std::vector<int> GetIndiciesFromSubchannel(std::string const & subchannel);
 			int CompareSBNspecs(SBNspec * compsec, std::string tag);
-			};
+	        int CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec, std::string tag);
+		
+    };
 
 
 
