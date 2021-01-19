@@ -195,15 +195,6 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
                         double true_var = *(static_cast<double*>(branch_variables[j][t]->GetTrueValue()));
                         double true_L = *(static_cast<double*>(branch_variables[j][t]->GetTrueL()));
 
-                        //first subtract off a random 50m
-                        //true_L = true_L - rangen->Uniform(0,50.0);
-
-                        if(ih==0 || ih ==1) true_L = true_L-10.0;
-
-                        //WARNING need to change to km
-                        true_L = true_L/1000.0;
-                        //true_L = FUDGE[ih]/1000.0;
-                        //
                         //std::cout<<ih<<" "<<spec_osc_sin.hist[ih].GetName()<<std::endl;
 
                         double osc_Probability_sin = nu_model.oscProbSin(true_var, true_L);
