@@ -274,10 +274,9 @@ int SBNspec::CalcFullVector(){
     
   assert (hoffset == num_bins_total);
 
-    
   if(m_bool_use_wire_bayes){
     //Loop over all channels: for each bin in this channel, get 
-    // means: vector<double> of GetBinContent()
+    // means:     vector<double> of GetBinContent()
     // sigmas2s:  vector<double> of GetBinError() //maybe square of this
     // pots: vector<double> of overall POT scale factor for that sample (for use when 0 bins)?
 

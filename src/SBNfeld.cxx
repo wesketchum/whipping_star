@@ -13,6 +13,7 @@ NeutrinoModel SBNfeld::convert3p1(std::vector<double> ingrid){
     return signalModel;
 }
 
+
 int SBNfeld::GenerateOscillatedSpectra(){
 
     //This will loop over the predefined grid for oscillation studies, and calculate it
@@ -661,7 +662,7 @@ std::vector<double> SBNfeld::PerformIterativeGridFit(const std::vector<float> &d
 
             double chi_tmp = this->CalcChi(datavec, m_cv_spec_grid[r]->collapsed_vector, inverse_current_collapsed_covariance_matrix);
 
-            //            std::cout<<"Iter: "<<n_iter<<" "<<r<<" "<<chi_tmp<<std::endl;
+            //std::cout<<"Iter: "<<n_iter<<" "<<r<<" "<<chi_tmp<<std::endl;
 
             if(chi_tmp <= chi_min){
                 best_grid_point = r;

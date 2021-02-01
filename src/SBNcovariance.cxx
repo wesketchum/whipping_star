@@ -8,6 +8,7 @@ using namespace sbn;
 
 // for single photon: when we use root files with systematics already applied.
 // usually 'useuniverse' is set to 'false' in this case.
+
 SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(xmlname, true, useuniverse) {
     otag = "SBN covariance::SBNcovariance\t||\t";
 
