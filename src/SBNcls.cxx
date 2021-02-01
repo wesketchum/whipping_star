@@ -105,8 +105,7 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
         std::cout<<i<<" "<<h0_results[i].m_values.size()<<" "<<numMC<<std::endl;
         for(int m=0; m< numMC; m++){
             for(int p =0; p< prob_values.size();p++){
-                if(h0_results[i].m_values[m]>=1.82){
-//                if(h0_results[i].m_values[m]>=h1_results[i].m_quantiles[p]){
+                if(h0_results[i].m_values[m]>=h1_results[i].m_quantiles[p]){
                     h0_results[i].m_nlower[p] += 1.0/(double(numMC));
                 }
             }
@@ -121,7 +120,6 @@ int SBNcls::CalcCLS(int numMC, std::string tag){
     std::vector<std::string> nice_names = {"Pearson_Chi","Poisson_Log_Likelihood","CNP_Chi"};
 
     for(int i=0;i< 3;i++){
-        //for(int i=0;i< h0_results.size();i++){
         makePlots( h0_results[i], h1_results[i], tag+nice_names[i], which_mode);
     }
 

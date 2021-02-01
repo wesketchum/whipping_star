@@ -234,7 +234,7 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
     }
 
     /*
-       TMatrixD Mcorr = matrix_systematics;
+    TMatrixD Mcorr = matrix_systematics;
     //TEMP
     TFile *f = new TFile("gloop.root","recreate");
     f->cd();
