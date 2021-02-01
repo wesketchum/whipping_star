@@ -128,9 +128,8 @@ SBNchi::SBNchi(SBNspec in, bool is_is_stat_only): SBNconfig(in.xmlname), core_sp
     matrix_collapsed.ResizeTo(num_bins_total_compressed, num_bins_total_compressed);
     matrix_systematics.ResizeTo(num_bins_total, num_bins_total);
     matrix_fractional_covariance.ResizeTo(num_bins_total, num_bins_total);
-m_cmin = -999;
+    m_cmin = -999;
     m_cmax = -999;
-
 
     m_tolerance = 1e-12;
     max_sample_chi_val =150.0;
@@ -864,6 +863,28 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrixCNP(TMatrixT<double>*M, std::vector
     }
     return Mout;
 }
+
+
+float SBNchi::CalcChi_Pearson(float * pred, float* data){
+
+    is_verbose = false;
+    TMatrixT<double> inverse_collapsed = m_matrix_systematics_collapsed;
+    //Add on Pearson Stats terms proportional to data
+    for(int j =0; j<num_bins_total_compressed; j++)
+    {
+        inverse_collapsed(j,j) +=  pred[j];
+    }
+    inverse_collapsed = this->InvertMatrix(inverse_collapsed);   
+
+    float tchi = 0.0;
+    for(int i =0; i<num_bins_total_compressed; i++){
+        for(int j =0; j<num_bins_total_compressed; j++){
+            tchi += (pred[i]-data[i])*inverse_collapsed(i,j)*(pred[j]-data[j]);
+        }
+    }
+    return tchi;
+}
+
 
 float SBNchi::CalcChi_CNP(float * pred, float* data){
 
@@ -2338,15 +2359,15 @@ std::vector<CLSresult> SBNchi::Mike_NP(SBNspec *specin, SBNchi &chi_h0, SBNchi &
                 collapsed[j] = float(dist_pois(*rangen_twister));
             }
         }else if(which_sample==1){//Covariance Sampling
-            auto exp =  this->GeneratePseudoExperiment();
+            auto exp = this->GeneratePseudoExperiment();
             for(int j=0; j < num_bins_total_compressed; j++){
                 collapsed[j] = exp[j];
             }
         }
 
         //Base Default Chi
-        float val_chi_h0  = chi_h0.CalcChi(h0_vec_matrix_inverted, h0_corein, collapsed);
-        float val_chi_h1  = chi_h1.CalcChi(h1_vec_matrix_inverted, h1_corein, collapsed);
+        float val_chi_h0  = chi_h0.CalcChi_Pearson(h0_corein, collapsed);
+        float val_chi_h1  = chi_h1.CalcChi_Pearson(h1_corein, collapsed);
 
         //Poisson Log Likli
         float val_pois_h0  = chi_h0.PoissonLogLiklihood(h0_corein, collapsed);

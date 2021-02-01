@@ -181,6 +181,7 @@ namespace sbn{
 
             float PoissonLogLiklihood(float * h0_corein, float *collapsed);
             float CalcChi_CNP(float * pred, float* data);
+            float CalcChi_Pearson(float * pred, float* data);
             double CalcChi(TMatrixT<double> M, std::vector<double>& spec, std::vector<double>& data);
 
             std::vector<std::vector<double >> TMatrixDToVector(TMatrixT <double> McI);
