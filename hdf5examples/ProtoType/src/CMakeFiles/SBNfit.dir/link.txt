@@ -1,0 +1,2 @@
+"/usr/bin/gcc-ar" cr libSBNfit.a  CMakeFiles/SBNfit.dir/SBNconfig.cxx.o CMakeFiles/SBNfit.dir/prob.cxx.o CMakeFiles/SBNfit.dir/tinyxmlparser.cpp.o CMakeFiles/SBNfit.dir/tinyxmlerror.cpp.o CMakeFiles/SBNfit.dir/tinystr.cpp.o CMakeFiles/SBNfit.dir/tinyxml.cpp.o
+"/usr/bin/gcc-ranlib" libSBNfit.a

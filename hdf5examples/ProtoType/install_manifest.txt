@@ -1,0 +1,4 @@
+/usr/local/lib/libSBNfit.a
+/usr/local/include/GenericBlock.hpp
+/usr/local/include/opts.h
+/usr/local/bin/pureeigen

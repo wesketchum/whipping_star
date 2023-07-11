@@ -1,0 +1,4 @@
+/code/src/CMakeFiles/_CMakeLTOTest-C/bin/CMakeFiles/rebuild_cache.dir
+/code/src/CMakeFiles/_CMakeLTOTest-C/bin/CMakeFiles/edit_cache.dir
+/code/src/CMakeFiles/_CMakeLTOTest-C/bin/CMakeFiles/foo.dir
+/code/src/CMakeFiles/_CMakeLTOTest-C/bin/CMakeFiles/boo.dir
