@@ -1,0 +1,1 @@
+cmake ../ -DCMAKE_INSTALL_PREFIX=/home/hschulz/scidac/sbn/h5cpp/build/../local -DDIY_INCLUDE_DIRS=/home/hschulz/scidac/sbn/h5cpp/build/../../diy/include -DHIGHFIVE_DIR=/home/hschulz/scidac/sbn/h5cpp/build/../../HighFive
