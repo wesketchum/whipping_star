@@ -230,9 +230,11 @@ struct Block : public BlockBase<T>
     
     // Set points per direction and compute total points in domain
     VectorXi ndom_pts(dom_dim);
-    for (int i = 0; i < dom_dim; i++)
+    for (int i = 0; i < dom_dim; i++){
       ndom_pts(i)     =  a->ndom_pts[i];
-    
+      //std::cout << "ndom_pts: " << ndom_pts << std::endl;
+    }
+
     // Create input data set and add to block
     //std::cout << "dom_dim, mdims, ndom_pts.prod(), ndom_pts: " << dom_dim << ", " << mdims << ", " << ndom_pts.prod() << ", " << ndom_pts << std::endl;
     input = new mfa::PointSet<T>(dom_dim, mdims, ndom_pts.prod(), ndom_pts);
@@ -243,6 +245,7 @@ struct Block : public BlockBase<T>
     int index = 0;
     int n = 0;
     int pd = mfa_info.pt_dim();
+    std::cout << "pd: " << pd << std::endl;
     for (size_t k = 0; k < (size_t)(ndom_pts(2)); k++) {
       for (size_t j = 0; j < (size_t)(ndom_pts(1)); j++) {
         for (size_t i = 0; i < (size_t)(ndom_pts(0)); i++) {
@@ -250,10 +253,13 @@ struct Block : public BlockBase<T>
           input->domain(n, 1) = j;
           input->domain(n, 2) = k;
           for (int m = 0; m < pd-dom_dim; m++) {
-	    //std::cout << "index n, 3+m, i, j, k, vals: " << n << ", " << 3+m << ", " << i << ", " << j << ", " << k << ", ";
+	    index = (i*ndom_pts(1)*ndom_pts(2) + j*ndom_pts(2) + k)*(pd-dom_dim) + m;
+	    //if(i == 0 && j < 60 && k < 60 && m<1) std::cout << "index n, 3+m, i, j, k, vals: " << n << ", " << 3+m << ", " << i << ", " << j << ", " << k << ", ";
+	    //if( i==0 && j==0 && m==0 ) std::cout << "index n, 3+m, i, j, k, vals: " << index << ", " << n << ", " << 3+m << ", " << i << ", " << j << ", " << k << ", ";
             input->domain(n, dom_dim+m) = vals[index];
-	    //std::cout << vals(m, i, j, k) << std::endl;
-            index++;
+	    //if(i == 0 && j < 60 && k < 60 && m<1) std::cout << std::setprecision(8) << vals[index] << std::endl;
+	    //if( i==0 && j==0 && m==0 ) std::cout << std::setprecision(8) << vals[index] << std::endl;
+            //index++;
           }	
           n++;
         }
@@ -345,6 +351,17 @@ inline Eigen::VectorXd collapseVectorTrans(Eigen::VectorXd  const & vin, Eigen::
   return cvec;
 }
 
+std::vector<float> getEvenElements(const std::vector<float>& vec) {
+    std::vector<float> evenVector;
+    int count = 0;
+    for (int i = 0; i < vec.size(); ++i) {
+        if (i % 2 == 0) {
+            evenVector.push_back(vec[i]);
+        }
+    }
+    return evenVector;
+}
+
 inline std::vector<float> makeSignalObject(std::string filename, std::vector<float>& dm2_index, std::vector<float>& s2_Tue_index, std::vector<float>& s2_T24_index, int & nbins ) { 
 
   // Open the HDF5 file for reading
@@ -375,29 +392,19 @@ inline std::vector<float> makeSignalObject(std::string filename, std::vector<flo
   std::set<float> s2_T24_unique(s2_T24.begin(), s2_T24.end());
 
   // Resize dm2_index to the size of dm2_unique
-  dm2_index.resize(16);
+  dm2_index.resize(dm2_unique.size());
   getrusage(RUSAGE_SELF, &usage);
   std::cout << "rank, after setting dm2_index: "  << usage.ru_maxrss/1000000. << " GB" << std::endl;
-  //dm2_index.resize(dm2_unique.size());
   s2_Tue_index.resize(s2_Tue_unique.size());
   std::cout << "rank, after setting s2_Tue_index: "  << usage.ru_maxrss/1000000. << " GB" << std::endl;
   s2_T24_index.resize(s2_T24_unique.size());
   std::cout << "rank, after setting s2_Tue_index: "  << usage.ru_maxrss/1000000. << " GB" << std::endl;
   
   // Copy the elements from dm2_unique to dm2_index
-  //std::copy( std::begin(dm2_unique), std::next(std::begin(dm2_unique), 8), std::begin(dm2_index));
+  //std::copy( std::begin(dm2_unique), std::next(std::begin(dm2_unique), 20), std::begin(dm2_index));
   std::copy(dm2_unique.begin(), dm2_unique.end(), dm2_index.begin());
   std::copy(s2_Tue_unique.begin(), s2_Tue_unique.end(), s2_Tue_index.begin());
   std::copy(s2_T24_unique.begin(), s2_T24_unique.end(), s2_T24_index.begin());
-
-  //check how many bins in each parameters:
-  //std::cout << "length of dm2, s2_Tue, s2_T24, spectrum row, spectrum col: " << dm2_unique.size() << ", " << s2_Tue_unique.size() << ", " << s2_T24_unique.size() << ", " << spectrum.rows() << ", " << spectrum.cols() << std::endl;
-  std::copy(dm2_unique.begin(), dm2_unique.end(), std::ostream_iterator<float>(std::cout, " "));
-  //std::cout << std::endl;
-  std::copy(s2_Tue_unique.begin(), s2_Tue_unique.end(), std::ostream_iterator<float>(std::cout, " "));
-  //std::cout << std::endl;
-  std::copy(s2_T24_unique.begin(), s2_T24_unique.end(), std::ostream_iterator<float>(std::cout, " "));
- 
 
   // Define grid dimensions
   //const int dim1 = dm2_unique.size(); 
@@ -407,12 +414,14 @@ inline std::vector<float> makeSignalObject(std::string filename, std::vector<flo
   const int grid_size = spectrum.rows(); 
   nbins = spectrum.cols(); 
   const int total_size = dim1 * dim2 * dim3;
+  std::cout << "grid_size, total_size = " << grid_size << ", " << total_size << std::endl;
+  std::cout << "dim1, dim2, dim3 = " << dim1 << ", " << dim2 << ", " << dim3 << std::endl;
   // Create an Eigen tensor with size 80x60x60x1092
   getrusage(RUSAGE_SELF, &usage);
   std::cout << "rank, before creating tensor: "  << usage.ru_maxrss/1000000. << " GB" << std::endl;
   //Eigen::Tensor<float, 4> my_grid(dim1, dim2, dim3, nbins);
   //my_grid.setZero();
-  std::vector<float> my_grid(grid_size*nbins);
+  std::vector<float> my_grid(total_size*nbins);
   std::fill(my_grid.begin(), my_grid.end(), 0);
 
   //Initialize grid in 3d
@@ -425,6 +434,7 @@ inline std::vector<float> makeSignalObject(std::string filename, std::vector<flo
   // Iterate over the grid points and fill the tensor
   int index=0;
   for (int l = 0; l < grid_size; ++l) {
+
       auto itx  = std::find( dm2_index.begin(), dm2_index.end(), dm2(l) );
       if ( itx != dm2_index.end() ) gridx = (itx - dm2_index.begin());
 
@@ -433,22 +443,15 @@ inline std::vector<float> makeSignalObject(std::string filename, std::vector<flo
 
       auto itz  = std::find( s2_T24_index.begin(), s2_T24_index.end(), s2_T24(l) );
       if (itz != s2_T24_index.end()) gridz = (itz - s2_T24_index.begin());
-
+    
       // Find the index of the grid point in the grid vectors
       if (gridx >= 0 && gridy >= 0 && gridz >= 0) {
           for ( int bin = 0; bin < nbins; bin++ ){
+	      index = (gridx*dim2*dim3 + gridy*dim3 + gridz)*nbins + bin;
 	      my_grid[index] = spectrum(l,bin);
-	      //if(index<10) std::cout << "gridx,gridy,gridz,bin,my_grid: " <<  gridx << ", " << gridy << ", " << gridz << ", " << bin << ", " << my_grid[index] << std::endl;
-	      index++;
-	  }
-      } else {
-          for ( int bin = 0; bin < nbins; bin++ ){
-	      my_grid[index] = 0;
-	      //if(index<10) std::cout << "gridx,gridy,gridz,bin,my_grid: " <<  gridx << ", " << gridy << ", " << gridz << ", " << bin << ", " << my_grid[index] << std::endl;
-	      index++;
+	      //if( /*( l==0 || l==30 || l==31 || l==99025 ) && bin<1 ) std::cout << "l, gridx,gridy,gridz,bin,my_grid: " <<  l << ", " << gridx << ", " << gridy << ", " << gridz << ", " << bin << ", " << std::setprecision(8) << my_grid[index] << std::endl;
 	  }
       }
-      //std::cout << "l, index = " << l << ", " << index << std::endl;
   }
   getrusage(RUSAGE_SELF, &usage);
   std::cout << "index, rank, after filling tensor: "  << index << ", " << usage.ru_maxrss/1000000. << " GB" << std::endl;
@@ -521,7 +524,7 @@ inline void makeSignalModel(diy::mpi::communicator world, Block<real_t>* b, cons
   if(world.rank()==0) std::cout << "took: " << t7-t6 << " seconds" << std::endl;
   if(world.rank()==0) std::cout << "print block" << std::endl;
   double t8 = MPI_Wtime();
-  b->print_block(cp, 0);
+  //b->print_block(cp, 0);
   getrusage(RUSAGE_SELF, &usage);
   std::cout << "rank, Memory usage after print block : "  << usage.ru_maxrss/1000000. << " GB" << std::endl;
   double t9 = MPI_Wtime();
@@ -535,6 +538,7 @@ float roundoff(float value, unsigned char prec)
   float pow_10 = pow(10.0f, (float)prec);
   return round(value * pow_10) / pow_10;
 }
+
 
 void loadData(const char* fname, std::string what, std::vector<float> & v_buffer, int & n_rows, int & n_cols) {
   H5Easy::File file(fname, H5Easy::File::ReadOnly);
@@ -588,16 +592,12 @@ Eigen::MatrixXi bcMatrixXi(diy::mpi::communicator world, std::vector<int>  v_buf
 }
 
 void createDataSets(HighFive::File* file, size_t nPoints, size_t nUniverses) {
-  //std::cout << "Enter createDataset... nPoints*nUniverses = " << nPoints << "*" << nUniverses << " = " << nPoints*nUniverses << std::endl;
   file->createDataSet<double>("last_chi_min", HighFive::DataSpace( { nPoints*nUniverses,       1} ));
   file->createDataSet<double>("delta_chi",    HighFive::DataSpace( { nPoints*nUniverses,       1} ));
   file->createDataSet<int>("best_grid_point", HighFive::DataSpace( { nPoints*nUniverses,       1} ));
   file->createDataSet<double>("best_grid_point_x", HighFive::DataSpace( { nPoints*nUniverses,       1} ));
   file->createDataSet<double>("best_grid_point_y", HighFive::DataSpace( { nPoints*nUniverses,       1} ));
   file->createDataSet<int>("n_iter",          HighFive::DataSpace( { nPoints*nUniverses,       1} ));
-  //file->createDataSet<int>("warn_flag",       HighFive::DataSpace( { nPoints*nUniverses,       1} ));
-  //file->createDataSet<double>("fakedataC",    HighFive::DataSpace( { nPoints*nUniverses,       57} ));
-  //file->createDataSet<double>("specbestC",    HighFive::DataSpace( { nPoints*nUniverses,       57} ));
   // Some bookkeeping why not
   file->createDataSet<int>("i_grid",          HighFive::DataSpace( {nPoints*nUniverses,        1} ));
   file->createDataSet<int>("i_univ",          HighFive::DataSpace( {nPoints*nUniverses,        1} ));
@@ -611,6 +611,15 @@ void writeGrid(HighFive::File* file, std::vector<float> my_grid, std::vector<flo
   HighFive::DataSet d_gridx          = file->getDataSet("gridx");
   HighFive::DataSet d_gridy          = file->getDataSet("gridy");
   HighFive::DataSet d_gridz          = file->getDataSet("gridz");
+  std::cout << "x : " ;
+  for(int i = 0; i < xcoord.size(); i++) std::cout << i << ", " << xcoord[i] << ", ";
+  std::cout << std::endl;
+  std::cout << "y : " ;
+  for(int i = 0; i < ycoord.size(); i++) std::cout << i << ", " << ycoord[i] << std::endl;
+  std::cout << std::endl;
+  std::cout << "z : " ;
+  for(int i = 0; i < zcoord.size(); i++) std::cout << i << ", " << zcoord[i] << std::endl;
+  std::cout << std::endl;
   d_gridx.select(   {0, 0}, {xcoord.size(), 1}).write(xcoord);
   d_gridy.select(   {0, 0}, {ycoord.size(), 1}).write(ycoord);
   d_gridz.select(   {0, 0}, {zcoord.size(), 1}).write(zcoord);
@@ -977,6 +986,20 @@ inline std::tuple<Eigen::MatrixXd,Eigen::MatrixXd> updateInvCov(Eigen::MatrixXd 
 }
 
 
+inline std::tuple<Eigen::MatrixXd,Eigen::MatrixXd> updateInvCovCNP(Eigen::MatrixXd const & mat_frac, Eigen::MatrixXd const & mat_trans, Eigen::MatrixXd const & mat_dirt, Eigen::MatrixXd const & mat_data, Eigen::VectorXd const & spec_full, Eigen::VectorXd const & data, std::ofstream& debugFile) {
+
+    debugFile << "fractional matrix (syst only): [" << mat_frac.diagonal().transpose() << "]" << std::endl;
+    auto const & cov = calcMatrix(mat_frac, spec_full);
+    debugFile << "full matrix (syst only): [" << cov.diagonal().transpose() << "]" << std::endl;
+    auto out = collapseMatrix(cov, mat_trans);//collapse before adding on CNP terms
+    debugFile << "collapsed matrix (syst only): [" << out.diagonal().transpose() << "]" << std::endl;
+    out += mat_dirt;
+    debugFile << "collapsed matrix (syst + dirt): [" << out.diagonal().transpose() << "]" << std::endl;
+    Eigen::VectorXd const & cnp = 3.0*( data.array().inverse()+2.0*(collapseVectorTrans(spec_full, mat_trans)).array().inverse()).inverse();
+    out.diagonal() += cnp;
+    debugFile << "collapsed matrix (syst + dirt + CNP stats): [" << out.diagonal().transpose() << "]" << std::endl;
+    return {out,invertMatrixEigen3(out)};
+}
 inline std::tuple<Eigen::MatrixXd,Eigen::MatrixXd> updateInvCovCNP(Eigen::MatrixXd const & mat_frac, Eigen::MatrixXd const & mat_trans, Eigen::MatrixXd const & mat_dirt, Eigen::MatrixXd const & mat_data, Eigen::VectorXd const & spec_full, Eigen::VectorXd const & data) {
 
     auto const & cov = calcMatrix(mat_frac, spec_full);
@@ -1315,6 +1338,7 @@ inline FitResult coreFC( Block<real_t>* b, //replace with block that has encoded
 			 Eigen::MatrixXd const & mat_trans,
 			 Eigen::MatrixXd const & mat_dirt,
 			 Eigen::MatrixXd const & mat_data,
+			 std::ofstream& debugFile,
 			 bool doScan,
 			 bool pearson,
 			 size_t max_number_iterations,
@@ -1345,7 +1369,7 @@ inline FitResult coreFC( Block<real_t>* b, //replace with block that has encoded
 
   double t1 = MPI_Wtime(); 
   if( !pearson ) {
-    auto const & rescnp = updateInvCovCNP(mat_frac, mat_trans, mat_dirt, mat_data, full, fake_data);
+    auto const & rescnp = updateInvCovCNP(mat_frac, mat_trans, mat_dirt, mat_data, full, fake_data, debugFile);
     invcovcol = std::get<1>(rescnp);
     covcol    = std::get<0>(rescnp);
   } else {
@@ -1354,14 +1378,17 @@ inline FitResult coreFC( Block<real_t>* b, //replace with block that has encoded
     covcol    = std::get<0>(rescnp);
   }
   double t2 = MPI_Wtime();
-  std::cout << "fake_data: " << fake_data << std::endl;
-  std::cout << "v_coll: " << v_coll << std::endl;
-  std::cout << "invcovcol: " << invcovcol.diagonal() << std::endl;
+  debugFile << "fake_data: [" << fake_data.transpose() << "]" << std::endl;
+  debugFile << "oscillated spectrum: [" << v_coll.transpose() << "]" << std::endl;
+  debugFile << "fake_data - osc spectrum: [" << (fake_data - v_coll).transpose() << "]" << std::endl;
+  debugFile << "inverse collapsed matrix: [" << invcovcol.diagonal().transpose() << "]" << std::endl;
+  //std::cout << "diff: " << (fake_data - v_coll) << std::endl;
   double this_chi = calcChi(fake_data - v_coll, invcovcol);
+  debugFile << "this_chi: " << this_chi << std::endl;
   double t3 = MPI_Wtime();
     
   //if(this_chi<0) 
-  std::cout << "i_grid, this_chi: " << i_grid << ", " << this_chi << std::endl; 
+  std::cout << "i_grid (dmsq, sin2theta_mue, sin2theta24), this_chi: " << i_grid << "(" << int(i_grid/dim2/dim3) << ", " << int(i_grid/dim2)%dim3 << ", " << i_grid%dim3 << "), " << this_chi << std::endl; 
  
   //do the optimization if doScan flag == 0
   bool debug = false;
@@ -1394,7 +1421,7 @@ inline FitResult coreFC( Block<real_t>* b, //replace with block that has encoded
     mt.seed(0);
     std::random_device r;
     default_random_engine eng{r()};
-    //debugfile << "n_iter, dim1, sinsq, chi_min, result.f_tol, result.num_iters, result.num_fun_calls, result.time_on_cauchy_point, result.time_on_line_search, result.time_on_subspace_minimization, flag \n";
+    //debugFile << "n_iter, dim1, sinsq, chi_min, result.f_tol, result.num_iters, result.num_fun_calls, result.time_on_cauchy_point, result.time_on_line_search, result.time_on_subspace_minimization, flag \n";
     uniform_real_distribution<double> urd(0., 1.);
     while( n_iter<max_number_iterations){
       if(n_iter==0){
@@ -1433,7 +1460,7 @@ inline FitResult coreFC( Block<real_t>* b, //replace with block that has encoded
         best_grid_pointy  = x0[1];
         best_grid_pointz  = x0[2];
       }
-      //debugfile << n_iter << ", " << roundoff(x0[0],2) << ", " << roundoff(x0[1],2) << ", " << roundoff(result.f_opt,3) << ", " << result.f_tol << ", " << result.num_iters << ", " << result.num_fun_calls << ", " << result.time_on_cauchy_points << ", " << result.time_on_line_search << ", " << result.time_on_subspace_minimization << ", " << flag << "\n";
+      //debugFile << n_iter << ", " << roundoff(x0[0],2) << ", " << roundoff(x0[1],2) << ", " << roundoff(result.f_opt,3) << ", " << result.f_tol << ", " << result.num_iters << ", " << result.num_fun_calls << ", " << result.time_on_cauchy_points << ", " << result.time_on_line_search << ", " << result.time_on_subspace_minimization << ", " << flag << "\n";
     } // End loop over iterations
 
     global_chi_min = last_chi_min; //the global minimum chi2
@@ -1462,9 +1489,11 @@ inline FitResult coreFC( Block<real_t>* b, //replace with block that has encoded
 void doScan(Block<real_t>* b, diy::Master::ProxyWithLink const& cp, int rank,
 	    Eigen::MatrixXf const & mat_frac_, Eigen::MatrixXf const & mat_trans_,
 	    Eigen::MatrixXf const & mat_dirt_, Eigen::MatrixXf const & mat_data_,
-	    int dim1, int dim2, int dim3,
+	    Eigen::VectorXd const & corecoll,  int dim1, int dim2, int dim3,
 	    HighFive::File* file, std::vector<size_t> const & rankwork, 
-	    double tol, double factr, size_t iter, bool pearson, bool debug)
+	    double tol, double factr, size_t iter, bool pearson,
+	    std::vector<float> const & xcoord, std::vector<float> const & ycoord, std::vector<float> const & zcoord, 
+	    std::ofstream& debugFile, bool debug)
 {
 
   // Cast MatrixXf to MatrixXd
@@ -1479,6 +1508,7 @@ void doScan(Block<real_t>* b, diy::Master::ProxyWithLink const& cp, int rank,
   std::vector<FitResult> results;
   std::vector<int> v_grid, v_univ, v_iter, v_best;
   std::vector<double> v_last, v_dchi;
+  std::vector<double> v_gridx, v_gridy, v_gridz;
   std::vector<std::vector<double> > v_fakedataC, v_collspec;
   std::vector<double> v_timeIteration, v_timeOptimizer, v_timeDecode, v_timeGrad;
   
@@ -1500,6 +1530,9 @@ void doScan(Block<real_t>* b, diy::Master::ProxyWithLink const& cp, int rank,
   v_best.reserve(lenDS);
   v_last.reserve(lenDS);
   v_dchi.reserve(lenDS);
+  v_gridx.reserve(lenDS);
+  v_gridy.reserve(lenDS);
+  v_gridz.reserve(lenDS);
   v_fakedataC.reserve(lenDS);
   v_collspec.reserve(lenDS);
  
@@ -1520,17 +1553,29 @@ void doScan(Block<real_t>* b, diy::Master::ProxyWithLink const& cp, int rank,
     
     int i_grid = r[0];
     if (debug && i_grid!=0) return;
-
+    int x = int(i_grid/dim2/dim3);
+    int y = int(i_grid/dim2)%dim3;
+    int z = i_grid%dim3;
+    //if(i_grid > 1000) continue;
+    //if( z < y ) continue;
+    //if( i_grid != 0 && i_grid != 30 && i_grid != 31 && ( int(i_grid/dim2/dim3) != 54 || int(i_grid/dim2)%dim3 != 3 || i_grid%dim3 != 31 ) ) continue;
     auto const & specfull = getSpectrum(b, cp, i_grid, dim2, dim3);
+    //for(int bin = 0; bin < 1; bin++ ) std::cout << "i_grid, bin, spectrum: " << i_grid << ", " << bin << ", " << std::setprecision(8) << float(specfull(bin)) << std::endl; 
     double t1 = MPI_Wtime();
     auto const & speccoll = collapseVectorTrans(specfull, mat_trans);
     double t2 = MPI_Wtime();
     if(rank == 0) std::cout << "time to collapse spectrum: " << t2-t1 << " seconds" << std::endl;
-    auto const & corefull = getSpectrum(b, cp, 100, dim2, dim3); //test using null spectrum
-    auto const & corecoll = collapseVectorTrans(corefull, mat_trans);
-
-    //if( i_grid%dim3 == 50 ) std::cout << "corefull: " << speccoll.transpose() << std::endl;
-    //if( i_grid%dim3 == 50 ) std::cout << "corecoll: " << corecoll.transpose() << std::endl;
+    //auto const & corefull = getSpectrum(b, cp, 0, dim2, dim3); //test using null spectrum
+    //auto const & corecoll = collapseVectorTrans(corefull, mat_trans);
+    v_gridx.push_back(xcoord[x]);
+    v_gridy.push_back(ycoord[y]);
+    v_gridz.push_back(zcoord[z]);
+    //std::cout <<  "*********** grid index, delta-msq, sin^2theta_{mue}, sin^2theta_{24} : " << i_grid << ", " << xcoord[x] << ", " << ycoord[y] << ", " << zcoord[z] << std::endl;
+    debugFile << "\n *********** grid index, delta-msq, sin^2theta_{mue}, sin^2theta_{24} : " << i_grid << ", " << xcoord[x] << ", " << ycoord[y] << ", " << zcoord[z] << "\n" << std::endl;
+    //debugFile << "corefull: [" << corefull.transpose() << "]" << std::endl;
+    debugFile << "corecoll: [" << corecoll.transpose() << "]" << std::endl;
+    debugFile << "specfull: [" << specfull.transpose() << "]" << std::endl;
+    debugFile << "speccoll: [" << speccoll.transpose() << "]" << std::endl;
     
     starttime = MPI_Wtime();
     
@@ -1538,7 +1583,7 @@ void doScan(Block<real_t>* b, diy::Master::ProxyWithLink const& cp, int rank,
     getrusage(RUSAGE_SELF, &usage);
     //if(rank==0) std::cout << "rank, Memory usage beore coreFC: " << usage.ru_maxrss/1000000. << " GB" << std::endl;
     double t3 = MPI_Wtime();
-    results.push_back(coreFC(b, cp, corecoll, speccoll, specfull, dim1, dim2, dim3, i_grid, -1, mat_frac, mat_trans, mat_dirt, mat_data, true, pearson, iter, factr, tol )); 
+    results.push_back(coreFC(b, cp, corecoll, speccoll, specfull, dim1, dim2, dim3, i_grid, -1, mat_frac, mat_trans, mat_dirt, mat_data, debugFile, true, pearson, iter, factr, tol )); 
     double t4 = MPI_Wtime();
     getrusage(RUSAGE_SELF, &usage);
     //if(rank==0) std::cout << "rank, Memory usage after coreFC: " << ", " << usage.ru_maxrss/1000000. << " GB" << std::endl;
@@ -1567,6 +1612,9 @@ void doScan(Block<real_t>* b, diy::Master::ProxyWithLink const& cp, int rank,
   // write out this grid and universe
   HighFive::DataSet d_i_grid          = file->getDataSet("i_grid");
   HighFive::DataSet d_i_univ          = file->getDataSet("i_univ");
+  HighFive::DataSet d_gridx          = file->getDataSet("gridx");
+  HighFive::DataSet d_gridy          = file->getDataSet("gridy");
+  HighFive::DataSet d_gridz          = file->getDataSet("gridz");
   
   size_t d_bgn = rankwork[0];
   for (auto res : results) {
@@ -1579,19 +1627,22 @@ void doScan(Block<real_t>* b, diy::Master::ProxyWithLink const& cp, int rank,
 
   double minchi = *min_element(v_dchi.begin(), v_dchi.end());
   std::map<double,int> mapbp;
-  std::cout << "minchi: " << minchi << std::endl;
+  //std::cout << "i_grid, minchi: " << i_grid << ", " << minchi << std::endl;
   for (int i=0; i < v_dchi.size(); i++ ){
-  	v_last[i] = minchi;
+      v_last[i] = minchi;
       double this_chi = v_dchi[i];
       mapbp[this_chi] = i;
-  	v_dchi[i] -= minchi;
-      std::cout << "grid, this_chi, minchi, deltachi: " << i << ", " << this_chi << ", " << v_last[i] << ", " << v_dchi[i] << std::endl;
+      v_dchi[i] -= minchi;
+      if(v_dchi[i] == 0) std::cout << "grid, this_chi, minchi, deltachi: " << i << ", " << this_chi << ", " << v_last[i] << ", " << v_dchi[i] << std::endl;
       //std::cout << i << ", " << this_chi << ", " << v_last[i] << ", " << v_dchi[i] << std::endl;
   }
 
-  vector<pair<double,int> > vsortbp;
-  copy(mapbp.begin(),mapbp.end(),back_inserter<vector<pair<double,int> > >(vsortbp));
- 
+  //find best point
+  auto it = mapbp.find(minchi);
+
+  if (it != mapbp.end()) {
+      std::cout << "The integer associated with " << minchi << " is " << it->second << std::endl;
+  }
 
   d_last_chi_min.select(     {d_bgn, 0}, {size_t(v_last.size()), 1}).write(v_last);
   d_delta_chi.select(        {d_bgn, 0}, {size_t(v_dchi.size()), 1}).write(v_dchi);
@@ -1599,6 +1650,9 @@ void doScan(Block<real_t>* b, diy::Master::ProxyWithLink const& cp, int rank,
   d_n_iter.select(           {d_bgn, 0}, {size_t(v_iter.size()), 1}).write(v_iter);
   d_i_grid.select(           {d_bgn, 0}, {size_t(v_grid.size()), 1}).write(v_grid);
   d_i_univ.select(           {d_bgn, 0}, {size_t(v_univ.size()), 1}).write(v_univ);
+  d_gridx.select(            {d_bgn, 0}, {size_t(v_gridx.size()), 1}).write(v_gridx);
+  d_gridy.select(            {d_bgn, 0}, {size_t(v_gridy.size()), 1}).write(v_gridy);
+  d_gridz.select(            {d_bgn, 0}, {size_t(v_gridz.size()), 1}).write(v_gridz);
   if (cp.gid()==0) fmt::print(stderr, "[{}] Write out took {} seconds\n", cp.gid(), endtime-starttime);
 }
 
@@ -1618,7 +1672,7 @@ void doMin(Block<real_t>* b, diy::Master::ProxyWithLink const& cp, int rank,
 void doFC(Block<real_t>* b, diy::Master::ProxyWithLink const& cp, int rank,
 	  const char * xmldata, sbn::SBNconfig const & myconf, int mass, int dim2, int dim3,
 	  Eigen::MatrixXd const & ECOV, Eigen::MatrixXd const & INVCOVBG, Eigen::VectorXd const & ecore,
-	  SignalGenerator signal, HighFive::File* file, ofstream &chi2value, ofstream &debugfile,  
+	  SignalGenerator signal, HighFive::File* file, ofstream &chi2value, ofstream &debugFile,  
 	  std::vector<size_t> const & rankwork, int nUniverses, int outer_gpt, int inner_gpt,
 	  double tol, double factr, size_t iter, int degree, bool debug, bool doFullGrid, bool noWrite=false, int msg_every=1 )
 {
@@ -1735,13 +1789,13 @@ void doFC(Block<real_t>* b, diy::Master::ProxyWithLink const& cp, int rank,
 
      if(verbose) 
        std::cout << "corecoll: " << corecoll << std::endl;
-     //debugfile << "corecoll: " << corecoll << "\n";
+     //debugFile << "corecoll: " << corecoll << "\n";
      if(verbose) 
        std::cout << "specfull: " << specfull << std::endl;
-     //debugfile << "specfull: " << specfull << "\n";
+     //debugFile << "specfull: " << specfull << "\n";
      if(verbose) 
        std::cout << "speccoll: " << speccoll << std::endl;
-     //debugfile << "speccoll: " << speccoll << "\n";
+     //debugFile << "speccoll: " << speccoll << "\n";
 
      double starttimeLMAT = MPI_Wtime();
      Eigen::MatrixXd const & LMAT = cholDcollapsed(ECOV, specfull, myconf);
@@ -1757,11 +1811,11 @@ void doFC(Block<real_t>* b, diy::Master::ProxyWithLink const& cp, int rank,
        auto const & fake_dataC = poisson_fluctuate(sample(speccoll, LMAT, rng),rng);
        if( verbose ) 
          std::cout << "fake_dataC: " << fake_dataC.transpose() << std::endl;
-       //debugfile << "fake_dataC: " << fake_dataC << "\n";
+       //debugFile << "fake_dataC: " << fake_dataC << "\n";
        double endtimeFCfd = MPI_Wtime();
 
        //std::cout << "coreFC" << std::endl;
-       results.push_back(coreFC(fake_dataC, speccoll, specfull, b, cp, signal, mass, dim2, dim3, inner_gpt, i_grid, INVCOVBG, ECOV, timeIteration, timeOptimizer, timeDecode, timeGrad, myconf, debugfile, false, iter, factr, tol)); 
+       results.push_back(coreFC(fake_dataC, speccoll, specfull, b, cp, signal, mass, dim2, dim3, inner_gpt, i_grid, INVCOVBG, ECOV, timeIteration, timeOptimizer, timeDecode, timeGrad, myconf, debugFile, false, iter, factr, tol)); 
        double endtimeFC = MPI_Wtime();
        v_univ.push_back(uu);
        v_grid.push_back(outer_gpt);
@@ -1898,6 +1952,8 @@ int main(int argc, char* argv[]) {
     std::string tag="";
     //std::string xml="";
     std::string infile  = "";                 // h5 input file
+    std::string fileName  = "";                 // root input file
+    std::string debugFileName = "";                 // debug file name
 
     double tol(1.000e-4);
     double factr(1.000e+7);
@@ -1918,6 +1974,8 @@ int main(int argc, char* argv[]) {
     ops >> Option("factr",           factr,      "Minimiser factr");
     ops >> Option("iter",            iter,       "Max number of iterations.");
     ops >> Option('t', "tag",        tag,        "Tag.");
+    ops >> Option('f', "rootfile",   fileName,   "root file");
+    ops >> Option('l', "log file",   debugFileName,   "debugging logfile");
     ops >> Option("degree",          degree,     "MFA science degree");
     ops >> Option("fgpt",	     fgpt,       "First grid point");
     ops >> Option("lgpt",	     lgpt,       "Last grid point");
@@ -1966,8 +2024,43 @@ int main(int argc, char* argv[]) {
     std::cout << "rank, Memory usage 0a: " << world.rank() << ", " << usage.ru_maxrss/1000000. << " GB" << std::endl;
     double t1 = MPI_Wtime();
     std::vector<float> v_buff;
+    std::vector<double> v_buffd;
     int ncols, nrows;
-  
+ 
+
+    // Open the ROOT file
+    std::string matrixName = "matrix_data_total";
+     
+    TFile* file = TFile::Open(fileName.c_str());
+    if (!file || file->IsZombie()) {
+        std::cerr << "Failed to open the file '" << fileName << "'" << std::endl;
+        return 1;
+    }
+
+    // Get the TMatrixT object from the file
+    TMatrixT<Double_t>* matrix = dynamic_cast<TMatrixT<Double_t>*>(file->Get(matrixName.c_str()));
+    if (!matrix) {
+        std::cerr << "Failed to retrieve the matrix '" << matrixName << "' from the file" << std::endl;
+        file->Close();
+        return 1;
+    }
+
+    // Get the number of bins in the z axis
+    Int_t numBinsZ = matrix->GetNrows();
+    Int_t numBinsX = matrix->GetNcols();
+    std::vector<double> _core;
+    // Extract the specified column as a TMatrixT object
+    TMatrixT<Double_t> columnMatrix = matrix->GetSub(0, numBinsZ - 1, 0, numBinsX - 1);
+    // Iterate over the elements in the column
+    for (Int_t i = 0; i < numBinsZ; i++) {
+        for (Int_t j = 0; j < numBinsX; j++) {
+            _core.push_back(columnMatrix(i, j));  // Access the element in the column
+        }
+    }
+    diy::mpi::broadcast(world, _core, 0);
+
+    Eigen::Map<Eigen::VectorXd> ecore(_core.data(), _core.size(), 1);
+   
     if (world.rank() == 0) loadData(Form("%s",infile.c_str()), "matrix_fractional_flux_Xs_G4_det", v_buff,   nrows, ncols);
     Eigen::MatrixXf _mat_frac = bcMatrixXf(world, v_buff, nrows, ncols);
     getrusage(RUSAGE_SELF, &usage);
@@ -1983,6 +2076,8 @@ int main(int argc, char* argv[]) {
   
     if (world.rank() == 0) loadData(Form("%s",infile.c_str()), "matrix_data_1xN", v_buff,   nrows, ncols);
     Eigen::MatrixXf _mat_data = bcMatrixXf(world, v_buff, nrows, ncols);
+    Eigen::VectorXd dataspec = _mat_data.row(0).cast<double>();
+    std::cout << "dataspec size: " << dataspec.size() << std::endl;
     getrusage(RUSAGE_SELF, &usage);
     std::cout << "rank, Memory usage matrix_data_1xN: " << world.rank() << ", " << usage.ru_maxrss/1000000. << " GB" << std::endl;
   
@@ -2066,7 +2161,7 @@ int main(int argc, char* argv[]) {
     createDataSets(f_out, nPoints, nUniverses);
    
     // First rank also writes the grid so we know what the poins actually are
-    if (world.rank() == 0)  writeGrid(f_out, myVector, xcoord, ycoord, zcoord);
+    //if (world.rank() == 0)  writeGrid(f_out, myVector, xcoord, ycoord, zcoord);
 
     // Now more blocks as we have universes
     size_t blocks = world.size();//nPoints;// *nUniverses;
@@ -2133,23 +2228,29 @@ int main(int argc, char* argv[]) {
     std::vector<size_t> rankwork;
     fmt::print(stderr, "[{}] Got {} ranks and {} sets of work {}\n", world.rank(), world.size(), _bu.size() -1, _bp.size() -1);
     world.barrier();
-    std::cout << "a" << std::endl;
     rankwork.push_back(_bp[world.rank()]);
-    std::cout << "b" << std::endl;
     rankwork.push_back(_bu[world.rank()]);
-    std::cout << "c" << std::endl;
     rankwork.push_back(_bp[world.rank()+1]);
-    std::cout << "d" << std::endl;
     rankwork.push_back(_bu[world.rank()+1]);
-    std::cout << "e" << std::endl;
 
     double T12 = MPI_Wtime();
     double starttime = MPI_Wtime();
-    
+  
+    //declare the offstream object to write matrices and spectrums	
+    std::ofstream debugFile; 
+    debugFile.open(debugFileName.c_str());
+
+    // Check if the file was successfully opened
+    if (!debugFile.is_open()) {
+        // Handle the error (e.g., print an error message or exit the program)
+        std::cerr << "Failed to open the wirecell debug log file!" << std::endl;
+        return 1; // Return an error code
+    }
+
     if (simplescan) {
        if (world.rank()==0) fmt::print(stderr, "Start simple scan\n");
-       fc_master.foreach([world, _mat_frac, _mat_trans, _mat_dirt, _mat_data, dim1, dim2, dim3, f_out, rankwork, tol, factr, iter, pearson, debug ](Block<real_t>* b, const diy::Master::ProxyWithLink& cp)
-                              { doScan(b, cp, world.rank(), _mat_frac, _mat_trans, _mat_dirt, _mat_data, dim1, dim2, dim3, f_out, rankwork, tol, factr, iter, pearson, debug); });
+       fc_master.foreach([world, _mat_frac, _mat_trans, _mat_dirt, _mat_data, dataspec, dim1, dim2, dim3, f_out, rankwork, tol, factr, iter, pearson, xcoord, ycoord, zcoord, &debugFile, debug ](Block<real_t>* b, const diy::Master::ProxyWithLink& cp)
+                              { doScan(b, cp, world.rank(), _mat_frac, _mat_trans, _mat_dirt, _mat_data, dataspec, dim1, dim2, dim3, f_out, rankwork, tol, factr, iter, pearson, xcoord, ycoord, zcoord, debugFile, debug); });
     }/*
     else {
        if (world.rank()==0) fmt::print(stderr, "Start FC -- new version\n");
@@ -2178,7 +2279,8 @@ int main(int argc, char* argv[]) {
     if (world.rank()==0) fmt::print(stderr, "[{}] Total Time: {} seconds \n", world.rank(), tottime_max);
     if (world.rank()==0) fmt::print(stderr, "Output written to {}\n",out_file);
     */
-    std::cout << "f" << std::endl;
+    //std::cout << "f" << std::endl;
+    debugFile.close();
     delete f_out;
 
     return 0;
