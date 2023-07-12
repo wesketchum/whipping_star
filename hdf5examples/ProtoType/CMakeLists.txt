@@ -82,7 +82,7 @@ endif                       (${CMAKE_SYSTEM_NAME} MATCHES      "Darwin")
 
  # MPI
 find_package                (MPI REQUIRED)
-    set                     (libraries ${libraries} ${MPI_C_LIBRARIES} ${MPI_CXX_LIBRARIES})
+    set                     (libraries ${libraries} ${MPI_C_LIBRARIES})# ${MPI_CXX_LIBRARIES})
 
 #find_package                (HDF5)
 set                     (libraries ${libraries} ${HDF5_C_LIBRARIES})
