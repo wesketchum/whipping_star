@@ -3,16 +3,37 @@ FROM fedora:36
 ENV LD_LIBRARY_PATH="/usr/lib64/mpich/lib:${LD_LIBRARY_PATH}"
 ENV PATH="/usr/lib64/mpich/bin:${PATH}"
 
+ARG NPROC=1
+
 RUN dnf install -y hdf5-mpich-devel git cmake rsync git gcc-c++ cmake mpich-devel make gsl-devel eigen3-devel
 RUN dnf install -y make root-mathmore root-mathcore root-minuit2
 
 RUN dnf install -y tar vim
 RUN dnf install -y valgrind
 
+RUN dnf install -y wget
+
+RUN dnf install -y libX11-devel libXpm-devel libXft-devel libXext libXext-devel openssl-devel
+RUN dnf install -y patch
+
 RUN mkdir -p /code
 WORKDIR /
-COPY root-6.14.06.tar.gz root-6.14.06.tar.gz
-RUN tar xzf root-6.14.06.tar.gz
+
+LABEL root.version="6.28.06"
+RUN mkdir -p /root-6.28.06
+WORKDIR /root-6.28.06
+RUN wget -q https://root.cern/download/root_v6.28.06.source.tar.gz && \
+    mkdir build install root_src &&\
+    tar xzf root_v6.28.06.source.tar.gz -C root_src --strip-components 1 &&\
+    cd build &&\
+    cmake \
+      -Dopengl=OFF \
+      -Dxrootd=OFF \
+      -Dmathmore=OFF \   
+      -DCMAKE_INSTALL_PREFIX=/root-6.28.06/install \
+    ../root_src &&\
+    cmake --build . --target install -j$NPROC &&\
+    rm -rf *.tar.gz
 
 WORKDIR /
 COPY inputdata.tar.gz inputdata.tar.gz 
@@ -29,12 +50,11 @@ WORKDIR /code/lbfgsb_cpp/build
 RUN cmake -DCMAKE_INSTALL_PREFIX=../lib -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON ../
 RUN make
 RUN make install
-RUN ls ../lib/
+#RUN ls ../lib/
 
 WORKDIR /code
-RUN ls -lrt .
-ENV LD_LIBRARY_PATH="/root-6.14.06/local/lib:${LD_LIBRARY_PATH}:/code/lbfgsb_cpp/lib/"
-RUN cmake . -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=/usr/local -DMFA_INCLUDE_DIR=$PWD/mfa/include -DDIY_INCLUDE_DIRS=$PWD/diy/include -DEIGEN3_INCLUDE_DIRS=$PWD/eigen3 -DLBFGSB_INCLUDE_DIR=$PWD/lbfgsb_cpp/include -DLBFGSB_LIBRARIES=$PWD/lbfgsb_cpp/lib/liblbfgsb_cpp.so -DHighFive_INCLUDE_DIR=$PWD/HighFive/include -DHDF5_C_LIBRARIES=/usr/lib64/mpich/lib/libhdf5.so -DHDF5_INCLUDE_DIRS=/usr/include/mpich-x86_64 -DROOTSYS=/root-6.14.06/local -DARCH=haswell
+ENV LD_LIBRARY_PATH="/root-6.28.06/install/lib:${LD_LIBRARY_PATH}:/code/lbfgsb_cpp/lib/"
+RUN cmake . -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=/usr/local -DMFA_INCLUDE_DIR=$PWD/mfa/include -DDIY_INCLUDE_DIRS=$PWD/diy/include -DEIGEN3_INCLUDE_DIRS=$PWD/eigen3 -DLBFGSB_INCLUDE_DIR=$PWD/lbfgsb_cpp/include -DLBFGSB_LIBRARIES=$PWD/lbfgsb_cpp/lib/liblbfgsb_cpp.so -DHighFive_INCLUDE_DIR=$PWD/HighFive/include -DHDF5_C_LIBRARIES=/usr/lib64/mpich/lib/libhdf5.so -DHDF5_INCLUDE_DIRS=/usr/include/mpich-x86_64 -DROOTSYS=/root-6.28.06/install -DARCH=haswell
 
 WORKDIR /code/src
 RUN make
